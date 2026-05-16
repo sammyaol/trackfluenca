@@ -1,187 +1,201 @@
 'use client'
 import { useState } from 'react'
-import Link from 'next/link'
-
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
-  { href: '/discovery', label: 'Discovery', icon: '◎' },
-  { href: '/creator', label: 'Creator', icon: '👤' },
-  { href: '/outreach', label: 'Outreach', icon: '✉' },
-  { href: '/kampagnen', label: 'Kampagnen', icon: '📢' },
-  { href: '/affiliate', label: 'Affiliate', icon: '%' },
-  { href: '/einstellungen', label: 'Einstellungen', icon: '⚙' },
-]
+import Sidebar from '../components/Sidebar'
 
 export default function Einstellungen() {
   const [saved, setSaved] = useState(false)
   const [plan, setPlan] = useState('free')
+  const [primaryColor, setPrimaryColor] = useState('#7F77DD')
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
-  }
+  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+
+  const colors = ['#7F77DD', '#E24B4A', '#1D9E75', '#D85A30', '#185FA5', '#D4537E']
 
   return (
-    <div className="flex min-h-screen bg-[#0E0E0E]">
-      <aside className="hidden md:flex w-52 flex-col bg-[#111] border-r border-white/5 fixed h-full">
-        <div className="flex items-center gap-2 px-4 py-5 border-b border-white/5">
-          <div className="w-8 h-8 rounded-lg bg-[#2C1F6B] flex items-center justify-center text-xs">⟆</div>
-          <span className="text-white font-bold text-sm">Track<span className="text-[#7F77DD] font-normal">fluenca</span></span>
-        </div>
-        <nav className="flex flex-col gap-1 p-3 flex-1">
-          {navItems.map(item => (
-            <Link key={item.href} href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${item.href === '/einstellungen' ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
-              <span>{item.icon}</span>{item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="p-4 border-t border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-[#2C1F6B] flex items-center justify-center text-xs text-purple-300">KO</div>
-            <div>
-              <div className="text-white text-xs font-medium">Kolure</div>
-              <div className="text-gray-500 text-xs">Free Plan</div>
-            </div>
+    <div className="flex min-h-screen bg-[#0A0A0A]">
+      <Sidebar />
+      <main className="flex-1 md:ml-60 min-h-screen">
+        <div className="border-b border-white/[0.06] px-8 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
+          <div>
+            <h1 className="text-white font-semibold text-lg">Einstellungen</h1>
+            <p className="text-gray-600 text-xs mt-0.5">Marke, API-Keys, Plan & Portal-Branding</p>
           </div>
-        </div>
-      </aside>
-
-      <main className="flex-1 md:ml-52 p-4 md:p-8 max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-white text-xl font-medium">Einstellungen</h1>
-          <p className="text-gray-500 text-sm mt-1">Marke, API-Keys, Plan</p>
-        </div>
-
-        {/* Plan */}
-        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-5 mb-4">
-          <h2 className="text-white text-sm font-medium mb-4">Dein Plan</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {[
-              { id: 'free', name: 'Free', price: '0 €', features: ['5 Creator', '1 Kampagne', 'Basis-Portal'] },
-              { id: 'pro', name: 'Pro', price: '49 €/Mo', features: ['50 Creator', 'Unbegrenzte Kampagnen', 'Portal Branding', 'Auto-Fetch API', 'Discovery + Outreach'] },
-              { id: 'business', name: 'Business', price: '149 €/Mo', features: ['Unbegrenzt', 'Multi-Brand', 'White-Label', 'Shopify Sync', 'API-Zugang'] },
-            ].map(p => (
-              <div key={p.id} onClick={() => setPlan(p.id)}
-                className={`rounded-xl p-4 border cursor-pointer transition-colors ${plan === p.id ? 'border-[#7F77DD] bg-[#7F77DD]/10' : 'border-white/10 hover:border-white/20'}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-white font-medium text-sm">{p.name}</span>
-                  {plan === p.id && <span className="w-2 h-2 rounded-full bg-[#7F77DD]"></span>}
-                </div>
-                <div className="text-[#7F77DD] font-medium mb-3">{p.price}</div>
-                {p.features.map(f => (
-                  <div key={f} className="flex items-center gap-2 text-xs text-gray-400 py-0.5">
-                    <span className="text-green-400">✓</span>{f}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-          {plan !== 'free' && (
-            <button className="mt-4 px-6 py-2 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7]">
-              Auf {plan === 'pro' ? 'Pro' : 'Business'} upgraden
-            </button>
-          )}
-        </div>
-
-        {/* Brand */}
-        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-5 mb-4">
-          <h2 className="text-white text-sm font-medium mb-4">Marke</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              { label: 'Markenname', placeholder: 'Kolure', value: 'Kolure' },
-              { label: 'Währung', placeholder: 'EUR', value: 'EUR' },
-              { label: 'Tracking Domain', placeholder: 'trackfluenca.io/r', value: 'trackfluenca.io/r' },
-              { label: 'Website', placeholder: 'kolure.de', value: 'kolure.de' },
-            ].map(f => (
-              <div key={f.label}>
-                <label className="text-gray-400 text-xs mb-1 block">{f.label}</label>
-                <input defaultValue={f.value} placeholder={f.placeholder}
-                  className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7F77DD]" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* API */}
-        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-5 mb-4">
-          <h2 className="text-white text-sm font-medium mb-1">API Integrationen</h2>
-          <p className="text-gray-500 text-xs mb-4">Für automatischen Datenfetch von Instagram und TikTok</p>
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'RapidAPI Key', placeholder: 'f4c7d7229bmsh...', sub: 'Für IG + TT Auto-Fetch · rapidapi.com' },
-              { label: 'E-Mail für Outreach', placeholder: 'hello@kolure.de', sub: 'Gmail oder SMTP für automatische Anfragen' },
-              { label: 'Shopify Store URL', placeholder: 'kolure.myshopify.com', sub: 'Für automatischen ROAS via Order-Sync (Business)' },
-              { label: 'Stripe Secret Key', placeholder: 'sk_live_...', sub: 'Für Affiliate-Auszahlungen via Stripe' },
-            ].map(f => (
-              <div key={f.label}>
-                <label className="text-gray-400 text-xs mb-1 block">{f.label}</label>
-                <input type="password" placeholder={f.placeholder}
-                  className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7F77DD] mb-1" />
-                <p className="text-gray-600 text-xs">{f.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Portal Branding */}
-        <div className="bg-[#1A1A1A] rounded-xl border border-white/5 p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-white text-sm font-medium">Portal Branding</h2>
-              <p className="text-gray-500 text-xs mt-0.5">Logo, Farben und Design des Creator-Portals</p>
-            </div>
-            {plan === 'free' && (
-              <span className="text-xs px-2 py-1 rounded-full bg-[#2C1F6B] text-purple-300">Ab Pro</span>
+          <button onClick={save}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${saved ? 'bg-emerald-600 text-white' : 'bg-[#7F77DD] text-white hover:bg-[#534AB7]'}`}>
+            {saved ? (
+              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Gespeichert!</>
+            ) : (
+              <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Speichern</>
             )}
+          </button>
+        </div>
+
+        <div className="p-8 max-w-4xl">
+          {/* Plan */}
+          <div className="mb-8">
+            <h2 className="text-white font-semibold text-sm mb-1">Plan</h2>
+            <p className="text-gray-600 text-xs mb-4">Wähle den passenden Plan für deine Brand</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { id: 'free', name: 'Free', price: '0 €', sub: 'Zum Testen', features: ['5 Creator', '1 Kampagne', 'Basis-Portal', 'ROAS Tracking'], locked: [] },
+                { id: 'pro', name: 'Pro', price: '49 €/Mo', sub: 'Beliebteste', features: ['50 Creator', 'Alles unbegrenzt', 'Portal Branding', 'Auto-Fetch API', 'Discovery + Outreach', 'Kein "Powered by"'], locked: [], featured: true },
+                { id: 'business', name: 'Business', price: '149 €/Mo', sub: 'Für Agenturen', features: ['Unbegrenzt', 'Multi-Brand', 'White-Label', 'Shopify Sync', 'API-Zugang', 'Priority Support'], locked: [] },
+              ].map(p => (
+                <div key={p.id} onClick={() => setPlan(p.id)}
+                  className={`relative rounded-2xl p-5 cursor-pointer transition-all border ${plan === p.id ? 'border-[#7F77DD] bg-[#7F77DD]/5' : 'border-white/[0.06] bg-[#141414] hover:border-white/[0.12]'} ${p.featured ? 'ring-1 ring-[#7F77DD]/30' : ''}`}>
+                  {p.featured && <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] px-3 py-0.5 rounded-full bg-[#7F77DD] text-white font-medium">Beliebteste</div>}
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="text-white font-semibold text-sm">{p.name}</div>
+                      <div className="text-gray-600 text-xs mt-0.5">{p.sub}</div>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${plan === p.id ? 'border-[#7F77DD] bg-[#7F77DD]' : 'border-gray-600'}`}>
+                      {plan === p.id && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                  <div className="text-[#7F77DD] font-bold text-xl mb-4">{p.price}</div>
+                  <div className="flex flex-col gap-1.5">
+                    {p.features.map(f => (
+                      <div key={f} className="flex items-center gap-2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span className="text-gray-400 text-xs">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {plan !== p.id && p.id !== 'free' && (
+                    <button className="w-full mt-4 py-2 rounded-xl border border-[#7F77DD]/40 text-[#7F77DD] text-xs hover:bg-[#7F77DD]/10 transition-colors font-medium">
+                      Upgraden
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className={`${plan === 'free' ? 'opacity-40 pointer-events-none' : ''}`}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-gray-400 text-xs mb-1 block">Portal-Name</label>
-                <input defaultValue="Kolure Partner-Portal" placeholder="Kolure Partner-Portal"
-                  className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#7F77DD]" />
+
+          {/* Brand */}
+          <div className="bg-[#141414] rounded-2xl border border-white/[0.06] p-6 mb-5">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-6 h-6 rounded-lg bg-[#7F77DD]/20 flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               </div>
-              <div>
-                <label className="text-gray-400 text-xs mb-1 block">Primärfarbe</label>
-                <div className="flex gap-2">
-                  {['#7F77DD','#E24B4A','#1D9E75','#D85A30','#185FA5','#D4537E'].map(c => (
-                    <div key={c} className="w-8 h-8 rounded-lg cursor-pointer border-2 border-transparent hover:border-white/30"
-                      style={{background: c}}></div>
-                  ))}
+              <h2 className="text-white font-semibold text-sm">Marke</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { label: 'Markenname', placeholder: 'Kolure', defaultValue: 'Kolure' },
+                { label: 'Währung', placeholder: 'EUR', defaultValue: 'EUR' },
+                { label: 'Tracking Domain', placeholder: 'trackfluenca.io/r', defaultValue: 'trackfluenca.io/r' },
+                { label: 'Website', placeholder: 'kolure.de', defaultValue: 'kolure.de' },
+              ].map(f => (
+                <div key={f.label}>
+                  <label className="text-gray-500 text-xs mb-1.5 block font-medium">{f.label}</label>
+                  <input defaultValue={f.defaultValue} placeholder={f.placeholder}
+                    className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40 transition-colors" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* API */}
+          <div className="bg-[#141414] rounded-2xl border border-white/[0.06] p-6 mb-5">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </div>
+              <h2 className="text-white font-semibold text-sm">API Integrationen</h2>
+            </div>
+            <div className="flex flex-col gap-4">
+              {[
+                { label: 'RapidAPI Key', placeholder: 'f4c7d7229bmsh...', sub: 'Für IG + TT Auto-Fetch · rapidapi.com', color: 'text-purple-400' },
+                { label: 'E-Mail für Outreach', placeholder: 'hello@kolure.de', sub: 'Gmail oder SMTP für automatische Anfragen', color: 'text-blue-400' },
+                { label: 'Shopify Store URL', placeholder: 'kolure.myshopify.com', sub: 'Für automatischen ROAS via Order-Sync (Business)', color: 'text-green-400' },
+                { label: 'Stripe Secret Key', placeholder: 'sk_live_...', sub: 'Für Affiliate-Auszahlungen', color: 'text-amber-400' },
+              ].map(f => (
+                <div key={f.label}>
+                  <label className="text-gray-500 text-xs mb-1.5 block font-medium">{f.label}</label>
+                  <input type="password" placeholder={f.placeholder}
+                    className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40 mb-1.5 transition-colors" />
+                  <p className={`text-xs ${f.color}`}>{f.sub}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Portal Branding */}
+          <div className={`bg-[#141414] rounded-2xl border p-6 mb-5 transition-colors ${plan === 'free' ? 'border-white/[0.06] opacity-60' : 'border-[#7F77DD]/20'}`}>
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[#7F77DD]/20 flex items-center justify-center">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                </div>
+                <h2 className="text-white font-semibold text-sm">Portal Branding</h2>
+              </div>
+              {plan === 'free' && (
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[#7F77DD]/20 text-[#7F77DD] border border-[#7F77DD]/30 font-medium">Ab Pro</span>
+              )}
+            </div>
+
+            <div className={`${plan === 'free' ? 'pointer-events-none' : ''}`}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="text-gray-500 text-xs mb-1.5 block font-medium">Portal-Name</label>
+                  <input defaultValue="Kolure Partner-Portal" disabled={plan === 'free'}
+                    className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#7F77DD]/40 disabled:opacity-40" />
+                </div>
+                <div>
+                  <label className="text-gray-500 text-xs mb-2 block font-medium">Primärfarbe</label>
+                  <div className="flex gap-2">
+                    {colors.map(c => (
+                      <button key={c} onClick={() => setPrimaryColor(c)}
+                        className={`w-8 h-8 rounded-lg transition-all ${primaryColor === c ? 'ring-2 ring-white/50 ring-offset-2 ring-offset-[#141414] scale-110' : 'hover:scale-105'}`}
+                        style={{ background: c }} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between py-3 border-t border-white/[0.06]">
+                <div>
+                  <div className="text-white text-sm font-medium">"Powered by Trackfluenca" ausblenden</div>
+                  <div className="text-gray-600 text-xs">Im Free Plan immer sichtbar</div>
+                </div>
+                <div className={`w-10 h-6 rounded-full flex items-center px-1 cursor-pointer transition-colors ${plan !== 'free' ? 'bg-[#7F77DD] justify-end' : 'bg-gray-700 justify-start'}`}>
+                  <div className="w-4 h-4 rounded-full bg-white shadow" />
+                </div>
+              </div>
+
+              {/* Live Preview */}
+              <div className="mt-4">
+                <label className="text-gray-500 text-xs mb-2 block font-medium">Live-Vorschau</label>
+                <div className="rounded-xl overflow-hidden border border-white/[0.08]">
+                  <div className="px-4 py-3 flex items-center gap-3" style={{ background: primaryColor }}>
+                    <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-white text-xs font-bold">KO</div>
+                    <span className="text-white font-semibold text-sm">Kolure Partner-Portal</span>
+                  </div>
+                  <div className="bg-[#0A0A0A] p-4">
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div className="bg-[#141414] rounded-lg p-3 border border-white/[0.06]">
+                        <div className="text-gray-600 text-xs">Verdient</div>
+                        <div className="text-emerald-400 font-bold">1.912 €</div>
+                      </div>
+                      <div className="bg-[#141414] rounded-lg p-3 border border-white/[0.06]">
+                        <div className="text-gray-600 text-xs">Klicks</div>
+                        <div className="text-white font-bold">2.840</div>
+                      </div>
+                    </div>
+                    <div className="bg-[#141414] rounded-lg px-4 py-2.5 border border-white/[0.06] flex items-center justify-between">
+                      <span className="font-mono font-bold" style={{ color: primaryColor }}>SOPHIE15</span>
+                      <button className="text-xs px-2 py-1 rounded-md text-white" style={{ background: primaryColor }}>Kopieren</button>
+                    </div>
+                    {plan === 'free' && (
+                      <div className="text-center mt-2 text-gray-700 text-xs">Powered by Trackfluenca</div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between py-3 border-t border-white/5">
-              <div>
-                <div className="text-white text-sm">"Powered by Trackfluenca" ausblenden</div>
-                <div className="text-gray-500 text-xs">Im Free Plan immer sichtbar</div>
-              </div>
-              <div className="w-10 h-6 rounded-full bg-[#7F77DD] flex items-center justify-end pr-1 cursor-pointer">
-                <div className="w-4 h-4 rounded-full bg-white"></div>
-              </div>
-            </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          <button onClick={handleSave}
-            className="px-6 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors">
-            {saved ? '✓ Gespeichert!' : 'Einstellungen speichern'}
-          </button>
-          <button className="px-6 py-2.5 rounded-xl border border-white/10 text-gray-400 text-sm hover:bg-white/5">
-            Abbrechen
-          </button>
-        </div>
-
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#111] border-t border-white/10 flex justify-around py-2 z-40">
-          {navItems.slice(0, 5).map(item => (
-            <Link key={item.href} href={item.href} className="flex flex-col items-center gap-1 text-gray-500 hover:text-white px-3 py-1">
-              <span className="text-lg">{item.icon}</span>
-              <span className="text-xs">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
       </main>
     </div>
   )

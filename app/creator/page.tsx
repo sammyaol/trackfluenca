@@ -59,6 +59,8 @@ const allColumns = [
   { key: 'ttFollower', label: 'TT Follower', group: 'TikTok' },
   { key: 'ttAvgViews', label: 'TT Ø Views', group: 'TikTok' },
   { key: 'ttEr', label: 'TT ER%', group: 'TikTok' },
+  { key: 'ttAvgLikes', label: 'TT Ø Likes', group: 'TikTok' },
+  { key: 'ttAvgComments', label: 'TT Ø Komm.', group: 'TikTok' },
   { key: 'overallTier', label: 'Overall Tier', group: 'Overall' },
   { key: 'gesamtReichweite', label: 'Reichweite', group: 'Overall' },
   { key: 'kampagne', label: 'Kampagne', group: 'Deal' },
@@ -89,6 +91,7 @@ const allColumns = [
 ]
 
 const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 'Ads', 'Gesamt', 'Bewertung', 'TKP']
+const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
 
 export default function Creator() {
   const [creators, setCreators] = useState<Creator[]>(initialCreators)
@@ -97,92 +100,97 @@ export default function Creator() {
   const [filterTier, setFilterTier] = useState('')
   const [selected, setSelected] = useState<Creator | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [editMode, setEditMode] = useState(false)
   const [showColPicker, setShowColPicker] = useState(false)
   const [fetching, setFetching] = useState(false)
   const [fetchDone, setFetchDone] = useState(false)
+  const [fetchError, setFetchError] = useState('')
   const [fetchedData, setFetchedData] = useState<Partial<Creator> | null>(null)
   const [visibleCols, setVisibleCols] = useState(['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS'])
-
-  const [form, setForm] = useState({ name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' })
+  const [form, setForm] = useState(emptyForm)
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
-
   const toggleGroup = (group: string) => {
     const keys = allColumns.filter(c => c.group === group).map(c => c.key)
     const allOn = keys.every(k => visibleCols.includes(k))
     setVisibleCols(prev => allOn ? prev.filter(k => !keys.includes(k)) : [...new Set([...prev, ...keys])])
   }
 
-  const simulateFetch = () => {
+  const openAdd = () => { setForm(emptyForm); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setShowModal(true) }
+  const openEdit = (c: Creator) => {
+    setForm({ name: c.name, igHandle: c.ig, ttHandle: c.tt, status: c.status, prio: c.prio, kategorie: c.kategorie, kampagne: c.kampagne, buchungstyp: c.buchungstyp, fee: String(c.fee), produkt: String(c.produkt), promoCode: c.promoCode, datum: c.datum, notizen: c.notizen })
+    setEditMode(true); setFetchDone(false); setFetchedData(null); setSelected(null); setShowModal(true)
+  }
+  const closeModal = () => { setShowModal(false); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setForm(emptyForm) }
+
+  const simulateFetch = async () => {
     if (!form.igHandle) return
     setFetching(true)
     setFetchDone(false)
-    setTimeout(() => {
-      const igF = 125000
-      const ttF = form.ttHandle ? 98000 : 0
-      const total = igF + ttF
-      const tier = getTier(Math.max(igF, ttF))
-      const data: Partial<Creator> = {
-        igFollower: igF, ttFollower: ttF,
-        igTier: getTier(igF), ttTier: ttF > 0 ? getTier(ttF) : '',
-        igEr: 4.8, ttEr: ttF > 0 ? 3.2 : 0,
-        ttAvgViews: ttF > 0 ? 48200 : 0,
-        ttAvgLikes: ttF > 0 ? 3200 : 0,
-        ttAvgComments: ttF > 0 ? 180 : 0,
-        overallTier: tier,
-        gesamtReichweite: total,
-        storyWert: Math.round(igF * 0.0001 * 10) * 100,
-        ttWert: ttF > 0 ? calcPostWert(ttF) : 0,
-        reelWert: calcPostWert(igF),
-        affiliatePct: getAffPct(Math.max(igF, ttF)),
-      }
+    setFetchError('')
+    setFetchedData(null)
+    try {
+      const params = new URLSearchParams()
+      if (form.igHandle) params.append('ig', form.igHandle.replace('@', ''))
+      if (form.ttHandle) params.append('tt', form.ttHandle.replace('@', ''))
+      const res = await fetch(`/api/creator?${params.toString()}`)
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
       setFetchedData(data)
-      setFetching(false)
+      if (data.fullName && !form.name) setForm(p => ({ ...p, name: data.fullName }))
       setFetchDone(true)
-    }, 1800)
+    } catch (e: any) {
+      setFetchError(e.message || 'Fehler beim Laden')
+    } finally {
+      setFetching(false)
+    }
   }
 
-  const handleAdd = () => {
+  const handleSave = () => {
     if (!form.name || !form.igHandle) return
     const fee = Number(form.fee) || 0
     const produkt = Number(form.produkt) || 0
-    const base = fetchedData || {}
-    const igF = (base as Creator).igFollower || 0
-    const ttF = (base as Creator).ttFollower || 0
-    const newCreator: Creator = {
-      name: form.name,
-      ig: form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle,
-      tt: form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : '',
-      igFollower: igF, ttFollower: ttF,
-      igTier: (base as Creator).igTier || getTier(igF),
-      ttTier: (base as Creator).ttTier || '',
-      igEr: (base as Creator).igEr || 0,
-      ttEr: (base as Creator).ttEr || 0,
-      ttAvgViews: (base as Creator).ttAvgViews || 0,
-      ttAvgLikes: (base as Creator).ttAvgLikes || 0,
-      ttAvgComments: (base as Creator).ttAvgComments || 0,
-      overallTier: (base as Creator).overallTier || getTier(igF),
-      gesamtReichweite: (base as Creator).gesamtReichweite || igF + ttF,
-      status: form.status, prio: form.prio, kategorie: form.kategorie,
-      mgmt: 'Nein', notizen: form.notizen,
-      kampagne: form.kampagne, buchungstyp: form.buchungstyp,
-      fee, produkt, gesamt: fee + produkt,
-      promoCode: form.promoCode, datum: form.datum,
-      orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0,
-      adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0,
-      gesUmsatz: 0, gesROAS: 0, gesKlicks: 0,
-      storyViews: 0,
-      storyWert: (base as Creator).storyWert || 0,
-      ttWert: (base as Creator).ttWert || 0,
-      reelWert: (base as Creator).reelWert || 0,
-      affiliatePct: (base as Creator).affiliatePct || getAffPct(igF),
-      tkpTT: 0, tkpStory: 0, tkpPost: 0,
+    const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
+    const tt = form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : ''
+
+    if (editMode) {
+      setCreators(prev => prev.map(c => c.name === (selected?.name || form.name) ? {
+        ...c, name: form.name, ig, tt, status: form.status, prio: form.prio,
+        kategorie: form.kategorie, kampagne: form.kampagne, buchungstyp: form.buchungstyp,
+        fee, produkt, gesamt: fee + produkt, promoCode: form.promoCode, notizen: form.notizen,
+      } : c))
+    } else {
+      const base = fetchedData || {}
+      const igF = (base as any).igFollower || 0
+      const ttF = (base as any).ttFollower || 0
+      setCreators(prev => [...prev, {
+        name: form.name, ig, tt,
+        igFollower: igF, ttFollower: ttF,
+        igTier: (base as any).igTier || getTier(igF),
+        ttTier: (base as any).ttTier || '',
+        igEr: (base as any).igEr || 0,
+        ttEr: (base as any).ttEr || 0,
+        ttAvgViews: (base as any).ttAvgViews || 0,
+        ttAvgLikes: (base as any).ttAvgLikes || 0,
+        ttAvgComments: (base as any).ttAvgComments || 0,
+        overallTier: (base as any).overallTier || getTier(igF),
+        gesamtReichweite: (base as any).gesamtReichweite || igF + ttF,
+        status: form.status, prio: form.prio, kategorie: form.kategorie,
+        mgmt: 'Nein', notizen: form.notizen,
+        kampagne: form.kampagne, buchungstyp: form.buchungstyp,
+        fee, produkt, gesamt: fee + produkt,
+        promoCode: form.promoCode, datum: form.datum,
+        orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0,
+        adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0,
+        gesUmsatz: 0, gesROAS: 0, gesKlicks: 0, storyViews: 0,
+        storyWert: (base as any).storyWert || 0,
+        ttWert: (base as any).ttWert || 0,
+        reelWert: (base as any).reelWert || 0,
+        affiliatePct: (base as any).affiliatePct || getAffPct(igF),
+        tkpTT: 0, tkpStory: 0, tkpPost: 0,
+      }])
     }
-    setCreators(prev => [...prev, newCreator])
-    setShowModal(false)
-    setFetchDone(false)
-    setFetchedData(null)
-    setForm({ name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' })
+    closeModal()
   }
 
   const filtered = creators.filter(c => {
@@ -205,10 +213,12 @@ export default function Creator() {
       case 'kategorie': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.kategorie}</span>
       case 'igFollower': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmt(c.igFollower)}</span>
       case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${tierStyle[c.igTier]}`}>{c.igTier}</span> : dash
-      case 'igEr': return <span className={`text-sm font-medium whitespace-nowrap ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
+      case 'igEr': return <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
       case 'ttFollower': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
       case 'ttAvgViews': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.ttAvgViews > 0 ? fmt(c.ttAvgViews) : dash}</span>
       case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : dash
+      case 'ttAvgLikes': return <span className="text-gray-300 text-sm">{c.ttAvgLikes > 0 ? fmt(c.ttAvgLikes) : dash}</span>
+      case 'ttAvgComments': return <span className="text-gray-300 text-sm">{c.ttAvgComments > 0 ? fmt(c.ttAvgComments) : dash}</span>
       case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
       case 'gesamtReichweite': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmt(c.gesamtReichweite)}</span>
       case 'kampagne': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.kampagne || dash}</span>
@@ -220,8 +230,8 @@ export default function Creator() {
       case 'datum': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.datum || dash}</span>
       case 'orgUmsatz': return <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">{fmtEur(c.orgUmsatz)}</span>
       case 'orgKlicks': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.orgKlicks > 0 ? fmt(c.orgKlicks) : dash}</span>
-      case 'orgCPK': return c.orgCPK > 0 ? <span className={`text-sm font-medium whitespace-nowrap ${c.orgCPK <= 1 ? 'text-emerald-400' : c.orgCPK <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.orgCPK.toFixed(2)} €</span> : dash
-      case 'orgROAS': return <span className={`text-sm font-semibold whitespace-nowrap ${roasColor(c.orgROAS)}`}>{c.orgROAS > 0 ? `${c.orgROAS}x` : dash}</span>
+      case 'orgCPK': return c.orgCPK > 0 ? <span className={`text-sm font-medium ${c.orgCPK <= 1 ? 'text-emerald-400' : c.orgCPK <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.orgCPK.toFixed(2)} €</span> : dash
+      case 'orgROAS': return <span className={`text-sm font-semibold ${roasColor(c.orgROAS)}`}>{c.orgROAS > 0 ? `${c.orgROAS}x` : dash}</span>
       case 'orgBestellungen': return <span className="text-gray-300 text-sm">{c.orgBestellungen > 0 ? c.orgBestellungen : dash}</span>
       case 'adSpend': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmtEur(c.adSpend)}</span>
       case 'adUmsatz': return <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">{fmtEur(c.adUmsatz)}</span>
@@ -240,12 +250,14 @@ export default function Creator() {
     }
   }
 
+  const inputCls = "w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40"
+  const selectCls = "w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#7F77DD]/40"
+  const labelCls = "text-gray-500 text-xs mb-1.5 block font-medium"
+
   return (
     <div className="flex min-h-screen bg-[#0A0A0A]">
       <Sidebar />
-      <main className="flex-1 md:ml-60 min-h-screen overflow-hidden">
-
-        {/* Topbar */}
+      <main className="flex-1 md:ml-60 min-h-screen">
         <div className="border-b border-white/[0.06] px-6 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
           <div>
             <h1 className="text-white font-semibold text-lg">Creator</h1>
@@ -291,8 +303,7 @@ export default function Creator() {
                 </div>
               )}
             </div>
-            <button onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
+            <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Creator hinzufügen
             </button>
@@ -300,7 +311,6 @@ export default function Creator() {
         </div>
 
         <div className="p-6">
-          {/* Filters */}
           <div className="flex gap-3 mb-5 flex-wrap">
             <div className="flex-1 min-w-48 relative">
               <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -319,13 +329,12 @@ export default function Creator() {
             </select>
           </div>
 
-          {/* Table */}
           <div className="bg-[#141414] rounded-2xl border border-white/[0.06] overflow-hidden">
             <div style={{ overflowX: 'auto', maxWidth: 'calc(100vw - 17rem)' }}>
               <table className="w-full" style={{ minWidth: 'max-content' }}>
                 <thead>
                   <tr className="border-b border-white/[0.06]">
-                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-[#141414] z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-white/[0.06]">Creator</th>
+                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-[#141414] z-10">Creator</th>
                     {allColumns.filter(c => visibleCols.includes(c.key)).map(col => (
                       <th key={col.key} className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap">{col.label}</th>
                     ))}
@@ -335,7 +344,7 @@ export default function Creator() {
                   {filtered.map((c, i) => (
                     <tr key={c.name} onClick={() => setSelected(c)}
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
-                      <td className="px-5 py-4 sticky left-0 bg-[#141414] z-10 after:absolute after:right-0 after:top-0 after:bottom-0 after:w-px after:bg-white/[0.06]">
+                      <td className="px-5 py-4 sticky left-0 bg-[#141414] z-10">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
                             {c.name.split(' ').map(n => n[0]).join('')}
@@ -369,21 +378,20 @@ export default function Creator() {
                   </div>
                   <div>
                     <div className="text-white font-semibold">{selected.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-gray-500 text-xs">{selected.ig}</span>
-                      {selected.tt && <><span className="text-gray-700 text-xs">·</span><span className="text-gray-500 text-xs">{selected.tt}</span></>}
+                      {selected.tt && <span className="text-gray-500 text-xs">{selected.tt}</span>}
                       <span className={`text-xs px-2 py-0.5 rounded-md ${tierStyle[selected.overallTier]}`}>{selected.overallTier}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-md ${statusStyle[selected.status]}`}>{selected.status}</span>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
               <div className="p-6 flex flex-col gap-5">
-                {/* Plattformen */}
                 <div>
                   <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Plattform Daten</p>
                   <div className="grid grid-cols-2 gap-3">
@@ -409,7 +417,7 @@ export default function Creator() {
                       </div>
                       {selected.ttFollower > 0 ? (
                         <div className="space-y-2">
-                          {[['Follower', selected.ttFollower.toLocaleString('de-DE')], ['Ø Views', selected.ttAvgViews.toLocaleString('de-DE')], ['ER', `${selected.ttEr}%`]].map(([l, v]) => (
+                          {[['Follower', selected.ttFollower.toLocaleString('de-DE')], ['Ø Views', selected.ttAvgViews.toLocaleString('de-DE')], ['ER', `${selected.ttEr}%`], ['Ø Likes', selected.ttAvgLikes.toLocaleString('de-DE')], ['Ø Komm.', selected.ttAvgComments.toLocaleString('de-DE')]].map(([l, v]) => (
                             <div key={l} className="flex justify-between"><span className="text-gray-600 text-xs">{l}</span><span className="text-gray-200 text-xs font-medium">{v}</span></div>
                           ))}
                         </div>
@@ -418,7 +426,6 @@ export default function Creator() {
                   </div>
                 </div>
 
-                {/* ROAS */}
                 <div>
                   <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Performance</p>
                   <div className="grid grid-cols-3 gap-2 mb-3">
@@ -447,27 +454,25 @@ export default function Creator() {
                   </div>
                 </div>
 
-                {/* Deal */}
                 <div>
                   <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Deal & Kosten</p>
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
                     {[
-                      ['Kampagne', selected.kampagne || '—'],
-                      ['Buchungstyp', selected.buchungstyp || '—'],
-                      ['Fee', fmtEur(selected.fee)],
-                      ['Produkt', fmtEur(selected.produkt)],
-                      ['Gesamt', fmtEur(selected.gesamt)],
-                      ['Promo Code', selected.promoCode || '—'],
-                    ].map(([l, v]) => (
+                      ['Kampagne', selected.kampagne || '—', ''],
+                      ['Buchungstyp', selected.buchungstyp || '—', ''],
+                      ['Fee', fmtEur(selected.fee), ''],
+                      ['Produkt', fmtEur(selected.produkt), ''],
+                      ['Gesamt', fmtEur(selected.gesamt), 'text-white font-semibold'],
+                      ['Promo Code', selected.promoCode || '—', 'font-mono text-[#7F77DD]'],
+                    ].map(([l, v, cls]) => (
                       <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
                         <span className="text-gray-600 text-xs">{l}</span>
-                        <span className={`text-xs font-medium ${l === 'Promo Code' ? 'font-mono text-[#7F77DD]' : 'text-gray-300'}`}>{v}</span>
+                        <span className={`text-xs ${cls || 'text-gray-300'}`}>{v}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Bewertung */}
                 <div>
                   <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
                   <div className="grid grid-cols-2 gap-2">
@@ -490,116 +495,124 @@ export default function Creator() {
 
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
-                  <button className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-400 text-sm hover:bg-white/[0.04] transition-colors">Bearbeiten</button>
+                  <button onClick={() => openEdit(selected)} className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-300 text-sm hover:bg-white/[0.04] transition-colors font-medium">Bearbeiten</button>
+                  <button onClick={() => { setCreators(prev => prev.filter(c => c.name !== selected.name)); setSelected(null) }}
+                    className="w-10 h-10 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors flex items-center justify-center flex-shrink-0">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Add Modal */}
+        {/* Add/Edit Modal */}
         {showModal && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => { setShowModal(false); setFetchDone(false); setFetchedData(null) }}>
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
             <div className="bg-[#141414] rounded-2xl w-full max-w-lg border border-white/[0.08] overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] flex-shrink-0">
                 <div>
-                  <h2 className="text-white font-semibold">Creator hinzufügen</h2>
-                  <p className="text-gray-500 text-xs mt-0.5">Handles eingeben → Daten werden automatisch geladen</p>
+                  <h2 className="text-white font-semibold">{editMode ? 'Creator bearbeiten' : 'Creator hinzufügen'}</h2>
+                  <p className="text-gray-500 text-xs mt-0.5">{editMode ? 'Daten anpassen und speichern' : 'Handle eingeben → echte Daten werden geladen'}</p>
                 </div>
-                <button onClick={() => { setShowModal(false); setFetchDone(false); setFetchedData(null) }} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white">
+                <button onClick={closeModal} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
 
               <div className="overflow-y-auto p-6 flex flex-col gap-4">
-                {/* Auto-Fetch Block */}
-                <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                  <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Automatisch via API</p>
-                  <div className="flex flex-col gap-2 mb-3">
-                    <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))}
-                      placeholder="Instagram Handle (@sophiestyle)"
-                      className="w-full bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-                    <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))}
-                      placeholder="TikTok Handle (@sophiett) — optional"
-                      className="w-full bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-                  </div>
-                  <button onClick={simulateFetch} disabled={fetching || !form.igHandle}
-                    className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
-                    {fetching ? (
-                      <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/><circle cx="12" cy="12" r="10" strokeOpacity="0.2"/></svg>Follower, ER, Views werden geladen...</>
-                    ) : fetchDone ? (
-                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daten geladen ✓</>
-                    ) : (
-                      <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.73-7.78"/></svg>Daten automatisch laden</>
-                    )}
-                  </button>
-                  {fetchDone && fetchedData && (
-                    <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3">
-                      <p className="text-emerald-400 text-xs font-medium mb-1">Automatisch geladen:</p>
-                      <div className="text-emerald-600 text-xs space-y-0.5">
-                        <p>· IG: {(fetchedData as Creator).igFollower?.toLocaleString('de-DE')} Follower · Tier: {(fetchedData as Creator).igTier} · ER: {(fetchedData as Creator).igEr}%</p>
-                        {(fetchedData as Creator).ttFollower ? <p>· TT: {(fetchedData as Creator).ttFollower?.toLocaleString('de-DE')} Follower · Ø Views: {(fetchedData as Creator).ttAvgViews?.toLocaleString('de-DE')}</p> : null}
-                        <p>· Reel Wert: ~{(fetchedData as Creator).reelWert?.toLocaleString('de-DE')} € · Affiliate: {(fetchedData as Creator).affiliatePct}</p>
+                {!editMode && (
+                  <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                    <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Auto-Fetch via RapidAPI</p>
+                    <div className="flex flex-col gap-2 mb-3">
+                      <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))}
+                        placeholder="Instagram Handle (@sophiestyle)" className={inputCls} />
+                      <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))}
+                        placeholder="TikTok Handle — optional" className={inputCls} />
+                    </div>
+                    <button onClick={simulateFetch} disabled={fetching || !form.igHandle}
+                      className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400 border border-red-800/30' : form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                      {fetching ? (
+                        <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/><circle cx="12" cy="12" r="10" strokeOpacity="0.2"/></svg>Echte Daten werden geladen...</>
+                      ) : fetchDone ? (
+                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daten geladen ✓</>
+                      ) : fetchError ? (
+                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{fetchError}</>
+                      ) : (
+                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.73-7.78"/></svg>Echte Daten laden (IG + TT API)</>
+                      )}
+                    </button>
+                    {fetchDone && fetchedData && (
+                      <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3 text-xs text-emerald-500 space-y-0.5">
+                        <p className="text-emerald-400 font-medium mb-1">✓ Echte Daten von RapidAPI:</p>
+                        {(fetchedData as any).igFollower > 0 && <p>· IG: {(fetchedData as any).igFollower?.toLocaleString('de-DE')} Follower · {(fetchedData as any).igTier} · ER: {(fetchedData as any).igEr}%</p>}
+                        {(fetchedData as any).ttFollower > 0 && <p>· TT: {(fetchedData as any).ttFollower?.toLocaleString('de-DE')} Follower · Ø Views: {(fetchedData as any).ttAvgViews?.toLocaleString('de-DE')} · Ø Likes: {(fetchedData as any).ttAvgLikes?.toLocaleString('de-DE')}</p>}
+                        <p>· Reel: ~{(fetchedData as any).reelWert?.toLocaleString('de-DE')} € · Affiliate: {(fetchedData as any).affiliatePct}</p>
                       </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3">
+                  <div><label className={labelCls}>Name *</label>
+                    <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Sophie Müller" className={inputCls} /></div>
+
+                  {editMode && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div><label className={labelCls}>IG Handle</label>
+                        <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))} placeholder="@sophiestyle" className={inputCls} /></div>
+                      <div><label className={labelCls}>TT Handle</label>
+                        <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))} placeholder="@sophiett" className={inputCls} /></div>
                     </div>
                   )}
-                </div>
 
-                {/* Manuell */}
-                <div>
-                  <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Manuell ausfüllen</p>
-                  <div className="flex flex-col gap-3">
-                    <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                      placeholder="Name *"
-                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-                    <div className="grid grid-cols-2 gap-3">
-                      <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelCls}>Status</label>
+                      <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))} className={selectCls}>
                         {['Offen', 'Kontaktiert', 'In Verhandlung', 'Deal', 'Abgelehnt'].map(s => <option key={s}>{s}</option>)}
-                      </select>
-                      <select value={form.prio} onChange={e => setForm(p => ({ ...p, prio: e.target.value }))}
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none">
+                      </select></div>
+                    <div><label className={labelCls}>Priorität</label>
+                      <select value={form.prio} onChange={e => setForm(p => ({ ...p, prio: e.target.value }))} className={selectCls}>
                         {['Hoch', 'Mittel', 'Niedrig'].map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))}
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none">
-                        {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
-                      </select>
-                      <select value={form.kampagne} onChange={e => setForm(p => ({ ...p, kampagne: e.target.value }))}
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-gray-400 text-sm focus:outline-none">
-                        <option value="">Keine Kampagne</option>
-                        {['SS25 Launch', 'AW25 Schmuck', 'Black Friday 2026', 'Evergreen'].map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <select value={form.buchungstyp} onChange={e => setForm(p => ({ ...p, buchungstyp: e.target.value }))}
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none">
-                        {['Reel', 'TikTok Post', 'Story', 'Reel + TikTok', 'Story + Reel', 'Bundle', 'UGC'].map(s => <option key={s}>{s}</option>)}
-                      </select>
-                      <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))}
-                        placeholder="Promo Code"
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 font-mono focus:outline-none focus:border-[#7F77DD]/40" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <input value={form.fee} onChange={e => setForm(p => ({ ...p, fee: e.target.value }))}
-                        placeholder="Fee €"
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-                      <input value={form.produkt} onChange={e => setForm(p => ({ ...p, produkt: e.target.value }))}
-                        placeholder="Produkt €"
-                        className="bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-                    </div>
-                    <textarea value={form.notizen} onChange={e => setForm(p => ({ ...p, notizen: e.target.value }))}
-                      placeholder="Notizen..."
-                      rows={2}
-                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40 resize-none" />
+                      </select></div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelCls}>Kategorie</label>
+                      <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))} className={selectCls}>
+                        {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
+                      </select></div>
+                    <div><label className={labelCls}>Kampagne</label>
+                      <select value={form.kampagne} onChange={e => setForm(p => ({ ...p, kampagne: e.target.value }))} className={selectCls}>
+                        <option value="">Keine</option>
+                        {['SS25 Launch', 'AW25 Schmuck', 'Black Friday 2026', 'Evergreen'].map(s => <option key={s}>{s}</option>)}
+                      </select></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelCls}>Buchungstyp</label>
+                      <select value={form.buchungstyp} onChange={e => setForm(p => ({ ...p, buchungstyp: e.target.value }))} className={selectCls}>
+                        {['Reel', 'TikTok Post', 'Story', 'Reel + TikTok', 'Story + Reel', 'Bundle', 'UGC'].map(s => <option key={s}>{s}</option>)}
+                      </select></div>
+                    <div><label className={labelCls}>Promo Code</label>
+                      <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))} placeholder="SOPHIE15" className={inputCls + ' font-mono'} /></div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelCls}>Fee €</label>
+                      <input value={form.fee} onChange={e => setForm(p => ({ ...p, fee: e.target.value }))} placeholder="850" className={inputCls} /></div>
+                    <div><label className={labelCls}>Produkt €</label>
+                      <input value={form.produkt} onChange={e => setForm(p => ({ ...p, produkt: e.target.value }))} placeholder="150" className={inputCls} /></div>
+                  </div>
+
+                  <div><label className={labelCls}>Notizen</label>
+                    <textarea value={form.notizen} onChange={e => setForm(p => ({ ...p, notizen: e.target.value }))} placeholder="Agentur, Konditionen..." rows={2}
+                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40 resize-none" /></div>
                 </div>
 
-                <button onClick={handleAdd} disabled={!form.name || !form.igHandle}
+                <button onClick={handleSave} disabled={!form.name || !form.igHandle}
                   className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
-                  Creator hinzufügen
+                  {editMode ? 'Änderungen speichern' : 'Creator hinzufügen'}
                 </button>
               </div>
             </div>
