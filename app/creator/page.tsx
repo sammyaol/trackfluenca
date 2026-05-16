@@ -15,19 +15,30 @@ type Creator = {
   gesUmsatz: number; gesROAS: number; gesKlicks: number;
   storyViews: number; storyWert: number; ttWert: number; reelWert: number; affiliatePct: string;
   tkpTT: number; tkpStory: number; tkpPost: number;
+  igImage?: string; igVerified?: boolean; igAvgLikes?: number; igAvgComments?: number;
+  igAvgReelViews?: number; igAvgReelLikes?: number; igAvgReelComments?: number; igAvgReelEr?: number;
+  igTopCountries?: {name: string, pct: number}[];
+  igTopCities?: {name: string, pct: number}[];
+  igGenderMale?: number; igGenderFemale?: number;
+  igTopAge?: string; igAgeDistribution?: {age: string, pct: number}[];
+  igRealFollowers?: number; igFakeFollowers?: number;
+  igFollowerWachstum7d?: number; igQualityScore?: number; igPostsPerWeek?: number;
+  ttImage?: string; ttVerified?: boolean; ttAvgVideoViews?: number; ttAvgVideoLikes?: number;
+  ttAvgVideoComments?: number; ttAvgReposts?: number; ttAvgVideoEr?: number;
+  ttFollowerWachstum7d?: number; ttQualityScore?: number; ttPostsPerWeek?: number;
+  ttTopVideoViews?: number; ttTopVideoUrl?: string;
+  tkpReel?: number; igCategories?: string[];
 }
 
 const initialCreators: Creator[] = [
-  { name: 'Sophie Müller', ig: '@sophiestyle', tt: '@sophiett', igFollower: 125000, ttFollower: 98000, igTier: 'Micro', ttTier: 'Micro', igEr: 4.8, ttEr: 3.2, ttAvgViews: 48200, ttAvgLikes: 3200, ttAvgComments: 180, overallTier: 'Micro', gesamtReichweite: 223000, status: 'Deal', prio: 'Hoch', kategorie: 'Schmuck', mgmt: 'Nein', notizen: 'Sehr responsive', kampagne: 'SS25', buchungstyp: 'Reel + TikTok', fee: 850, produkt: 150, gesamt: 1000, promoCode: 'SOPHIE15', datum: '01.05.2026', orgUmsatz: 12750, orgKlicks: 2840, orgCPK: 0.35, orgROAS: 15.0, orgBestellungen: 143, orgBW: 89, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 12750, gesROAS: 15.0, gesKlicks: 2840, storyViews: 14800, storyWert: 1250, ttWert: 980, reelWert: 1250, affiliatePct: '12%', tkpTT: 2.1, tkpStory: 0.85, tkpPost: 1.2 },
-  { name: 'Jana Koch', ig: '@janakoch', tt: '@janatt', igFollower: 18500, ttFollower: 42000, igTier: 'Nano', ttTier: 'Micro', igEr: 6.2, ttEr: 5.1, ttAvgViews: 32000, ttAvgLikes: 1800, ttAvgComments: 95, overallTier: 'Nano', gesamtReichweite: 60500, status: 'Deal', prio: 'Mittel', kategorie: 'Fashion', mgmt: 'Nein', notizen: '', kampagne: 'SS25', buchungstyp: 'TikTok Post', fee: 300, produkt: 0, gesamt: 300, promoCode: 'JANA10', datum: '03.05.2026', orgUmsatz: 3900, orgKlicks: 890, orgCPK: 0.34, orgROAS: 13.0, orgBestellungen: 44, orgBW: 89, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 3900, gesROAS: 13.0, gesKlicks: 890, storyViews: 3200, storyWert: 320, ttWert: 630, reelWert: 278, affiliatePct: '15%', tkpTT: 1.4, tkpStory: 3.2, tkpPost: 2.1 },
-  { name: 'Lena Hoffmann', ig: '@lena.jewelry', tt: '', igFollower: 450000, ttFollower: 0, igTier: 'Mid-Tier', ttTier: '', igEr: 3.2, ttEr: 0, ttAvgViews: 0, ttAvgLikes: 0, ttAvgComments: 0, overallTier: 'Mid-Tier', gesamtReichweite: 450000, status: 'In Verhandlung', prio: 'Hoch', kategorie: 'Schmuck', mgmt: 'Ja', notizen: 'Agentur: MGM', kampagne: 'AW25', buchungstyp: 'Reel', fee: 2200, produkt: 200, gesamt: 2400, promoCode: 'LENA20', datum: '10.05.2026', orgUmsatz: 8800, orgKlicks: 1420, orgCPK: 1.69, orgROAS: 4.0, orgBestellungen: 98, orgBW: 90, adSpend: 1200, adUmsatz: 4800, adKlicks: 620, adCPK: 1.94, adROAS: 4.0, adBestellungen: 54, gesUmsatz: 13600, gesROAS: 3.8, gesKlicks: 2040, storyViews: 45000, storyWert: 4500, ttWert: 0, reelWert: 4500, affiliatePct: '12%', tkpTT: 0, tkpStory: 2.1, tkpPost: 3.5 },
-  { name: 'Mia Wagner', ig: '@miafashion', tt: '@miawagner', igFollower: 1250000, ttFollower: 890000, igTier: 'Macro', ttTier: 'Macro', igEr: 2.1, ttEr: 1.8, ttAvgViews: 210000, ttAvgLikes: 8400, ttAvgComments: 320, overallTier: 'Macro', gesamtReichweite: 2140000, status: 'Kontaktiert', prio: 'Mittel', kategorie: 'Lifestyle', mgmt: 'Agentur', notizen: '', kampagne: '', buchungstyp: '', fee: 5500, produkt: 300, gesamt: 5800, promoCode: '', datum: '', orgUmsatz: 2100, orgKlicks: 340, orgCPK: 17.06, orgROAS: 1.8, orgBestellungen: 23, orgBW: 91, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 2100, gesROAS: 1.8, gesKlicks: 340, storyViews: 125000, storyWert: 12500, ttWert: 8750, reelWert: 8750, affiliatePct: '10%', tkpTT: 4.8, tkpStory: 1.2, tkpPost: 2.8 },
-  { name: 'Klara Becker', ig: '@klarabecker', tt: '@klaratt', igFollower: 3800000, ttFollower: 2100000, igTier: 'Top-Tier', ttTier: 'Top-Tier', igEr: 1.4, ttEr: 1.2, ttAvgViews: 890000, ttAvgLikes: 24000, ttAvgComments: 980, overallTier: 'Top-Tier', gesamtReichweite: 5900000, status: 'Offen', prio: 'Niedrig', kategorie: 'Lifestyle', mgmt: 'Agentur', notizen: 'Sehr teuer', kampagne: '', buchungstyp: '', fee: 15000, produkt: 500, gesamt: 15500, promoCode: '', datum: '', orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 0, gesROAS: 0, gesKlicks: 0, storyViews: 380000, storyWert: 38000, ttWert: 10500, reelWert: 19000, affiliatePct: '8%', tkpTT: 0, tkpStory: 0, tkpPost: 0 },
+  { name: 'Sophie Müller', ig: '@sophiestyle', tt: '@sophiett', igFollower: 125000, ttFollower: 98000, igTier: 'Micro', ttTier: 'Micro', igEr: 4.8, ttEr: 3.2, ttAvgViews: 48200, ttAvgLikes: 3200, ttAvgComments: 180, overallTier: 'Micro', gesamtReichweite: 223000, status: 'Deal', prio: 'Hoch', kategorie: 'Schmuck', mgmt: 'Nein', notizen: 'Sehr responsive', kampagne: 'SS25', buchungstyp: 'Reel + TikTok', fee: 850, produkt: 150, gesamt: 1000, promoCode: 'SOPHIE15', datum: '01.05.2026', orgUmsatz: 12750, orgKlicks: 2840, orgCPK: 0.35, orgROAS: 15.0, orgBestellungen: 143, orgBW: 89, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 12750, gesROAS: 15.0, gesKlicks: 2840, storyViews: 14800, storyWert: 1250, ttWert: 980, reelWert: 1250, affiliatePct: '12%', tkpTT: 2.1, tkpStory: 0.85, tkpPost: 1.2, igGenderMale: 35, igGenderFemale: 65, igTopAge: '24_27', igRealFollowers: 82, igFakeFollowers: 8 },
+  { name: 'Jana Koch', ig: '@janakoch', tt: '@janatt', igFollower: 18500, ttFollower: 42000, igTier: 'Nano', ttTier: 'Micro', igEr: 6.2, ttEr: 5.1, ttAvgViews: 32000, ttAvgLikes: 1800, ttAvgComments: 95, overallTier: 'Nano', gesamtReichweite: 60500, status: 'Deal', prio: 'Mittel', kategorie: 'Fashion', mgmt: 'Nein', notizen: '', kampagne: 'SS25', buchungstyp: 'TikTok Post', fee: 300, produkt: 0, gesamt: 300, promoCode: 'JANA10', datum: '03.05.2026', orgUmsatz: 3900, orgKlicks: 890, orgCPK: 0.34, orgROAS: 13.0, orgBestellungen: 44, orgBW: 89, adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0, gesUmsatz: 3900, gesROAS: 13.0, gesKlicks: 890, storyViews: 3200, storyWert: 320, ttWert: 630, reelWert: 278, affiliatePct: '15%', tkpTT: 1.4, tkpStory: 3.2, tkpPost: 2.1, igGenderMale: 28, igGenderFemale: 72, igTopAge: '18_24', igRealFollowers: 88, igFakeFollowers: 5 },
+  { name: 'Lena Hoffmann', ig: '@lena.jewelry', tt: '', igFollower: 450000, ttFollower: 0, igTier: 'Mid-Tier', ttTier: '', igEr: 3.2, ttEr: 0, ttAvgViews: 0, ttAvgLikes: 0, ttAvgComments: 0, overallTier: 'Mid-Tier', gesamtReichweite: 450000, status: 'In Verhandlung', prio: 'Hoch', kategorie: 'Schmuck', mgmt: 'Ja', notizen: 'Agentur: MGM', kampagne: 'AW25', buchungstyp: 'Reel', fee: 2200, produkt: 200, gesamt: 2400, promoCode: 'LENA20', datum: '10.05.2026', orgUmsatz: 8800, orgKlicks: 1420, orgCPK: 1.69, orgROAS: 4.0, orgBestellungen: 98, orgBW: 90, adSpend: 1200, adUmsatz: 4800, adKlicks: 620, adCPK: 1.94, adROAS: 4.0, adBestellungen: 54, gesUmsatz: 13600, gesROAS: 3.8, gesKlicks: 2040, storyViews: 45000, storyWert: 4500, ttWert: 0, reelWert: 4500, affiliatePct: '12%', tkpTT: 0, tkpStory: 2.1, tkpPost: 3.5, igGenderMale: 22, igGenderFemale: 78, igTopAge: '25_34', igRealFollowers: 79, igFakeFollowers: 12 },
 ]
 
 const getTier = (f: number) => f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano'
 const getAffPct = (f: number) => f >= 1000000 ? '8%' : f >= 500000 ? '10%' : f >= 50000 ? '12%' : '15%'
-const calcPostWert = (f: number) => f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005)
+const calcWert = (f: number) => f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005)
 
 const tierStyle: Record<string, string> = {
   'Nano': 'text-gray-400 bg-gray-800 border border-gray-700/50',
@@ -55,45 +66,30 @@ const allColumns = [
   { key: 'igFollower', label: 'IG Follower', group: 'Instagram' },
   { key: 'igTier', label: 'IG Tier', group: 'Instagram' },
   { key: 'igEr', label: 'IG ER%', group: 'Instagram' },
+  { key: 'igAvgReelViews', label: 'Reel Views', group: 'Instagram' },
+  { key: 'igRealFollowers', label: 'Echte Follower%', group: 'Instagram' },
   { key: 'tt', label: 'TT Handle', group: 'TikTok' },
   { key: 'ttFollower', label: 'TT Follower', group: 'TikTok' },
-  { key: 'ttAvgViews', label: 'TT Ø Views', group: 'TikTok' },
+  { key: 'ttAvgVideoViews', label: 'TT Ø Views', group: 'TikTok' },
   { key: 'ttEr', label: 'TT ER%', group: 'TikTok' },
-  { key: 'ttAvgLikes', label: 'TT Ø Likes', group: 'TikTok' },
-  { key: 'ttAvgComments', label: 'TT Ø Komm.', group: 'TikTok' },
   { key: 'overallTier', label: 'Overall Tier', group: 'Overall' },
   { key: 'gesamtReichweite', label: 'Reichweite', group: 'Overall' },
   { key: 'kampagne', label: 'Kampagne', group: 'Deal' },
   { key: 'buchungstyp', label: 'Buchungstyp', group: 'Deal' },
   { key: 'fee', label: 'Fee €', group: 'Deal' },
-  { key: 'produkt', label: 'Produkt €', group: 'Deal' },
-  { key: 'gesamt', label: 'Gesamt €', group: 'Deal' },
   { key: 'promoCode', label: 'Promo Code', group: 'Deal' },
-  { key: 'datum', label: 'Datum', group: 'Deal' },
   { key: 'orgUmsatz', label: 'Org. Umsatz', group: 'Organisch' },
-  { key: 'orgKlicks', label: 'Org. Klicks', group: 'Organisch' },
-  { key: 'orgCPK', label: 'Org. CPK', group: 'Organisch' },
   { key: 'orgROAS', label: 'Org. ROAS', group: 'Organisch' },
-  { key: 'orgBestellungen', label: 'Org. Best.', group: 'Organisch' },
-  { key: 'adSpend', label: 'Ad Spend', group: 'Ads' },
-  { key: 'adUmsatz', label: 'Ad Umsatz', group: 'Ads' },
-  { key: 'adROAS', label: 'Ad ROAS', group: 'Ads' },
   { key: 'gesUmsatz', label: 'Ges. Umsatz', group: 'Gesamt' },
   { key: 'gesROAS', label: 'Ges. ROAS', group: 'Gesamt' },
-  { key: 'gesKlicks', label: 'Ges. Klicks', group: 'Gesamt' },
-  { key: 'storyWert', label: 'Story €', group: 'Bewertung' },
-  { key: 'ttWert', label: 'TikTok €', group: 'Bewertung' },
   { key: 'reelWert', label: 'Reel €', group: 'Bewertung' },
   { key: 'affiliatePct', label: 'Affiliate %', group: 'Bewertung' },
-  { key: 'tkpTT', label: 'TKP TT', group: 'TKP' },
-  { key: 'tkpStory', label: 'TKP Story', group: 'TKP' },
-  { key: 'tkpPost', label: 'TKP Post', group: 'TKP' },
 ]
 
-const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 'Ads', 'Gesamt', 'Bewertung', 'TKP']
+const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 'Gesamt', 'Bewertung']
 const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
 
-export default function Creator() {
+export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>(initialCreators)
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
@@ -105,9 +101,10 @@ export default function Creator() {
   const [fetching, setFetching] = useState(false)
   const [fetchDone, setFetchDone] = useState(false)
   const [fetchError, setFetchError] = useState('')
-  const [fetchedData, setFetchedData] = useState<Partial<Creator> | null>(null)
+  const [fetchedData, setFetchedData] = useState<any>(null)
   const [visibleCols, setVisibleCols] = useState(['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS'])
   const [form, setForm] = useState(emptyForm)
+  const [detailTab, setDetailTab] = useState('overview')
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
   const toggleGroup = (group: string) => {
@@ -117,30 +114,23 @@ export default function Creator() {
   }
 
   const openAdd = () => { setForm(emptyForm); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setShowModal(true) }
-  const openEdit = (c: Creator) => {
-    setForm({ name: c.name, igHandle: c.ig, ttHandle: c.tt, status: c.status, prio: c.prio, kategorie: c.kategorie, kampagne: c.kampagne, buchungstyp: c.buchungstyp, fee: String(c.fee), produkt: String(c.produkt), promoCode: c.promoCode, datum: c.datum, notizen: c.notizen })
-    setEditMode(true); setFetchDone(false); setFetchedData(null); setSelected(null); setShowModal(true)
-  }
   const closeModal = () => { setShowModal(false); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setForm(emptyForm) }
 
-  const simulateFetch = async () => {
+  const doFetch = async () => {
     if (!form.igHandle) return
-    setFetching(true)
-    setFetchDone(false)
-    setFetchError('')
-    setFetchedData(null)
+    setFetching(true); setFetchDone(false); setFetchError(''); setFetchedData(null)
     try {
       const params = new URLSearchParams()
-      if (form.igHandle) params.append('ig', form.igHandle.replace('@', ''))
+      params.append('ig', form.igHandle.replace('@', ''))
       if (form.ttHandle) params.append('tt', form.ttHandle.replace('@', ''))
-      const res = await fetch(`/api/creator?${params.toString()}`)
+      const res = await fetch(`/api/creator?${params}`)
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setFetchedData(data)
       if (data.fullName && !form.name) setForm(p => ({ ...p, name: data.fullName }))
       setFetchDone(true)
     } catch (e: any) {
-      setFetchError(e.message || 'Fehler beim Laden')
+      setFetchError(e.message || 'Fehler')
     } finally {
       setFetching(false)
     }
@@ -152,44 +142,45 @@ export default function Creator() {
     const produkt = Number(form.produkt) || 0
     const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
     const tt = form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : ''
-
-    if (editMode) {
-      setCreators(prev => prev.map(c => c.name === (selected?.name || form.name) ? {
-        ...c, name: form.name, ig, tt, status: form.status, prio: form.prio,
-        kategorie: form.kategorie, kampagne: form.kampagne, buchungstyp: form.buchungstyp,
-        fee, produkt, gesamt: fee + produkt, promoCode: form.promoCode, notizen: form.notizen,
-      } : c))
-    } else {
-      const base = fetchedData || {}
-      const igF = (base as any).igFollower || 0
-      const ttF = (base as any).ttFollower || 0
-      setCreators(prev => [...prev, {
-        name: form.name, ig, tt,
-        igFollower: igF, ttFollower: ttF,
-        igTier: (base as any).igTier || getTier(igF),
-        ttTier: (base as any).ttTier || '',
-        igEr: (base as any).igEr || 0,
-        ttEr: (base as any).ttEr || 0,
-        ttAvgViews: (base as any).ttAvgViews || 0,
-        ttAvgLikes: (base as any).ttAvgLikes || 0,
-        ttAvgComments: (base as any).ttAvgComments || 0,
-        overallTier: (base as any).overallTier || getTier(igF),
-        gesamtReichweite: (base as any).gesamtReichweite || igF + ttF,
-        status: form.status, prio: form.prio, kategorie: form.kategorie,
-        mgmt: 'Nein', notizen: form.notizen,
-        kampagne: form.kampagne, buchungstyp: form.buchungstyp,
-        fee, produkt, gesamt: fee + produkt,
-        promoCode: form.promoCode, datum: form.datum,
-        orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0,
-        adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0,
-        gesUmsatz: 0, gesROAS: 0, gesKlicks: 0, storyViews: 0,
-        storyWert: (base as any).storyWert || 0,
-        ttWert: (base as any).ttWert || 0,
-        reelWert: (base as any).reelWert || 0,
-        affiliatePct: (base as any).affiliatePct || getAffPct(igF),
-        tkpTT: 0, tkpStory: 0, tkpPost: 0,
-      }])
-    }
+    const d = fetchedData || {}
+    setCreators(prev => [...prev, {
+      name: form.name, ig, tt,
+      igFollower: d.igFollower || 0, ttFollower: d.ttFollower || 0,
+      igTier: d.igTier || getTier(d.igFollower || 0), ttTier: d.ttTier || '',
+      igEr: d.igEr || 0, ttEr: d.ttEr || 0,
+      ttAvgViews: d.ttAvgVideoViews || 0, ttAvgLikes: d.ttAvgVideoLikes || 0, ttAvgComments: d.ttAvgVideoComments || 0,
+      overallTier: d.overallTier || getTier(d.igFollower || 0),
+      gesamtReichweite: d.gesamtReichweite || 0,
+      status: form.status, prio: form.prio, kategorie: form.kategorie,
+      mgmt: 'Nein', notizen: form.notizen,
+      kampagne: form.kampagne, buchungstyp: form.buchungstyp,
+      fee, produkt, gesamt: fee + produkt,
+      promoCode: form.promoCode, datum: form.datum,
+      orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0,
+      adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0,
+      gesUmsatz: 0, gesROAS: 0, gesKlicks: 0, storyViews: 0,
+      storyWert: d.storyWert || 0, ttWert: d.ttWert || 0, reelWert: d.reelWert || 0,
+      affiliatePct: d.affiliatePct || getAffPct(d.igFollower || 0),
+      tkpTT: d.tkpTT || 0, tkpStory: d.tkpStory || 0, tkpPost: d.tkpReel || 0,
+      igImage: d.igImage, igVerified: d.igVerified,
+      igAvgLikes: d.igAvgLikes, igAvgComments: d.igAvgComments,
+      igAvgReelViews: d.igAvgReelViews, igAvgReelLikes: d.igAvgReelLikes,
+      igAvgReelComments: d.igAvgReelComments, igAvgReelEr: d.igAvgReelEr,
+      igTopCountries: d.igTopCountries, igTopCities: d.igTopCities,
+      igGenderMale: d.igGenderMale, igGenderFemale: d.igGenderFemale,
+      igTopAge: d.igTopAge, igAgeDistribution: d.igAgeDistribution,
+      igRealFollowers: d.igRealFollowers, igFakeFollowers: d.igFakeFollowers,
+      igFollowerWachstum7d: d.igFollowerWachstum7d,
+      igQualityScore: d.igQualityScore, igPostsPerWeek: d.igPostsPerWeek,
+      ttImage: d.ttImage, ttVerified: d.ttVerified,
+      ttAvgVideoViews: d.ttAvgVideoViews, ttAvgVideoLikes: d.ttAvgVideoLikes,
+      ttAvgVideoComments: d.ttAvgVideoComments, ttAvgReposts: d.ttAvgReposts,
+      ttAvgVideoEr: d.ttAvgVideoEr,
+      ttFollowerWachstum7d: d.ttFollowerWachstum7d,
+      ttQualityScore: d.ttQualityScore, ttPostsPerWeek: d.ttPostsPerWeek,
+      ttTopVideoViews: d.ttTopVideoViews, ttTopVideoUrl: d.ttTopVideoUrl,
+      tkpReel: d.tkpReel, igCategories: d.igCategories,
+    }])
     closeModal()
   }
 
@@ -200,53 +191,38 @@ export default function Creator() {
       && (!filterTier || c.overallTier === filterTier)
   })
 
-  const dash = <span className="text-gray-700">—</span>
-  const fmt = (n: number) => n > 0 ? n.toLocaleString('de-DE') : '—'
-  const fmtEur = (n: number) => n > 0 ? `${n.toLocaleString('de-DE')} €` : '—'
+  const fmt = (n?: number) => n && n > 0 ? n.toLocaleString('de-DE') : '—'
+  const fmtEur = (n?: number) => n && n > 0 ? `${n.toLocaleString('de-DE')} €` : '—'
+  const dash = '—'
 
   const renderCell = (c: Creator, key: string) => {
     switch (key) {
-      case 'ig': return <span className="text-gray-500 text-sm whitespace-nowrap">{c.ig}</span>
-      case 'tt': return <span className="text-gray-500 text-sm whitespace-nowrap">{c.tt || dash}</span>
-      case 'status': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${statusStyle[c.status]}`}>{c.status}</span>
-      case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-gray-400 bg-gray-800 border border-gray-700/50'}`}>{c.prio}</span>
-      case 'kategorie': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.kategorie}</span>
-      case 'igFollower': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmt(c.igFollower)}</span>
-      case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${tierStyle[c.igTier]}`}>{c.igTier}</span> : dash
+      case 'ig': return <span className="text-gray-500 text-sm">{c.ig}</span>
+      case 'tt': return <span className="text-gray-500 text-sm">{c.tt || dash}</span>
+      case 'status': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${statusStyle[c.status]}`}>{c.status}</span>
+      case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-gray-400 bg-gray-800 border border-gray-700/50'}`}>{c.prio}</span>
+      case 'kategorie': return <span className="text-gray-400 text-sm">{c.kategorie}</span>
+      case 'igFollower': return <span className="text-gray-300 text-sm">{fmt(c.igFollower)}</span>
+      case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.igTier]}`}>{c.igTier}</span> : <span className="text-gray-700">{dash}</span>
       case 'igEr': return <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
-      case 'ttFollower': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
-      case 'ttAvgViews': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.ttAvgViews > 0 ? fmt(c.ttAvgViews) : dash}</span>
-      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : dash
-      case 'ttAvgLikes': return <span className="text-gray-300 text-sm">{c.ttAvgLikes > 0 ? fmt(c.ttAvgLikes) : dash}</span>
-      case 'ttAvgComments': return <span className="text-gray-300 text-sm">{c.ttAvgComments > 0 ? fmt(c.ttAvgComments) : dash}</span>
-      case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium whitespace-nowrap ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
-      case 'gesamtReichweite': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmt(c.gesamtReichweite)}</span>
-      case 'kampagne': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.kampagne || dash}</span>
-      case 'buchungstyp': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.buchungstyp || dash}</span>
-      case 'fee': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmtEur(c.fee)}</span>
-      case 'produkt': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmtEur(c.produkt)}</span>
-      case 'gesamt': return <span className="text-white text-sm font-medium whitespace-nowrap">{fmtEur(c.gesamt)}</span>
-      case 'promoCode': return <span className="font-mono text-[#7F77DD] text-xs whitespace-nowrap">{c.promoCode || dash}</span>
-      case 'datum': return <span className="text-gray-400 text-sm whitespace-nowrap">{c.datum || dash}</span>
-      case 'orgUmsatz': return <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">{fmtEur(c.orgUmsatz)}</span>
-      case 'orgKlicks': return <span className="text-gray-300 text-sm whitespace-nowrap">{c.orgKlicks > 0 ? fmt(c.orgKlicks) : dash}</span>
-      case 'orgCPK': return c.orgCPK > 0 ? <span className={`text-sm font-medium ${c.orgCPK <= 1 ? 'text-emerald-400' : c.orgCPK <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.orgCPK.toFixed(2)} €</span> : dash
+      case 'igAvgReelViews': return <span className="text-gray-300 text-sm">{fmt(c.igAvgReelViews)}</span>
+      case 'igRealFollowers': return c.igRealFollowers ? <span className={`text-sm font-medium ${c.igRealFollowers >= 80 ? 'text-emerald-400' : c.igRealFollowers >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{c.igRealFollowers}%</span> : <span className="text-gray-700">{dash}</span>
+      case 'ttFollower': return <span className="text-gray-300 text-sm">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
+      case 'ttAvgVideoViews': return <span className="text-gray-300 text-sm">{fmt(c.ttAvgVideoViews || c.ttAvgViews)}</span>
+      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-gray-700">{dash}</span>
+      case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
+      case 'gesamtReichweite': return <span className="text-gray-300 text-sm">{fmt(c.gesamtReichweite)}</span>
+      case 'kampagne': return <span className="text-gray-400 text-sm">{c.kampagne || dash}</span>
+      case 'buchungstyp': return <span className="text-gray-400 text-sm">{c.buchungstyp || dash}</span>
+      case 'fee': return <span className="text-gray-300 text-sm">{fmtEur(c.fee)}</span>
+      case 'promoCode': return <span className="font-mono text-[#7F77DD] text-xs">{c.promoCode || dash}</span>
+      case 'orgUmsatz': return <span className="text-emerald-400 text-sm font-medium">{fmtEur(c.orgUmsatz)}</span>
       case 'orgROAS': return <span className={`text-sm font-semibold ${roasColor(c.orgROAS)}`}>{c.orgROAS > 0 ? `${c.orgROAS}x` : dash}</span>
-      case 'orgBestellungen': return <span className="text-gray-300 text-sm">{c.orgBestellungen > 0 ? c.orgBestellungen : dash}</span>
-      case 'adSpend': return <span className="text-gray-300 text-sm whitespace-nowrap">{fmtEur(c.adSpend)}</span>
-      case 'adUmsatz': return <span className="text-emerald-400 text-sm font-medium whitespace-nowrap">{fmtEur(c.adUmsatz)}</span>
-      case 'adROAS': return <span className={`text-sm font-semibold ${roasColor(c.adROAS)}`}>{c.adROAS > 0 ? `${c.adROAS}x` : dash}</span>
-      case 'gesUmsatz': return <span className="text-emerald-400 text-sm font-semibold whitespace-nowrap">{fmtEur(c.gesUmsatz)}</span>
+      case 'gesUmsatz': return <span className="text-emerald-400 text-sm font-semibold">{fmtEur(c.gesUmsatz)}</span>
       case 'gesROAS': return <span className={`text-sm font-bold ${roasColor(c.gesROAS)}`}>{c.gesROAS > 0 ? `${c.gesROAS}x` : dash}</span>
-      case 'gesKlicks': return <span className="text-gray-300 text-sm">{c.gesKlicks > 0 ? fmt(c.gesKlicks) : dash}</span>
-      case 'storyWert': return <span className="text-purple-400 text-sm whitespace-nowrap">{fmtEur(c.storyWert)}</span>
-      case 'ttWert': return <span className="text-purple-400 text-sm whitespace-nowrap">{c.ttWert > 0 ? fmtEur(c.ttWert) : dash}</span>
-      case 'reelWert': return <span className="text-purple-400 text-sm whitespace-nowrap">{fmtEur(c.reelWert)}</span>
+      case 'reelWert': return <span className="text-purple-400 text-sm">{fmtEur(c.reelWert)}</span>
       case 'affiliatePct': return <span className="text-blue-400 text-sm font-medium">{c.affiliatePct}</span>
-      case 'tkpTT': return c.tkpTT > 0 ? <span className={`text-sm font-medium ${c.tkpTT <= 1 ? 'text-emerald-400' : c.tkpTT <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.tkpTT} €</span> : dash
-      case 'tkpStory': return c.tkpStory > 0 ? <span className={`text-sm font-medium ${c.tkpStory <= 1 ? 'text-emerald-400' : c.tkpStory <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.tkpStory} €</span> : dash
-      case 'tkpPost': return c.tkpPost > 0 ? <span className={`text-sm font-medium ${c.tkpPost <= 1 ? 'text-emerald-400' : c.tkpPost <= 3 ? 'text-amber-400' : 'text-red-400'}`}>{c.tkpPost} €</span> : dash
-      default: return dash
+      default: return <span className="text-gray-700">{dash}</span>
     }
   }
 
@@ -264,23 +240,16 @@ export default function Creator() {
             <p className="text-gray-500 text-xs mt-0.5">{creators.length} Creator · {creators.filter(c => c.status === 'Deal').length} Deals</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.08] text-gray-400 text-xs hover:bg-white/[0.04] transition-colors">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export
-            </button>
             <div className="relative">
               <button onClick={() => setShowColPicker(!showColPicker)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${showColPicker ? 'border-[#7F77DD]/50 text-[#7F77DD] bg-[#7F77DD]/10' : 'border-white/[0.08] text-gray-400 hover:bg-white/[0.04]'}`}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
                 Spalten ({visibleCols.length})
               </button>
               {showColPicker && (
                 <div className="absolute right-0 top-10 bg-[#1A1A1A] border border-white/[0.08] rounded-2xl p-4 w-64 z-50 shadow-2xl max-h-[80vh] overflow-y-auto">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-white text-xs font-semibold">Spalten anpassen</span>
-                    <button onClick={() => setShowColPicker(false)} className="text-gray-600 hover:text-gray-300">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
+                    <button onClick={() => setShowColPicker(false)} className="text-gray-600 hover:text-gray-300 text-lg leading-none">×</button>
                   </div>
                   {groups.map(group => (
                     <div key={group} className="mb-3">
@@ -293,7 +262,7 @@ export default function Creator() {
                       {allColumns.filter(c => c.group === group).map(col => (
                         <label key={col.key} className="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-white/[0.04] cursor-pointer" onClick={() => toggleCol(col.key)}>
                           <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors flex-shrink-0 ${visibleCols.includes(col.key) ? 'bg-[#7F77DD] border-[#7F77DD]' : 'border-gray-600'}`}>
-                            {visibleCols.includes(col.key) && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                            {visibleCols.includes(col.key) && <span className="text-white text-[9px]">✓</span>}
                           </div>
                           <span className="text-gray-300 text-xs">{col.label}</span>
                         </label>
@@ -304,19 +273,15 @@ export default function Creator() {
               )}
             </div>
             <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Creator hinzufügen
+              + Creator hinzufügen
             </button>
           </div>
         </div>
 
         <div className="p-6">
           <div className="flex gap-3 mb-5 flex-wrap">
-            <div className="flex-1 min-w-48 relative">
-              <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-600" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, Handle oder Code..."
-                className="w-full bg-[#141414] border border-white/[0.08] rounded-xl pl-10 pr-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40" />
-            </div>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, Handle oder Code..."
+              className="flex-1 min-w-48 bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" />
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
               className="bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-gray-400 text-sm focus:outline-none">
               <option value="">Alle Status</option>
@@ -330,34 +295,48 @@ export default function Creator() {
           </div>
 
           <div className="bg-[#141414] rounded-2xl border border-white/[0.06] overflow-hidden">
-            <div style={{ overflowX: 'auto', maxWidth: 'calc(100vw - 17rem)' }}>
+            <div className="overflow-x-auto">
               <table className="w-full" style={{ minWidth: 'max-content' }}>
                 <thead>
                   <tr className="border-b border-white/[0.06]">
-                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-[#141414] z-10">Creator</th>
+                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-[#141414]">Creator</th>
                     {allColumns.filter(c => visibleCols.includes(c.key)).map(col => (
                       <th key={col.key} className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap">{col.label}</th>
                     ))}
+                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((c, i) => (
-                    <tr key={c.name} onClick={() => setSelected(c)}
+                    <tr key={c.name} onClick={() => { setSelected(c); setDetailTab('overview') }}
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
-                      <td className="px-5 py-4 sticky left-0 bg-[#141414] z-10">
+                      <td className="px-5 py-4 sticky left-0 bg-[#141414]">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
-                            {c.name.split(' ').map(n => n[0]).join('')}
-                          </div>
+                          {c.igImage ? (
+                            <img src={c.igImage} alt={c.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
+                              {c.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                          )}
                           <div>
-                            <div className="text-white text-sm font-medium whitespace-nowrap">{c.name}</div>
-                            {c.notizen && <div className="text-gray-600 text-xs truncate max-w-28">{c.notizen}</div>}
+                            <div className="flex items-center gap-1">
+                              <span className="text-white text-sm font-medium whitespace-nowrap">{c.name}</span>
+                              {c.igVerified && <span className="text-blue-400 text-xs">✓</span>}
+                            </div>
+                            <span className="text-gray-600 text-xs">{c.ig}</span>
                           </div>
                         </div>
                       </td>
                       {allColumns.filter(col => visibleCols.includes(col.key)).map(col => (
-                        <td key={col.key} className="px-5 py-4">{renderCell(c, col.key)}</td>
+                        <td key={col.key} className="px-5 py-4 whitespace-nowrap">{renderCell(c, col.key)}</td>
                       ))}
+                      <td className="px-5 py-4">
+                        <button onClick={e => { e.stopPropagation(); setCreators(prev => prev.filter(x => x.name !== c.name)) }}
+                          className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
+                          Löschen
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -370,14 +349,21 @@ export default function Creator() {
         {selected && (
           <div className="fixed inset-0 z-50 flex" onClick={() => setSelected(null)}>
             <div className="flex-1 bg-black/60 backdrop-blur-sm" />
-            <div className="w-full max-w-xl bg-[#111] border-l border-white/[0.08] h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-full max-w-2xl bg-[#111] border-l border-white/[0.08] h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] sticky top-0 bg-[#111] z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] font-semibold text-lg">
-                    {selected.name.split(' ').map(n => n[0]).join('')}
-                  </div>
+                  {selected.igImage ? (
+                    <img src={selected.igImage} alt={selected.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] font-semibold text-xl">
+                      {selected.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                  )}
                   <div>
-                    <div className="text-white font-semibold">{selected.name}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-semibold text-base">{selected.name}</span>
+                      {selected.igVerified && <span className="text-blue-400 text-sm">✓</span>}
+                    </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-gray-500 text-xs">{selected.ig}</span>
                       {selected.tt && <span className="text-gray-500 text-xs">{selected.tt}</span>}
@@ -386,119 +372,284 @@ export default function Creator() {
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
+              </div>
+
+              <div className="flex gap-1 px-6 pt-4">
+                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['deal', 'Deal']].map(([id, label]) => (
+                  <button key={id} onClick={() => setDetailTab(id)}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
+                    {label}
+                  </button>
+                ))}
               </div>
 
               <div className="p-6 flex flex-col gap-5">
-                <div>
-                  <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Plattform Daten</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-5 h-5 rounded bg-pink-500/20 flex items-center justify-center">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f472b6" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
+                {detailTab === 'overview' && (
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-pink-400 text-sm">📸</span>
+                          <span className="text-gray-400 text-xs font-medium">Instagram</span>
                         </div>
-                        <span className="text-gray-400 text-xs font-medium">Instagram</span>
+                        <div className="space-y-2">
+                          {[
+                            ['Follower', selected.igFollower.toLocaleString('de-DE')],
+                            ['Tier', selected.igTier],
+                            ['ER', `${selected.igEr}%`],
+                            ['Ø Reel Views', selected.igAvgReelViews ? selected.igAvgReelViews.toLocaleString('de-DE') : '—'],
+                            ['Ø Likes', selected.igAvgLikes ? selected.igAvgLikes.toLocaleString('de-DE') : '—'],
+                            ['Ø Kommentare', selected.igAvgComments ? selected.igAvgComments.toLocaleString('de-DE') : '—'],
+                            ['Posts/Woche', selected.igPostsPerWeek ? `${selected.igPostsPerWeek}` : '—'],
+                          ].map(([l, v]) => (
+                            <div key={l} className="flex justify-between">
+                              <span className="text-gray-600 text-xs">{l}</span>
+                              <span className="text-gray-200 text-xs font-medium">{v}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        {[['Follower', selected.igFollower.toLocaleString('de-DE')], ['Tier', selected.igTier], ['ER', `${selected.igEr}%`]].map(([l, v]) => (
-                          <div key={l} className="flex justify-between"><span className="text-gray-600 text-xs">{l}</span><span className="text-gray-200 text-xs font-medium">{v}</span></div>
+
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-white text-sm">🎵</span>
+                          <span className="text-gray-400 text-xs font-medium">TikTok</span>
+                        </div>
+                        {selected.ttFollower > 0 ? (
+                          <div className="space-y-2">
+                            {[
+                              ['Follower', selected.ttFollower.toLocaleString('de-DE')],
+                              ['Tier', selected.ttTier],
+                              ['ER', `${selected.ttEr}%`],
+                              ['Ø Views', (selected.ttAvgVideoViews || selected.ttAvgViews || 0).toLocaleString('de-DE')],
+                              ['Ø Likes', (selected.ttAvgVideoLikes || selected.ttAvgLikes || 0).toLocaleString('de-DE')],
+                              ['Ø Kommentare', (selected.ttAvgVideoComments || selected.ttAvgComments || 0).toLocaleString('de-DE')],
+                              ['Ø Reposts', selected.ttAvgReposts ? selected.ttAvgReposts.toLocaleString('de-DE') : '—'],
+                            ].map(([l, v]) => (
+                              <div key={l} className="flex justify-between">
+                                <span className="text-gray-600 text-xs">{l}</span>
+                                <span className="text-gray-200 text-xs font-medium">{v}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <p className="text-gray-700 text-xs">Kein TikTok</p>}
+                      </div>
+                    </div>
+
+                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                      <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Qualität & Echtheit</p>
+                      <div className="grid grid-cols-3 gap-3 mb-3">
+                        {[
+                          { label: 'Echte Follower', value: selected.igRealFollowers ? `${selected.igRealFollowers}%` : '—', color: (selected.igRealFollowers || 0) >= 80 ? 'text-emerald-400' : (selected.igRealFollowers || 0) >= 60 ? 'text-amber-400' : 'text-red-400' },
+                          { label: 'Fake Follower', value: selected.igFakeFollowers !== undefined ? `${selected.igFakeFollowers}%` : '—', color: (selected.igFakeFollowers || 0) <= 10 ? 'text-emerald-400' : 'text-amber-400' },
+                          { label: 'Quality Score', value: selected.igQualityScore ? `${Math.round(selected.igQualityScore * 100)}%` : '—', color: (selected.igQualityScore || 0) >= 0.7 ? 'text-emerald-400' : 'text-amber-400' },
+                        ].map(m => (
+                          <div key={m.label} className="text-center">
+                            <div className={`text-xl font-bold mb-1 ${m.color}`}>{m.value}</div>
+                            <div className="text-gray-600 text-xs">{m.label}</div>
+                          </div>
+                        ))}
+                      </div>
+                      {selected.igRealFollowers && (
+                        <>
+                          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${selected.igRealFollowers}%` }} />
+                          </div>
+                          <div className="flex justify-between text-xs mt-1">
+                            <span className="text-emerald-500">{selected.igRealFollowers}% echt</span>
+                            <span className="text-red-500">{100 - selected.igRealFollowers}% nicht echt</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {(selected.igFollowerWachstum7d !== undefined || selected.ttFollowerWachstum7d !== undefined) && (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Follower Wachstum (7 Tage)</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {selected.igFollowerWachstum7d !== undefined && (
+                            <div>
+                              <div className="text-gray-500 text-xs mb-1">Instagram</div>
+                              <div className={`text-lg font-bold ${(selected.igFollowerWachstum7d || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {(selected.igFollowerWachstum7d || 0) >= 0 ? '+' : ''}{selected.igFollowerWachstum7d?.toLocaleString('de-DE')}
+                              </div>
+                            </div>
+                          )}
+                          {selected.ttFollowerWachstum7d !== undefined && selected.ttFollower > 0 && (
+                            <div>
+                              <div className="text-gray-500 text-xs mb-1">TikTok</div>
+                              <div className={`text-lg font-bold ${(selected.ttFollowerWachstum7d || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                {(selected.ttFollowerWachstum7d || 0) >= 0 ? '+' : ''}{selected.ttFollowerWachstum7d?.toLocaleString('de-DE')}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {detailTab === 'audience' && (
+                  <>
+                    {(selected.igGenderMale || selected.igGenderFemale) ? (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Geschlecht</p>
+                        <div className="flex items-center gap-4 mb-3">
+                          <div className="text-center flex-1">
+                            <div className="text-2xl font-bold text-blue-400">{selected.igGenderMale}%</div>
+                            <div className="text-gray-600 text-xs">Männlich</div>
+                          </div>
+                          <div className="text-center flex-1">
+                            <div className="text-2xl font-bold text-pink-400">{selected.igGenderFemale}%</div>
+                            <div className="text-gray-600 text-xs">Weiblich</div>
+                          </div>
+                        </div>
+                        <div className="h-3 bg-white/[0.05] rounded-full overflow-hidden flex">
+                          <div className="h-full bg-blue-500" style={{ width: `${selected.igGenderMale}%` }} />
+                          <div className="h-full bg-pink-500 flex-1" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06] text-center text-gray-600 text-sm">
+                        Keine Zielgruppen-Daten. Creator mit API hinzufügen.
+                      </div>
+                    )}
+
+                    {selected.igAgeDistribution && selected.igAgeDistribution.length > 0 && (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Altersverteilung</p>
+                        <div className="flex flex-col gap-2">
+                          {selected.igAgeDistribution.map(a => (
+                            <div key={a.age}>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-500">{a.age.replace('_', '–')}</span>
+                                <span className="text-gray-300 font-medium">{a.pct}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                <div className="h-full bg-[#7F77DD] rounded-full" style={{ width: `${Math.min(a.pct * 5, 100)}%` }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selected.igTopCountries && selected.igTopCountries.length > 0 && (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Länder</p>
+                        <div className="flex flex-col gap-2">
+                          {selected.igTopCountries.map(c => (
+                            <div key={c.name}>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-400 capitalize">{c.name.replace(/-/g, ' ')}</span>
+                                <span className="text-gray-300 font-medium">{c.pct}%</span>
+                              </div>
+                              <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(c.pct * 7, 100)}%` }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selected.igTopCities && selected.igTopCities.length > 0 && (
+                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Städte</p>
+                        {selected.igTopCities.map(c => (
+                          <div key={c.name} className="flex justify-between py-1">
+                            <span className="text-gray-400 text-xs capitalize">{c.name}</span>
+                            <span className="text-gray-300 text-xs font-medium">{c.pct}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {detailTab === 'performance' && (
+                  <>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[['Org. ROAS', selected.orgROAS], ['Ad ROAS', selected.adROAS], ['Ges. ROAS', selected.gesROAS]].map(([l, v]) => (
+                        <div key={l as string} className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06] text-center">
+                          <div className="text-gray-600 text-xs mb-1">{l}</div>
+                          <div className={`text-lg font-bold ${roasColor(v as number)}`}>{(v as number) > 0 ? `${v}x` : '—'}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
+                      {[
+                        ['Org. Umsatz', fmtEur(selected.orgUmsatz), 'text-emerald-400'],
+                        ['Org. Klicks', selected.orgKlicks > 0 ? fmt(selected.orgKlicks) : '—', ''],
+                        ['Org. CPK', selected.orgCPK > 0 ? `${selected.orgCPK.toFixed(2)} €` : '—', ''],
+                        ['Org. Bestellungen', selected.orgBestellungen > 0 ? String(selected.orgBestellungen) : '—', ''],
+                        ['Ad Spend', fmtEur(selected.adSpend), ''],
+                        ['Ad Umsatz', fmtEur(selected.adUmsatz), 'text-emerald-400'],
+                        ['Ges. Umsatz', fmtEur(selected.gesUmsatz), 'text-emerald-400 font-semibold'],
+                      ].map(([l, v, cls]) => (
+                        <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
+                          <span className="text-gray-600 text-xs">{l}</span>
+                          <span className={`text-xs font-medium ${cls || 'text-gray-300'}`}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                      <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          ['Story Wert', fmtEur(selected.storyWert)],
+                          ['Reel Wert', fmtEur(selected.reelWert)],
+                          ['TikTok Wert', selected.ttWert > 0 ? fmtEur(selected.ttWert) : '—'],
+                          ['Affiliate %', selected.affiliatePct],
+                          ['TKP Story', selected.tkpStory > 0 ? `${selected.tkpStory} €` : '—'],
+                          ['TKP Post', selected.tkpPost > 0 ? `${selected.tkpPost} €` : '—'],
+                          ['TKP TikTok', selected.tkpTT > 0 ? `${selected.tkpTT} €` : '—'],
+                        ].map(([l, v]) => (
+                          <div key={l} className="bg-[#141414] rounded-xl p-3 border border-white/[0.06]">
+                            <div className="text-gray-600 text-xs mb-1">{l}</div>
+                            <div className="text-white text-sm font-semibold">{v}</div>
+                          </div>
                         ))}
                       </div>
                     </div>
-                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-5 h-5 rounded bg-white/10 flex items-center justify-center">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V9a8.16 8.16 0 0 0 4.77 1.52V7.07a4.85 4.85 0 0 1-1-.38z"/></svg>
-                        </div>
-                        <span className="text-gray-400 text-xs font-medium">TikTok</span>
-                      </div>
-                      {selected.ttFollower > 0 ? (
-                        <div className="space-y-2">
-                          {[['Follower', selected.ttFollower.toLocaleString('de-DE')], ['Ø Views', selected.ttAvgViews.toLocaleString('de-DE')], ['ER', `${selected.ttEr}%`], ['Ø Likes', selected.ttAvgLikes.toLocaleString('de-DE')], ['Ø Komm.', selected.ttAvgComments.toLocaleString('de-DE')]].map(([l, v]) => (
-                            <div key={l} className="flex justify-between"><span className="text-gray-600 text-xs">{l}</span><span className="text-gray-200 text-xs font-medium">{v}</span></div>
-                          ))}
-                        </div>
-                      ) : <p className="text-gray-700 text-xs">Kein TikTok</p>}
-                    </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
-                <div>
-                  <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Performance</p>
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {[['Org. ROAS', selected.orgROAS], ['Ad ROAS', selected.adROAS], ['Ges. ROAS', selected.gesROAS]].map(([l, v]) => (
-                      <div key={l as string} className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06] text-center">
-                        <div className="text-gray-600 text-xs mb-1">{l}</div>
-                        <div className={`text-lg font-bold ${roasColor(v as number)}`}>{(v as number) > 0 ? `${v}x` : '—'}</div>
-                      </div>
-                    ))}
-                  </div>
+                {detailTab === 'deal' && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
                     {[
-                      ['Org. Umsatz', fmtEur(selected.orgUmsatz), 'text-emerald-400'],
-                      ['Org. Klicks', selected.orgKlicks > 0 ? fmt(selected.orgKlicks) : '—', ''],
-                      ['Org. CPK', selected.orgCPK > 0 ? `${selected.orgCPK.toFixed(2)} €` : '—', ''],
-                      ['Org. Best.', selected.orgBestellungen > 0 ? String(selected.orgBestellungen) : '—', ''],
-                      ['Ad Spend', fmtEur(selected.adSpend), ''],
-                      ['Ad Umsatz', fmtEur(selected.adUmsatz), 'text-emerald-400'],
-                      ['Ges. Umsatz', fmtEur(selected.gesUmsatz), 'text-emerald-400 font-semibold'],
-                    ].map(([l, v, cls]) => (
-                      <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
-                        <span className="text-gray-600 text-xs">{l}</span>
-                        <span className={`text-xs font-medium ${cls || 'text-gray-300'}`}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Deal & Kosten</p>
-                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
-                    {[
-                      ['Kampagne', selected.kampagne || '—', ''],
-                      ['Buchungstyp', selected.buchungstyp || '—', ''],
-                      ['Fee', fmtEur(selected.fee), ''],
-                      ['Produkt', fmtEur(selected.produkt), ''],
-                      ['Gesamt', fmtEur(selected.gesamt), 'text-white font-semibold'],
-                      ['Promo Code', selected.promoCode || '—', 'font-mono text-[#7F77DD]'],
-                    ].map(([l, v, cls]) => (
-                      <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
-                        <span className="text-gray-600 text-xs">{l}</span>
-                        <span className={`text-xs ${cls || 'text-gray-300'}`}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    {[
-                      ['Story Wert', fmtEur(selected.storyWert)],
-                      ['TikTok Wert', selected.ttWert > 0 ? fmtEur(selected.ttWert) : '—'],
-                      ['Reel Wert', fmtEur(selected.reelWert)],
-                      ['Affiliate %', selected.affiliatePct],
-                      ['TKP TikTok', selected.tkpTT > 0 ? `${selected.tkpTT} €` : '—'],
-                      ['TKP Story', selected.tkpStory > 0 ? `${selected.tkpStory} €` : '—'],
-                      ['TKP Post', selected.tkpPost > 0 ? `${selected.tkpPost} €` : '—'],
+                      ['Kampagne', selected.kampagne || '—'],
+                      ['Buchungstyp', selected.buchungstyp || '—'],
+                      ['Fee', fmtEur(selected.fee)],
+                      ['Produkt', fmtEur(selected.produkt)],
+                      ['Gesamt', fmtEur(selected.gesamt)],
+                      ['Promo Code', selected.promoCode || '—'],
+                      ['Datum', selected.datum || '—'],
+                      ['Priorität', selected.prio],
+                      ['Kategorie', selected.kategorie],
                     ].map(([l, v]) => (
-                      <div key={l} className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06]">
-                        <div className="text-gray-600 text-xs mb-1">{l}</div>
-                        <div className="text-white text-sm font-semibold">{v}</div>
+                      <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
+                        <span className="text-gray-600 text-xs">{l}</span>
+                        <span className="text-gray-300 text-xs">{v}</span>
                       </div>
                     ))}
+                    {selected.notizen && (
+                      <div className="px-4 py-3">
+                        <div className="text-gray-600 text-xs mb-1">Notizen</div>
+                        <div className="text-gray-300 text-xs">{selected.notizen}</div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
-                  <button onClick={() => openEdit(selected)} className="flex-1 py-2.5 rounded-xl border border-white/[0.08] text-gray-300 text-sm hover:bg-white/[0.04] transition-colors font-medium">Bearbeiten</button>
                   <button onClick={() => { setCreators(prev => prev.filter(c => c.name !== selected.name)); setSelected(null) }}
-                    className="w-10 h-10 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors flex items-center justify-center flex-shrink-0">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                    className="px-4 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">
+                    Löschen
                   </button>
                 </div>
               </div>
@@ -506,65 +657,47 @@ export default function Creator() {
           </div>
         )}
 
-        {/* Add/Edit Modal */}
+        {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
-            <div className="bg-[#141414] rounded-2xl w-full max-w-lg border border-white/[0.08] overflow-hidden max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] flex-shrink-0">
+            <div className="bg-[#141414] rounded-2xl w-full max-w-lg border border-white/[0.08] max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
                 <div>
-                  <h2 className="text-white font-semibold">{editMode ? 'Creator bearbeiten' : 'Creator hinzufügen'}</h2>
-                  <p className="text-gray-500 text-xs mt-0.5">{editMode ? 'Daten anpassen und speichern' : 'Handle eingeben → echte Daten werden geladen'}</p>
+                  <h2 className="text-white font-semibold">Creator hinzufügen</h2>
+                  <p className="text-gray-500 text-xs mt-0.5">Handle eingeben → echte Daten werden geladen</p>
                 </div>
-                <button onClick={closeModal} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+                <button onClick={closeModal} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
               </div>
 
               <div className="overflow-y-auto p-6 flex flex-col gap-4">
-                {!editMode && (
-                  <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                    <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Auto-Fetch via RapidAPI</p>
-                    <div className="flex flex-col gap-2 mb-3">
-                      <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))}
-                        placeholder="Instagram Handle (@sophiestyle)" className={inputCls} />
-                      <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))}
-                        placeholder="TikTok Handle — optional" className={inputCls} />
-                    </div>
-                    <button onClick={simulateFetch} disabled={fetching || !form.igHandle}
-                      className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400 border border-red-800/30' : form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
-                      {fetching ? (
-                        <><svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round"/><circle cx="12" cy="12" r="10" strokeOpacity="0.2"/></svg>Echte Daten werden geladen...</>
-                      ) : fetchDone ? (
-                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Daten geladen ✓</>
-                      ) : fetchError ? (
-                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>{fetchError}</>
-                      ) : (
-                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.73-7.78"/></svg>Echte Daten laden (IG + TT API)</>
-                      )}
-                    </button>
-                    {fetchDone && fetchedData && (
-                      <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3 text-xs text-emerald-500 space-y-0.5">
-                        <p className="text-emerald-400 font-medium mb-1">✓ Echte Daten von RapidAPI:</p>
-                        {(fetchedData as any).igFollower > 0 && <p>· IG: {(fetchedData as any).igFollower?.toLocaleString('de-DE')} Follower · {(fetchedData as any).igTier} · ER: {(fetchedData as any).igEr}%</p>}
-                        {(fetchedData as any).ttFollower > 0 && <p>· TT: {(fetchedData as any).ttFollower?.toLocaleString('de-DE')} Follower · Ø Views: {(fetchedData as any).ttAvgViews?.toLocaleString('de-DE')} · Ø Likes: {(fetchedData as any).ttAvgLikes?.toLocaleString('de-DE')}</p>}
-                        <p>· Reel: ~{(fetchedData as any).reelWert?.toLocaleString('de-DE')} € · Affiliate: {(fetchedData as any).affiliatePct}</p>
-                      </div>
-                    )}
+                <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                  <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Auto-Fetch via RapidAPI</p>
+                  <div className="flex flex-col gap-2 mb-3">
+                    <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))}
+                      placeholder="Instagram Handle (z.B. sophiestyle)" className={inputCls} />
+                    <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))}
+                      placeholder="TikTok Handle — optional" className={inputCls} />
                   </div>
-                )}
+                  <button onClick={doFetch} disabled={fetching || !form.igHandle}
+                    className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400' : form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                    {fetching ? 'Lade Daten...' : fetchDone ? '✓ Daten geladen ✓' : fetchError ? fetchError : 'Echte Daten laden (IG + TT + Demographics)'}
+                  </button>
+                  {fetchDone && fetchedData && (
+                    <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3 text-xs text-emerald-500 space-y-0.5">
+                      <p className="text-emerald-400 font-medium mb-1">✓ Echte Daten von RapidAPI:</p>
+                      {fetchedData.igFollower > 0 && <p>· IG: {fetchedData.igFollower?.toLocaleString('de-DE')} Follower · {fetchedData.igTier} · ER: {fetchedData.igEr}%</p>}
+                      {fetchedData.igAvgReelViews > 0 && <p>· Ø Reel Views: {fetchedData.igAvgReelViews?.toLocaleString('de-DE')}</p>}
+                      {fetchedData.igRealFollowers > 0 && <p>· Echte Follower: {fetchedData.igRealFollowers}% · Fake: {fetchedData.igFakeFollowers}%</p>}
+                      {fetchedData.igGenderFemale > 0 && <p>· {fetchedData.igGenderFemale}% weiblich · Top-Alter: {fetchedData.igTopAge}</p>}
+                      {fetchedData.ttFollower > 0 && <p>· TT: {fetchedData.ttFollower?.toLocaleString('de-DE')} Follower · Ø Views: {fetchedData.ttAvgVideoViews?.toLocaleString('de-DE')}</p>}
+                      <p>· Reel: ~{fetchedData.reelWert?.toLocaleString('de-DE')} € · Affiliate: {fetchedData.affiliatePct}</p>
+                    </div>
+                  )}
+                </div>
 
                 <div className="flex flex-col gap-3">
                   <div><label className={labelCls}>Name *</label>
                     <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Sophie Müller" className={inputCls} /></div>
-
-                  {editMode && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div><label className={labelCls}>IG Handle</label>
-                        <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))} placeholder="@sophiestyle" className={inputCls} /></div>
-                      <div><label className={labelCls}>TT Handle</label>
-                        <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))} placeholder="@sophiett" className={inputCls} /></div>
-                    </div>
-                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className={labelCls}>Status</label>
@@ -582,37 +715,27 @@ export default function Creator() {
                       <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))} className={selectCls}>
                         {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
                       </select></div>
-                    <div><label className={labelCls}>Kampagne</label>
-                      <select value={form.kampagne} onChange={e => setForm(p => ({ ...p, kampagne: e.target.value }))} className={selectCls}>
-                        <option value="">Keine</option>
-                        {['SS25 Launch', 'AW25 Schmuck', 'Black Friday 2026', 'Evergreen'].map(s => <option key={s}>{s}</option>)}
-                      </select></div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
                     <div><label className={labelCls}>Buchungstyp</label>
                       <select value={form.buchungstyp} onChange={e => setForm(p => ({ ...p, buchungstyp: e.target.value }))} className={selectCls}>
-                        {['Reel', 'TikTok Post', 'Story', 'Reel + TikTok', 'Story + Reel', 'Bundle', 'UGC'].map(s => <option key={s}>{s}</option>)}
+                        {['Reel', 'TikTok Post', 'Story', 'Reel + TikTok', 'Bundle', 'UGC'].map(s => <option key={s}>{s}</option>)}
                       </select></div>
-                    <div><label className={labelCls}>Promo Code</label>
-                      <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))} placeholder="SOPHIE15" className={inputCls + ' font-mono'} /></div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className={labelCls}>Fee €</label>
                       <input value={form.fee} onChange={e => setForm(p => ({ ...p, fee: e.target.value }))} placeholder="850" className={inputCls} /></div>
-                    <div><label className={labelCls}>Produkt €</label>
-                      <input value={form.produkt} onChange={e => setForm(p => ({ ...p, produkt: e.target.value }))} placeholder="150" className={inputCls} /></div>
+                    <div><label className={labelCls}>Promo Code</label>
+                      <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))} placeholder="SOPHIE15" className={inputCls} /></div>
                   </div>
 
                   <div><label className={labelCls}>Notizen</label>
                     <textarea value={form.notizen} onChange={e => setForm(p => ({ ...p, notizen: e.target.value }))} placeholder="Agentur, Konditionen..." rows={2}
-                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40 resize-none" /></div>
+                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
                 </div>
 
                 <button onClick={handleSave} disabled={!form.name || !form.igHandle}
                   className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
-                  {editMode ? 'Änderungen speichern' : 'Creator hinzufügen'}
+                  Creator hinzufügen
                 </button>
               </div>
             </div>
