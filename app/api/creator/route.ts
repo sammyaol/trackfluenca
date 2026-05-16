@@ -13,8 +13,8 @@ function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) =
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const ig = searchParams.get('ig')?.replace('@', '').trim()
-  const tt = searchParams.get('tt')?.replace('@', '').trim()
+  const ig = (searchParams.get('ig') ?? '').replace('@','').replace(/^https?://[^/]+//,'').replace(/.[a-z]{2,}$/,'').replace(///g,'').trim()
+  const tt = (searchParams.get('tt') ?? '').replace('@','').replace(/^https?://[^/]+//,'').replace(/.[a-z]{2,}$/,'').replace(///g,'').trim()
   if (!ig && !tt) return NextResponse.json({ error: 'Handle fehlt' }, { status: 400 })
 
   const result: any = {}
