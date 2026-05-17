@@ -117,11 +117,11 @@ export default function CreatorPage() {
   const closeModal = () => { setShowModal(false); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setForm(emptyForm) }
 
   const doFetch = async () => {
-    if (!form.igHandle) return
+    if (!form.igHandle && !form.ttHandle) return
     setFetching(true); setFetchDone(false); setFetchError(''); setFetchedData(null)
     try {
       const params = new URLSearchParams()
-      params.append('ig', form.igHandle.replace('@', ''))
+      if (form.igHandle) params.append('ig', form.igHandle.replace('@', ''))
       if (form.ttHandle) params.append('tt', form.ttHandle.replace('@', ''))
       const res = await fetch(`/api/creator?${params}`)
       const data = await res.json()
@@ -678,8 +678,8 @@ export default function CreatorPage() {
                     <input value={form.ttHandle} onChange={e => setForm(p => ({ ...p, ttHandle: e.target.value }))}
                       placeholder="TikTok Handle — optional" className={inputCls} />
                   </div>
-                  <button onClick={doFetch} disabled={fetching || !form.igHandle}
-                    className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400' : form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                  <button onClick={doFetch} disabled={fetching || (!form.igHandle && !form.ttHandle)}
+                    className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
                     {fetching ? 'Lade Daten...' : fetchDone ? '✓ Daten geladen ✓' : fetchError ? fetchError : 'Echte Daten laden (IG + TT + Demographics)'}
                   </button>
                   {fetchDone && fetchedData && (
@@ -733,8 +733,8 @@ export default function CreatorPage() {
                       className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
                 </div>
 
-                <button onClick={handleSave} disabled={!form.name || !form.igHandle}
-                  className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && form.igHandle ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle)}
+                  className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
                   Creator hinzufügen
                 </button>
               </div>
