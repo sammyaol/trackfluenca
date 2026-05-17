@@ -33,6 +33,23 @@ export async function GET(req: NextRequest) {
       result.igImage = profile.hd_profile_pic_url_info?.url || profile.profile_pic_url || ''
       result.igVerified = profile.is_verified || false
       result.igPostCount = profile.media_count || 0
+
+      const userId = profile.pk
+      if (userId) {
+        const feed = await apiFetch(`https://${IG_HOST}/feed?user_id=${userId}&count=12`, IG_H)
+        const posts = feed?.items || []
+        if (posts.length) {
+          const lks = posts.map((p: any) => p.like_count || 0)
+          const cmts = posts.map((p: any) => p.comment_count || 0)
+          const views = posts.map((p: any) => p.play_count || p.view_count || 0).filter((v: number) => v > 0)
+          result.igAvgLikes = avg(lks)
+          result.igAvgComments = avg(cmts)
+          result.igAvgReelViews = views.length ? avg(views) : 0
+          result.igEr = result.igFollower > 0
+            ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
+            : 0
+        }
+      }
     }
   }
 
