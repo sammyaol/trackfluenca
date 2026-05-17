@@ -394,15 +394,13 @@ export default function CreatorPage() {
                       <td className="px-5 py-4 sticky left-0 bg-[#141414]">
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0 w-10 h-8">
-                            <div className="w-8 h-8 rounded-full absolute left-0 top-0 border-2 border-[#141414] overflow-hidden bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold">
-                              {c.igImage
-                                ? <img src={c.igImage} alt={c.name} className="w-full h-full object-cover" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display='none'; t.parentElement!.innerText = c.name.split(' ').map((n:string)=>n[0]).join('') }} />
-                                : c.name.split(' ').map((n:string)=>n[0]).join('')}
+                            <div className="w-8 h-8 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold overflow-hidden">
+                              <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2)}</span>
                             </div>
-                            <div className="w-6 h-6 rounded-full absolute left-4 top-1 border-2 border-[#141414] overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
-                              {c.ttImage
-                                ? <img src={c.ttImage} alt="" className="w-full h-full object-cover" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display='none' }} />
-                                : <span className="text-[7px] text-gray-500 font-bold">TT</span>}
+                            <div className="w-6 h-6 rounded-full absolute left-4 top-1 border-2 border-[#141414] bg-[#222] flex items-center justify-center overflow-hidden">
+                              {c.tt
+                                ? <span className="text-[6px] text-gray-400 font-bold">{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,1)}</span>
+                                : <span className="text-[6px] text-gray-600">—</span>}
                             </div>
                           </div>
                           <div>
