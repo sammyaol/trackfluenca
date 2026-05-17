@@ -218,7 +218,7 @@ export default function Dashboard() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
-                          {c.name.split(' ').map(n => n[0]).join('')}
+                          {c.name.split(' ').map((n: string) => n[0]).join('')}
                         </div>
                         <div>
                           <div className="text-white text-sm font-medium">{c.name}</div>
