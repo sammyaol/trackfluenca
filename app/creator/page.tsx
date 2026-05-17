@@ -240,6 +240,31 @@ export default function CreatorPage() {
     closeModal()
   }
 
+  const updateCreator = async (c: Creator, fields: Record<string, any>) => {
+    const id = (c as any)._id
+    if (!id) return
+    const updated = { ...c, ...fields }
+    setCreators(prev => prev.map(x => x === c ? { ...x, ...fields } : x))
+    const body: Record<string, any> = {}
+    if ('status' in fields) body.status = fields.status
+    if ('prio' in fields) body.prio = fields.prio
+    if ('notizen' in fields) body.notizen = fields.notizen
+    if ('kampagne' in fields) body.kampagne = fields.kampagne
+    if ('orgUmsatz' in fields) body.org_umsatz = fields.orgUmsatz
+    if ('orgKlicks' in fields) body.org_klicks = fields.orgKlicks
+    if ('orgROAS' in fields) body.org_roas = fields.orgROAS
+    if ('adSpend' in fields) body.ad_spend = fields.adSpend
+    if ('adUmsatz' in fields) body.ad_umsatz = fields.adUmsatz
+    if ('adROAS' in fields) body.ad_roas = fields.adROAS
+    if ('gesUmsatz' in fields) body.ges_umsatz = fields.gesUmsatz
+    if ('gesROAS' in fields) body.ges_roas = fields.gesROAS
+    await fetch(`/api/creators/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+  }
+
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
     return (!s || c.name.toLowerCase().includes(s) || c.ig.includes(s) || c.promoCode.toLowerCase().includes(s))
@@ -424,7 +449,9 @@ export default function CreatorPage() {
                       <span className="text-gray-500 text-xs">{selected.ig}</span>
                       {selected.tt && <span className="text-gray-500 text-xs">{selected.tt}</span>}
                       <span className={`text-xs px-2 py-0.5 rounded-md ${tierStyle[selected.overallTier]}`}>{selected.overallTier}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-md ${statusStyle[selected.status]}`}>{selected.status}</span>
+                      <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className={`text-xs px-2 py-0.5 rounded-md border-0 cursor-pointer ${statusStyle[selected.status]} bg-transparent`}>
+                        {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-[#1a1a1a] text-white">{s}</option>)}
+                      </select>
                     </div>
                   </div>
                 </div>
