@@ -702,35 +702,58 @@ export default function CreatorPage() {
                 )}
 
                 {detailTab === 'deal' && (
-                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
-                    {[
-                      ['Kampagne', selected.kampagne || '—'],
-                      ['Buchungstyp', selected.buchungstyp || '—'],
-                      ['Fee', fmtEur(selected.fee)],
-                      ['Produkt', fmtEur(selected.produkt)],
-                      ['Gesamt', fmtEur(selected.gesamt)],
-                      ['Promo Code', selected.promoCode || '—'],
-                      ['Datum', selected.datum || '—'],
-                      ['Priorität', selected.prio],
-                      ['Kategorie', selected.kategorie],
-                    ].map(([l, v]) => (
-                      <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
-                        <span className="text-gray-600 text-xs">{l}</span>
-                        <span className="text-gray-300 text-xs">{v}</span>
+                  <div className="space-y-3">
+                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Status</label>
+                          <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                            {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Priorität</label>
+                          <select value={selected.prio} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, prio: v} : p); updateCreator(selected, {prio: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                            {['Hoch','Mittel','Niedrig'].map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </div>
                       </div>
-                    ))}
-                    {selected.notizen && (
-                      <div className="px-4 py-3">
-                        <div className="text-gray-600 text-xs mb-1">Notizen</div>
-                        <div className="text-gray-300 text-xs">{selected.notizen}</div>
+                      <div>
+                        <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
+                        <input value={selected.kampagne || ''} onChange={e => setSelected(p => p ? {...p, kampagne: e.target.value} : p)} onBlur={e => updateCreator(selected, {kampagne: e.target.value})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="z.B. SS25" />
                       </div>
-                    )}
+                      <div>
+                        <label className="text-gray-600 text-xs block mb-1">Notizen</label>
+                        <textarea value={selected.notizen || ''} onChange={e => setSelected(p => p ? {...p, notizen: e.target.value} : p)} onBlur={e => updateCreator(selected, {notizen: e.target.value})} rows={3} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none" placeholder="Agentur, Konditionen..." />
+                      </div>
+                    </div>
+                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                      <p className="text-gray-500 text-xs font-medium mb-3">Ergebnisse eintragen</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Org. Umsatz €</label>
+                          <input type="number" value={selected.orgUmsatz || ''} onChange={e => setSelected(p => p ? {...p, orgUmsatz: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {orgUmsatz: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Org. Klicks</label>
+                          <input type="number" value={selected.orgKlicks || ''} onChange={e => setSelected(p => p ? {...p, orgKlicks: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {orgKlicks: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Ad Spend €</label>
+                          <input type="number" value={selected.adSpend || ''} onChange={e => setSelected(p => p ? {...p, adSpend: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {adSpend: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Ad Umsatz €</label>
+                          <input type="number" value={selected.adUmsatz || ''} onChange={e => setSelected(p => p ? {...p, adUmsatz: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {adUmsatz: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
-                  <button onClick={() => { setCreators(prev => prev.filter(c => c.name !== selected.name)); setSelected(null) }}
+                  <button onClick={async () => { if ((selected as any)._id) await fetch(`/api/creators/${(selected as any)._id}`, {method:'DELETE'}); setCreators(prev => prev.filter(c => c !== selected)); setSelected(null) }}
                     className="px-4 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">
                     Löschen
                   </button>
