@@ -10,11 +10,12 @@ function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 500
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
 async function apiFetch(url: string) { try { const r = await fetch(url, { headers: H }); return r.json() } catch { return null } }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
+function sanitize(raw: string | null): string { return (raw ?? '').replace('@', '').split('/').pop()!.split('?')[0].replace(/\.[a-z]{2,}$/, '').trim() }
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const ig = (searchParams.get('ig') ?? '').replace('@','').replace(/^https?://[^/]+//,'').replace(/.[a-z]{2,}$/,'').replace(///g,'').trim()
-  const tt = (searchParams.get('tt') ?? '').replace('@','').replace(/^https?://[^/]+//,'').replace(/.[a-z]{2,}$/,'').replace(///g,'').trim()
+  const ig = sanitize(searchParams.get('ig'))
+  const tt = sanitize(searchParams.get('tt'))
   if (!ig && !tt) return NextResponse.json({ error: 'Handle fehlt' }, { status: 400 })
 
   const result: any = {}
