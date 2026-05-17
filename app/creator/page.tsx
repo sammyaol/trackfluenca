@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 
 type Creator = {
@@ -90,7 +90,40 @@ const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 
 const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
 
 export default function CreatorPage() {
-  const [creators, setCreators] = useState<Creator[]>(initialCreators)
+  const [creators, setCreators] = useState<Creator[]>([])
+  useEffect(() => {
+    fetch('/api/creators').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setCreators(data.map((c: any) => ({
+        name: c.name || '', ig: c.ig || '', tt: c.tt || '',
+        igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
+        igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
+        igEr: c.ig_er || 0, ttEr: c.tt_er || 0,
+        ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
+        overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
+        status: c.status || 'Offen', prio: c.prio || 'Mittel',
+        kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
+        notizen: c.notizen || '', kampagne: c.kampagne || '',
+        buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
+        produkt: c.produkt || 0, gesamt: c.gesamt || 0,
+        promoCode: c.promo_code || '', datum: c.datum || '',
+        orgUmsatz: c.org_umsatz || 0, orgKlicks: c.org_klicks || 0,
+        orgCPK: 0, orgROAS: c.org_roas || 0, orgBestellungen: c.org_bestellungen || 0, orgBW: 0,
+        adSpend: c.ad_spend || 0, adUmsatz: c.ad_umsatz || 0,
+        adKlicks: c.ad_klicks || 0, adCPK: 0, adROAS: c.ad_roas || 0,
+        adBestellungen: c.ad_bestellungen || 0,
+        gesUmsatz: c.ges_umsatz || 0, gesROAS: c.ges_roas || 0,
+        gesKlicks: c.ges_klicks || 0, storyViews: 0,
+        storyWert: c.story_wert || 0, ttWert: c.tt_wert || 0,
+        reelWert: c.reel_wert || 0, affiliatePct: c.affiliate_pct || '15%',
+        tkpTT: c.tkp_tt || 0, tkpStory: c.tkp_story || 0, tkpPost: c.tkp_reel || 0,
+        igImage: c.ig_image, igVerified: c.ig_verified,
+        igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
+        igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
+        ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+        tkpReel: c.tkp_reel, _id: c.id,
+      })))
+    })
+  }, [])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterTier, setFilterTier] = useState('')
@@ -136,51 +169,71 @@ export default function CreatorPage() {
     }
   }
 
-  const handleSave = () => {
-    if (!form.name || !form.igHandle) return
+  const handleSave = async () => {
+    if (!form.name || (!form.igHandle && !form.ttHandle)) return
     const fee = Number(form.fee) || 0
     const produkt = Number(form.produkt) || 0
     const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
     const tt = form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : ''
     const d = fetchedData || {}
-    setCreators(prev => [...prev, {
-      name: form.name, ig, tt,
-      igFollower: d.igFollower || 0, ttFollower: d.ttFollower || 0,
-      igTier: d.igTier || getTier(d.igFollower || 0), ttTier: d.ttTier || '',
-      igEr: d.igEr || 0, ttEr: d.ttEr || 0,
-      ttAvgViews: d.ttAvgVideoViews || 0, ttAvgLikes: d.ttAvgVideoLikes || 0, ttAvgComments: d.ttAvgVideoComments || 0,
-      overallTier: d.overallTier || getTier(d.igFollower || 0),
-      gesamtReichweite: d.gesamtReichweite || 0,
-      status: form.status, prio: form.prio, kategorie: form.kategorie,
-      mgmt: 'Nein', notizen: form.notizen,
-      kampagne: form.kampagne, buchungstyp: form.buchungstyp,
-      fee, produkt, gesamt: fee + produkt,
-      promoCode: form.promoCode, datum: form.datum,
-      orgUmsatz: 0, orgKlicks: 0, orgCPK: 0, orgROAS: 0, orgBestellungen: 0, orgBW: 0,
-      adSpend: 0, adUmsatz: 0, adKlicks: 0, adCPK: 0, adROAS: 0, adBestellungen: 0,
-      gesUmsatz: 0, gesROAS: 0, gesKlicks: 0, storyViews: 0,
-      storyWert: d.storyWert || 0, ttWert: d.ttWert || 0, reelWert: d.reelWert || 0,
-      affiliatePct: d.affiliatePct || getAffPct(d.igFollower || 0),
-      tkpTT: d.tkpTT || 0, tkpStory: d.tkpStory || 0, tkpPost: d.tkpReel || 0,
-      igImage: d.igImage, igVerified: d.igVerified,
-      igAvgLikes: d.igAvgLikes, igAvgComments: d.igAvgComments,
-      igAvgReelViews: d.igAvgReelViews, igAvgReelLikes: d.igAvgReelLikes,
-      igAvgReelComments: d.igAvgReelComments, igAvgReelEr: d.igAvgReelEr,
-      igTopCountries: d.igTopCountries, igTopCities: d.igTopCities,
-      igGenderMale: d.igGenderMale, igGenderFemale: d.igGenderFemale,
-      igTopAge: d.igTopAge, igAgeDistribution: d.igAgeDistribution,
-      igRealFollowers: d.igRealFollowers, igFakeFollowers: d.igFakeFollowers,
-      igFollowerWachstum7d: d.igFollowerWachstum7d,
-      igQualityScore: d.igQualityScore, igPostsPerWeek: d.igPostsPerWeek,
-      ttImage: d.ttImage, ttVerified: d.ttVerified,
-      ttAvgVideoViews: d.ttAvgVideoViews, ttAvgVideoLikes: d.ttAvgVideoLikes,
-      ttAvgVideoComments: d.ttAvgVideoComments, ttAvgReposts: d.ttAvgReposts,
-      ttAvgVideoEr: d.ttAvgVideoEr,
-      ttFollowerWachstum7d: d.ttFollowerWachstum7d,
-      ttQualityScore: d.ttQualityScore, ttPostsPerWeek: d.ttPostsPerWeek,
-      ttTopVideoViews: d.ttTopVideoViews, ttTopVideoUrl: d.ttTopVideoUrl,
-      tkpReel: d.tkpReel, igCategories: d.igCategories,
-    }])
+    await fetch('/api/creators', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name, ig, tt,
+        ig_follower: d.igFollower || 0, tt_follower: d.ttFollower || 0,
+        ig_tier: d.igTier || getTier(d.igFollower || 0), tt_tier: d.ttTier || '',
+        ig_er: d.igEr || 0, tt_er: d.ttEr || 0,
+        tt_avg_views: d.ttAvgVideoViews || 0,
+        overall_tier: d.overallTier || getTier(d.igFollower || 0),
+        gesamt_reichweite: d.gesamtReichweite || 0,
+        status: form.status, prio: form.prio, kategorie: form.kategorie,
+        mgmt: 'Nein', notizen: form.notizen,
+        kampagne: form.kampagne, buchungstyp: form.buchungstyp,
+        fee, produkt, gesamt: fee + produkt,
+        promo_code: form.promoCode, datum: form.datum,
+        story_wert: d.storyWert || 0, tt_wert: d.ttWert || 0,
+        reel_wert: d.reelWert || 0,
+        affiliate_pct: d.affiliatePct || getAffPct(d.igFollower || 0),
+        tkp_tt: d.tkpTT || 0, tkp_story: d.tkpStory || 0, tkp_reel: d.tkpReel || 0,
+        ig_image: d.igImage || '', ig_verified: d.igVerified || false,
+        ig_avg_likes: d.igAvgLikes || 0, ig_avg_comments: d.igAvgComments || 0,
+        ig_avg_reel_views: d.igAvgReelViews || 0,
+        tt_image: d.ttImage || '', tt_verified: d.ttVerified || false,
+        tt_avg_video_views: d.ttAvgVideoViews || 0,
+      })
+    })
+    const res = await fetch('/api/creators')
+    const data = await res.json()
+    if (Array.isArray(data)) setCreators(data.map((c: any) => ({
+      name: c.name || '', ig: c.ig || '', tt: c.tt || '',
+      igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
+      igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
+      igEr: c.ig_er || 0, ttEr: c.tt_er || 0,
+      ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
+      overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
+      status: c.status || 'Offen', prio: c.prio || 'Mittel',
+      kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
+      notizen: c.notizen || '', kampagne: c.kampagne || '',
+      buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
+      produkt: c.produkt || 0, gesamt: c.gesamt || 0,
+      promoCode: c.promo_code || '', datum: c.datum || '',
+      orgUmsatz: c.org_umsatz || 0, orgKlicks: c.org_klicks || 0,
+      orgCPK: 0, orgROAS: c.org_roas || 0, orgBestellungen: c.org_bestellungen || 0, orgBW: 0,
+      adSpend: c.ad_spend || 0, adUmsatz: c.ad_umsatz || 0,
+      adKlicks: c.ad_klicks || 0, adCPK: 0, adROAS: c.ad_roas || 0,
+      adBestellungen: c.ad_bestellungen || 0,
+      gesUmsatz: c.ges_umsatz || 0, gesROAS: c.ges_roas || 0,
+      gesKlicks: c.ges_klicks || 0, storyViews: 0,
+      storyWert: c.story_wert || 0, ttWert: c.tt_wert || 0,
+      reelWert: c.reel_wert || 0, affiliatePct: c.affiliate_pct || '15%',
+      tkpTT: c.tkp_tt || 0, tkpStory: c.tkp_story || 0, tkpPost: c.tkp_reel || 0,
+      igImage: c.ig_image, igVerified: c.ig_verified,
+      igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
+      igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
+      ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+      tkpReel: c.tkp_reel, _id: c.id,
+    })))
     closeModal()
   }
 
