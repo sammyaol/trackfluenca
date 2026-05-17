@@ -393,13 +393,22 @@ export default function CreatorPage() {
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
                       <td className="px-5 py-4 sticky left-0 bg-[#141414]">
                         <div className="flex items-center gap-3">
-                          {c.igImage ? (
-                            <img src={c.igImage} alt={c.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
-                              {c.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                          )}
+                          <div className="relative flex-shrink-0 w-10 h-8">
+                            {c.igImage ? (
+                              <img src={c.igImage} alt={c.name} className="w-8 h-8 rounded-full object-cover absolute left-0 top-0 border-2 border-[#141414]" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold absolute left-0 top-0 border-2 border-[#141414]">
+                                {c.name.split(' ').map((n: string) => n[0]).join('')}
+                              </div>
+                            )}
+                            {c.ttImage ? (
+                              <img src={c.ttImage} alt="" className="w-6 h-6 rounded-full object-cover absolute left-4 top-1 border-2 border-[#141414]" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+                            ) : c.tt ? (
+                              <div className="w-6 h-6 rounded-full bg-[#333]/80 flex items-center justify-center absolute left-4 top-1 border-2 border-[#141414]">
+                                <span className="text-[8px]">TT</span>
+                              </div>
+                            ) : null}
+                          </div>
                           <div>
                             <div className="flex items-center gap-1">
                               <span className="text-white text-sm font-medium whitespace-nowrap">{c.name}</span>
