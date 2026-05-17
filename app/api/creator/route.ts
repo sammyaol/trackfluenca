@@ -1,17 +1,16 @@
-cat > app/api/creator/route.ts << 'ENDOFFILE'
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_KEY = 'f4c7d7229bmsh61008aaae694e00p16c126jsn88ccf060645e'
 const HOST = 'social-media-master.p.rapidapi.com'
 const TT_HOST = 'tiktok-scrapper-videos-music-challenges-downloader.p.rapidapi.com'
-const H = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': HOST, 'Content-Type': 'application/json' }
-const TT_H = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
+const H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': HOST, 'Content-Type': 'application/json' }
+const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
 
 function getTier(f: number) { return f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano' }
 function getAffPct(f: number) { return f >= 1000000 ? '8%' : f >= 500000 ? '10%' : f >= 50000 ? '12%' : '15%' }
 function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005) }
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
-async function apiFetch(url: string, headers?: any) { try { const r = await fetch(url, { headers: headers ?? H }); return r.json() } catch { return null } }
+async function apiFetch(url: string, headers: Record<string,string> = H) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function sanitize(raw: string | null): string { return (raw ?? '').replace('@', '').split('/').pop()!.split('?')[0].replace(/\.[a-z]{2,}$/, '').trim() }
 
@@ -114,11 +113,9 @@ export async function GET(req: NextRequest) {
       const views = posts.map((p: any) => p.statistics?.play_count || 0).filter((v: number) => v > 0)
       const lks = posts.map((p: any) => p.statistics?.digg_count || 0)
       const cmts = posts.map((p: any) => p.statistics?.comment_count || 0)
-      const shares = posts.map((p: any) => p.statistics?.share_count || 0)
       result.ttAvgVideoViews = avg(views)
       result.ttAvgVideoLikes = avg(lks)
       result.ttAvgVideoComments = avg(cmts)
-      result.ttAvgShares = avg(shares)
       if (result.ttFollower && result.ttAvgVideoViews) {
         result.ttEr = Math.round((result.ttAvgVideoViews / result.ttFollower) * 100 * 10) / 10
       }
@@ -141,4 +138,3 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(result)
 }
-ENDOFFILE
