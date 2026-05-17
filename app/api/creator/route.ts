@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_KEY = '1c8f95c798msh3d63fd4092ead12p160391jsnc1b84ff843e7'
-const IG_HOST = 'instagram-looter2.p.rapidapi.com'
+const IG_HOST = 'instagram-best-experience.p.rapidapi.com'
 const TT_HOST = 'tiktok-scraper7.p.rapidapi.com'
 const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST }
 const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
@@ -23,27 +23,16 @@ export async function GET(req: NextRequest) {
   const result: any = {}
 
   if (ig) {
-    const profile = await apiFetch(`https://${IG_HOST}/v1/info?username_or_url=${encodeURIComponent(ig)}`, IG_H)
+    const profile = await apiFetch(`https://${IG_HOST}/profile?username=${encodeURIComponent(ig)}`, IG_H)
 
-    if (profile?.status === true) {
-      result.igFollower = profile.edge_followed_by?.count || 0
+    if (profile?.follower_count) {
+      result.igFollower = profile.follower_count || 0
       result.igTier = getTier(result.igFollower)
       result.fullName = profile.full_name || ''
       result.bio = profile.biography || ''
-      result.igImage = profile.profile_pic_url_hd || profile.profile_pic_url || ''
+      result.igImage = profile.hd_profile_pic_url_info?.url || profile.profile_pic_url || ''
       result.igVerified = profile.is_verified || false
-      result.igPostCount = profile.edge_owner_to_timeline_media?.count || 0
-
-      const posts = profile.edge_owner_to_timeline_media?.edges || []
-      if (posts.length) {
-        const lks = posts.map((e: any) => e.node?.edge_liked_by?.count || 0)
-        const cmts = posts.map((e: any) => e.node?.edge_media_to_comment?.count || 0)
-        result.igAvgLikes = avg(lks)
-        result.igAvgComments = avg(cmts)
-        result.igEr = result.igFollower > 0
-          ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
-          : 0
-      }
+      result.igPostCount = profile.media_count || 0
     }
   }
 
