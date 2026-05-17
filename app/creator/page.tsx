@@ -393,11 +393,11 @@ export default function CreatorPage() {
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
                       <td className="px-5 py-4 sticky left-0 bg-[#141414]">
                         <div className="flex items-center gap-3">
-                          <div className="relative flex-shrink-0 w-10 h-8">
-                            <div className="w-8 h-8 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold overflow-hidden">
+                          <div className="relative flex-shrink-0 w-12 h-9">
+                            <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2)}</span>
                             </div>
-                            <div className="w-6 h-6 rounded-full absolute left-4 top-1 border-2 border-[#141414] bg-[#222] flex items-center justify-center overflow-hidden">
+                            <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-[#141414] bg-[#333] flex items-center justify-center overflow-hidden z-20">
                               {c.tt
                                 ? <span className="text-[6px] text-gray-400 font-bold">{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,1)}</span>
                                 : <span className="text-[6px] text-gray-600">—</span>}
