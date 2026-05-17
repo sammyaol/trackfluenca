@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = 'f4c7d7229bmsh61008aaae694e00p16c126jsn88ccf060645e'
+const API_KEY = '1c8f95c798msh3d63fd4092ead12p160391jsnc1b84ff843e7'
 const IG_HOST = 'social-media-master.p.rapidapi.com'
 const TT_HOST = 'tiktok-scraper7.p.rapidapi.com'
 const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST, 'Content-Type': 'application/json' }
