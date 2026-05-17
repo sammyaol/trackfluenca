@@ -690,7 +690,7 @@ export default function CreatorPage() {
                       {fetchedData.igRealFollowers > 0 && <p>· Echte Follower: {fetchedData.igRealFollowers}% · Fake: {fetchedData.igFakeFollowers}%</p>}
                       {fetchedData.igGenderFemale > 0 && <p>· {fetchedData.igGenderFemale}% weiblich · Top-Alter: {fetchedData.igTopAge}</p>}
                       {fetchedData.ttFollower > 0 && <p>· TT: {fetchedData.ttFollower?.toLocaleString('de-DE')} Follower · Ø Views: {fetchedData.ttAvgVideoViews?.toLocaleString('de-DE')}</p>}
-                      <p>· Reel: ~{fetchedData.reelWert?.toLocaleString('de-DE')} € · Affiliate: {fetchedData.affiliatePct}</p>
+                      <p>· {fetchedData.reelWert > 0 && `Reel: ~${fetchedData.reelWert?.toLocaleString('de-DE')} €`}{fetchedData.reelWert > 0 && fetchedData.ttWert > 0 && ' · '}{fetchedData.ttWert > 0 && `TikTok: ~${fetchedData.ttWert?.toLocaleString('de-DE')} €`} · Affiliate: {fetchedData.affiliatePct}</p>
                     </div>
                   )}
                 </div>
