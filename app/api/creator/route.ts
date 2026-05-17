@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_KEY = '1c8f95c798msh3d63fd4092ead12p160391jsnc1b84ff843e7'
-const IG_HOST = 'social-media-master.p.rapidapi.com'
+const IG_HOST = 'instagram-looter2.p.rapidapi.com'
 const TT_HOST = 'tiktok-scraper7.p.rapidapi.com'
-const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST, 'Content-Type': 'application/json' }
+const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST }
 const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
 
 function getTier(f: number) { return f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano' }
@@ -21,72 +21,29 @@ export async function GET(req: NextRequest) {
   if (!ig && !tt) return NextResponse.json({ error: 'Handle fehlt' }, { status: 400 })
 
   const result: any = {}
-  const now = new Date()
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
-  const prevMonth = now.getMonth() === 0
-    ? `${now.getFullYear() - 1}-12-01`
-    : `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}-01`
 
   if (ig) {
-    const igUrl = `https://www.instagram.com/${ig}`
-    const [profile, reels, reelsPrev, demog, daily] = await Promise.all([
-      apiFetch(`https://${IG_HOST}/instagram-user-account?url=${encodeURIComponent(igUrl)}`, IG_H),
-      apiFetch(`https://${IG_HOST}/instagram-user-reels?id=${ig}&month=${month}`, IG_H),
-      apiFetch(`https://${IG_HOST}/instagram-user-reels?id=${ig}&month=${prevMonth}`, IG_H),
-      apiFetch(`https://${IG_HOST}/instagram-user-demographic?url=${encodeURIComponent(igUrl)}`, IG_H),
-      apiFetch(`https://${IG_HOST}/instagram-account-daily-stats?id=${ig}&days=7`, IG_H),
-    ])
+    const profile = await apiFetch(`https://${IG_HOST}/v1/info?username_or_url=${encodeURIComponent(ig)}`, IG_H)
 
-    if (profile?.status?.code === 200) {
-      const p = profile.profile
-      const s = profile.stats
-      result.igFollower = s.followersCount || 0
+    if (profile?.status === true) {
+      result.igFollower = profile.edge_followed_by?.count || 0
       result.igTier = getTier(result.igFollower)
-      result.igEr = s.avgER ? Math.round(s.avgER * 100 * 100) / 100 : 0
-      result.igAvgLikes = s.avgLikes || 0
-      result.igAvgComments = s.avgComments || 0
-      result.fullName = p.name || ''
-      result.bio = p.description || ''
-      result.igImage = p.image || ''
-      result.igVerified = p.verified || false
-      result.igGender = p.gender || ''
-      result.igAge = p.age || ''
-      result.igCountry = p.country || ''
-      result.igQualityScore = s.qualityScore || 0
-    }
+      result.fullName = profile.full_name || ''
+      result.bio = profile.biography || ''
+      result.igImage = profile.profile_pic_url_hd || profile.profile_pic_url || ''
+      result.igVerified = profile.is_verified || false
+      result.igPostCount = profile.edge_owner_to_timeline_media?.count || 0
 
-    const reelsData = (reels?.posts?.length ? reels : reelsPrev)
-    if (reelsData?.status?.code === 200 && reelsData?.posts?.length) {
-      const posts = reelsData.posts
-      const vViews = posts.map((p: any) => p.postDetails?.videoViews || 0).filter((v: number) => v > 0)
-      const lks = posts.map((p: any) => p.postDetails?.likes || 0)
-      const cmts = posts.map((p: any) => p.postDetails?.comments || 0)
-      const ers = posts.map((p: any) => p.postStats?.videoViewsER || 0).filter((v: number) => v > 0)
-      result.igAvgReelViews = avg(vViews)
-      result.igAvgReelLikes = avg(lks)
-      result.igAvgReelComments = avg(cmts)
-      result.igAvgReelEr = ers.length ? Math.round(avg(ers.map((e: number) => e * 100)) * 10) / 10 : 0
-      result.igReelCount = posts.length
-    }
-
-    if (demog?.status?.code === 200 && demog?.demographic) {
-      const d = demog.demographic
-      result.igTopCountries = d.followersCountries?.slice(0, 5).map((c: any) => ({ name: c.name, pct: Math.round(c.value * 1000) / 10 })) || []
-      result.igTopCities = d.followersCities?.slice(0, 3).map((c: any) => ({ name: c.name, pct: Math.round(c.value * 1000) / 10 })) || []
-      result.igGenderMale = Math.round((d.genders?.find((g: any) => g.name === 'm')?.percent || 0) * 100)
-      result.igGenderFemale = Math.round((d.genders?.find((g: any) => g.name === 'f')?.percent || 0) * 100)
-      result.igTopAge = d.ages?.[0]?.name || ''
-      result.igAgeDistribution = d.ages?.map((a: any) => ({ age: a.name, pct: Math.round(a.percent * 1000) / 10 })) || []
-      result.igRealFollowers = Math.round((d.followersTypes?.find((t: any) => t.name === 'real')?.percent || 0) * 100)
-      result.igFakeFollowers = Math.round((d.extra?.connections?.pctFakeFollowers || 0) * 100)
-      result.igCategories = d.extra?.categories || []
-    }
-
-    if (daily?.meta?.code === 200 && daily?.dailyStats?.length) {
-      const stats = daily.dailyStats
-      result.igFollowerWachstum7d = stats.reduce((s: number, d: any) => s + (d.deltaFollowers || 0), 0)
-      result.igQualityScore = daily.summaryStats?.qualityScore || result.igQualityScore || 0
-      result.igPostsPerWeek = Math.round((daily.summaryStats?.avgPostsPerWeek || 0) * 10) / 10
+      const posts = profile.edge_owner_to_timeline_media?.edges || []
+      if (posts.length) {
+        const lks = posts.map((e: any) => e.node?.edge_liked_by?.count || 0)
+        const cmts = posts.map((e: any) => e.node?.edge_media_to_comment?.count || 0)
+        result.igAvgLikes = avg(lks)
+        result.igAvgComments = avg(cmts)
+        result.igEr = result.igFollower > 0
+          ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
+          : 0
+      }
     }
   }
 
@@ -108,11 +65,6 @@ export async function GET(req: NextRequest) {
       if (!result.fullName) result.fullName = u.nickname || ''
     }
 
-    if (userInfo?.data?.user) {
-      const u = userInfo.data.user
-      result.ttImage = u.avatarThumb || result.ttImage || ''
-    }
-
     if (posts?.code === 0 && posts?.data?.videos?.length) {
       const videos = posts.data.videos
       function getViews(v: any) { return v.stats?.playCount || v.stats?.play_count || v.play_count || 0 }
@@ -126,16 +78,11 @@ export async function GET(req: NextRequest) {
       if (allViews.length) {
         const sorted = [...allViews].sort((a, b) => a - b)
         const median = sorted[Math.floor(sorted.length / 2)]
-        const filtered = pool.filter((v: any) => {
-          const vv = getViews(v)
-          return vv >= median * 0.05 && vv <= median * 5
-        })
+        const filtered = pool.filter((v: any) => { const vv = getViews(v); return vv >= median * 0.05 && vv <= median * 5 })
         const toUse = (filtered.length >= 3 ? filtered : pool).slice(0, 10)
-
         const views = toUse.map((v: any) => getViews(v)).filter((v: number) => v > 0)
         const lks = toUse.map((v: any) => getLikes(v))
         const cmts = toUse.map((v: any) => getComments(v))
-
         result.ttAvgVideoViews = avg(views)
         result.ttAvgVideoLikes = avg(lks)
         result.ttAvgVideoComments = avg(cmts)
