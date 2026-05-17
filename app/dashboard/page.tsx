@@ -32,11 +32,11 @@ export default function Dashboard() {
   }, [])
   const totalUmsatz = creators.reduce((s, c) => s + (c.ges_umsatz || c.org_umsatz || 0), 0)
   const deals = creators.filter(c => c.status === 'Deal').length
-  const roasCreators = creators.filter(c => (c.ges_roas || c.org_roas || 0) > 0)
-  const avgRoas = roasCreators.length ? roasCreators.reduce((s, c) => s + (c.ges_roas || c.org_roas || 0), 0) / roasCreators.length : 0
+  const roasCreators = creators.filter(c => c.roas > 0)
+  const avgRoas = roasCreators.length ? roasCreators.reduce((s, c) => s + c.roas, 0) / roasCreators.length : 0
   const campaigns = [...new Set(creators.map(c => c.kampagne).filter(Boolean))].map(name => ({
     name,
-    roas: (() => { const cs = creators.filter(c => c.kampagne === name && (c.ges_roas || c.org_roas) > 0); return cs.length ? cs.reduce((s,c) => s + (c.ges_roas || c.org_roas || 0), 0) / cs.length : 0 })(),
+    roas: (() => { const cs = creators.filter(c => c.kampagne === name && (c.ges_roas || c.org_roas) > 0); return cs.length ? cs.reduce((s,c) => s + c.roas, 0) / cs.length : 0 })(),
     budget: creators.filter(c => c.kampagne === name).reduce((s,c) => s + (c.fee || 0), 0),
     spent: creators.filter(c => c.kampagne === name && c.status === 'Deal').reduce((s,c) => s + (c.fee || 0), 0),
   }))
@@ -132,12 +132,12 @@ export default function Dashboard() {
               <div className="flex items-end gap-3 h-36">
                 {campaigns.map(c => {
                   const maxRoas = 7
-                  const height = (c.ges_roas || c.org_roas || 0) > 0 ? Math.max(((c.ges_roas || c.org_roas || 0) / maxRoas) * 100, 8) : 4
-                  const color = (c.ges_roas || c.org_roas || 0) >= 3 ? 'bg-emerald-500' : (c.ges_roas || c.org_roas || 0) >= 1 ? 'bg-amber-500' : 'bg-white/10'
+                  const height = c.roas > 0 ? Math.max((c.roas / maxRoas) * 100, 8) : 4
+                  const color = c.roas >= 3 ? 'bg-emerald-500' : c.roas >= 1 ? 'bg-amber-500' : 'bg-white/10'
                   return (
                     <div key={c.name} className="flex-1 flex flex-col items-center gap-2">
-                      <span className={`text-xs font-medium ${(c.ges_roas || c.org_roas || 0) >= 3 ? 'text-emerald-400' : (c.ges_roas || c.org_roas || 0) >= 1 ? 'text-amber-400' : 'text-gray-600'}`}>
-                        {(c.ges_roas || c.org_roas || 0) > 0 ? `${(c.ges_roas || c.org_roas || 0)}x` : '—'}
+                      <span className={`text-xs font-medium ${c.roas >= 3 ? 'text-emerald-400' : c.roas >= 1 ? 'text-amber-400' : 'text-gray-600'}`}>
+                        {c.roas > 0 ? `${c.roas}x` : '—'}
                       </span>
                       <div className="w-full flex items-end" style={{height: '100px'}}>
                         <div className={`w-full rounded-t-lg ${color} transition-all`} style={{height: `${height}%`}}></div>
@@ -231,8 +231,8 @@ export default function Dashboard() {
                     <td className="px-6 py-4"><span className={`text-xs px-2 py-1 rounded-md font-medium ${statusColor[c.status]}`}>{c.status}</span></td>
                     <td className="px-6 py-4 text-gray-300 text-sm font-medium">{(c.ges_umsatz || c.org_umsatz || 0) > 0 ? `${(c.ges_umsatz || c.org_umsatz || 0).toLocaleString('de-DE')} €` : <span className="text-gray-700">—</span>}</td>
                     <td className="px-6 py-4">
-                      <span className={`text-sm font-semibold ${(c.ges_roas || c.org_roas || 0) > 0 ? roasColor((c.ges_roas || c.org_roas || 0)) : 'text-gray-700'}`}>
-                        {(c.ges_roas || c.org_roas || 0) > 0 ? `${(c.ges_roas || c.org_roas || 0)}x` : '—'}
+                      <span className={`text-sm font-semibold ${c.roas > 0 ? roasColor(c.roas) : 'text-gray-700'}`}>
+                        {c.roas > 0 ? `${c.roas}x` : '—'}
                       </span>
                     </td>
                   </tr>
