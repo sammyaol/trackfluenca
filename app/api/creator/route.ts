@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_KEY = 'f4c7d7229bmsh61008aaae694e00p16c126jsn88ccf060645e'
-const HOST = 'social-media-master.p.rapidapi.com'
-const TT_HOST = 'tiktok-scrapper-videos-music-challenges-downloader.p.rapidapi.com'
-const H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': HOST, 'Content-Type': 'application/json' }
+const IG_HOST = 'social-media-master.p.rapidapi.com'
+const TT_HOST = 'tiktok-scraper7.p.rapidapi.com'
+const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST, 'Content-Type': 'application/json' }
 const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
 
 function getTier(f: number) { return f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano' }
 function getAffPct(f: number) { return f >= 1000000 ? '8%' : f >= 500000 ? '10%' : f >= 50000 ? '12%' : '15%' }
 function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005) }
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
-async function apiFetch(url: string, headers: Record<string,string> = H) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
+async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function sanitize(raw: string | null): string { return (raw ?? '').replace('@', '').split('/').pop()!.split('?')[0].replace(/\.[a-z]{2,}$/, '').trim() }
 
@@ -30,11 +30,11 @@ export async function GET(req: NextRequest) {
   if (ig) {
     const igUrl = `https://www.instagram.com/${ig}`
     const [profile, reels, reelsPrev, demog, daily] = await Promise.all([
-      apiFetch(`https://${HOST}/instagram-user-account?url=${encodeURIComponent(igUrl)}`),
-      apiFetch(`https://${HOST}/instagram-user-reels?id=${ig}&month=${month}`),
-      apiFetch(`https://${HOST}/instagram-user-reels?id=${ig}&month=${prevMonth}`),
-      apiFetch(`https://${HOST}/instagram-user-demographic?url=${encodeURIComponent(igUrl)}`),
-      apiFetch(`https://${HOST}/instagram-account-daily-stats?id=${ig}&days=7`),
+      apiFetch(`https://${IG_HOST}/instagram-user-account?url=${encodeURIComponent(igUrl)}`, IG_H),
+      apiFetch(`https://${IG_HOST}/instagram-user-reels?id=${ig}&month=${month}`, IG_H),
+      apiFetch(`https://${IG_HOST}/instagram-user-reels?id=${ig}&month=${prevMonth}`, IG_H),
+      apiFetch(`https://${IG_HOST}/instagram-user-demographic?url=${encodeURIComponent(igUrl)}`, IG_H),
+      apiFetch(`https://${IG_HOST}/instagram-account-daily-stats?id=${ig}&days=7`, IG_H),
     ])
 
     if (profile?.status?.code === 200) {
@@ -91,33 +91,57 @@ export async function GET(req: NextRequest) {
   }
 
   if (tt) {
-    const [profile, feed] = await Promise.all([
-      apiFetch(`https://${TT_HOST}/user/data/by/username/${tt}`, TT_H),
-      apiFetch(`https://${TT_HOST}/user/feed/by/username/${tt}`, TT_H),
+    const [userInfo, posts] = await Promise.all([
+      apiFetch(`https://${TT_HOST}/user/info?unique_id=${encodeURIComponent(tt)}`, TT_H),
+      apiFetch(`https://${TT_HOST}/user/posts?unique_id=${encodeURIComponent(tt)}&count=30&cursor=0`, TT_H),
     ])
 
-    if (profile?.data?.user) {
-      const u = profile.data.user
-      result.ttFollower = u.follower_count || 0
+    if (userInfo?.code === 0 && userInfo?.data) {
+      const u = userInfo.data.user || {}
+      const s = userInfo.data.stats || {}
+      result.ttFollower = s.followerCount || 0
       result.ttTier = getTier(result.ttFollower)
-      result.ttAvgLikes = u.total_favorited || 0
-      result.ttImage = u.avatar_thumb?.url_list?.[0] || ''
-      result.ttVerified = (u.verification_badge_type || 0) > 0
-      result.ttVideoCount = u.aweme_count || 0
-      result.ttFollowing = u.following_count || 0
+      result.ttAvgLikes = s.heartCount || 0
+      result.ttVideoCount = s.videoCount || 0
+      result.ttImage = u.avatarThumb || ''
+      result.ttVerified = u.verified || false
       if (!result.fullName) result.fullName = u.nickname || ''
     }
 
-    if (feed?.data?.aweme_list?.length) {
-      const posts = feed.data.aweme_list
-      const views = posts.map((p: any) => p.statistics?.play_count || 0).filter((v: number) => v > 0)
-      const lks = posts.map((p: any) => p.statistics?.digg_count || 0)
-      const cmts = posts.map((p: any) => p.statistics?.comment_count || 0)
-      result.ttAvgVideoViews = avg(views)
-      result.ttAvgVideoLikes = avg(lks)
-      result.ttAvgVideoComments = avg(cmts)
-      if (result.ttFollower && result.ttAvgVideoViews) {
-        result.ttEr = Math.round((result.ttAvgVideoViews / result.ttFollower) * 100 * 10) / 10
+    if (userInfo?.data?.user) {
+      const u = userInfo.data.user
+      result.ttImage = u.avatarThumb || result.ttImage || ''
+    }
+
+    if (posts?.code === 0 && posts?.data?.videos?.length) {
+      const videos = posts.data.videos
+      function getViews(v: any) { return v.stats?.playCount || v.stats?.play_count || v.play_count || 0 }
+      function getLikes(v: any) { return v.stats?.diggCount || v.stats?.like_count || v.digg_count || 0 }
+      function getComments(v: any) { return v.stats?.commentCount || v.stats?.comment_count || v.comment_count || 0 }
+
+      const notPinned = videos.filter((v: any) => !v.is_top && !v.isPinned && !v.pinned)
+      const pool = notPinned.length >= 5 ? notPinned : videos
+      const allViews = pool.map((v: any) => getViews(v)).filter((v: number) => v > 0)
+
+      if (allViews.length) {
+        const sorted = [...allViews].sort((a, b) => a - b)
+        const median = sorted[Math.floor(sorted.length / 2)]
+        const filtered = pool.filter((v: any) => {
+          const vv = getViews(v)
+          return vv >= median * 0.05 && vv <= median * 5
+        })
+        const toUse = (filtered.length >= 3 ? filtered : pool).slice(0, 10)
+
+        const views = toUse.map((v: any) => getViews(v)).filter((v: number) => v > 0)
+        const lks = toUse.map((v: any) => getLikes(v))
+        const cmts = toUse.map((v: any) => getComments(v))
+
+        result.ttAvgVideoViews = avg(views)
+        result.ttAvgVideoLikes = avg(lks)
+        result.ttAvgVideoComments = avg(cmts)
+        if (result.ttFollower && result.ttAvgVideoViews) {
+          result.ttEr = Math.round(((result.ttAvgVideoLikes + result.ttAvgVideoComments) / result.ttAvgVideoViews) * 100 * 10) / 10
+        }
       }
     }
   }
