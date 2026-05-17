@@ -388,7 +388,7 @@ export default function CreatorPage() {
                         <td key={col.key} className="px-5 py-4 whitespace-nowrap">{renderCell(c, col.key)}</td>
                       ))}
                       <td className="px-5 py-4">
-                        <button onClick={e => { e.stopPropagation(); setCreators(prev => prev.filter(x => x.name !== c.name)) }}
+                        <button onClick={async e => { e.stopPropagation(); if ((c as any)._id) await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE' }); setCreators(prev => prev.filter(x => x !== c)) }}
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
