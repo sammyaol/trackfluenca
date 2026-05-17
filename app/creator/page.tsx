@@ -92,7 +92,9 @@ const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio:
 export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
   useEffect(() => {
+    let mounted = true
     fetch('/api/creators').then(r => r.json()).then(data => {
+      if (!mounted) return
       if (Array.isArray(data)) setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
         igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
@@ -123,6 +125,7 @@ export default function CreatorPage() {
         tkpReel: c.tkp_reel, _id: c.id,
       })))
     })
+    return () => { mounted = false }
   }, [])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
