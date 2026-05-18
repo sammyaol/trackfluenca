@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 export async function middleware(req: NextRequest) {
-  const token = req.cookies.get('sb-whiomaberauihdwiaaoz-auth-token')?.value
-    || req.cookies.get('sb-access-token')?.value
-
-  const isPublic = req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/api')
+  const isPublic = req.nextUrl.pathname.startsWith('/login') || 
+                   req.nextUrl.pathname.startsWith('/api') ||
+                   req.nextUrl.pathname.startsWith('/_next')
   
-  if (!isPublic && !token) {
+  if (isPublic) return NextResponse.next()
+
+  // Check for any supabase auth cookie
+  const hasCookie = [...req.cookies.getAll()].some(c => 
+    c.name.includes('supabase') || c.name.includes('sb-')
+  )
+  
+  if (!hasCookie) {
     return NextResponse.redirect(new URL('/login', req.url))
   }
+  
   return NextResponse.next()
 }
 
