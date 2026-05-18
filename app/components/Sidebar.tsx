@@ -31,6 +31,11 @@ const nav = [
 
 export default function Sidebar() {
   const path = usePathname()
+  const [email, setEmail] = useState('')
+  const [showMenu, setShowMenu] = useState(false)
+  const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  useEffect(() => { sb.auth.getSession().then(({data}) => setEmail(data.session?.user?.email || '')) }, [])
+  const logout = async () => { await sb.auth.signOut(); window.location.href = '/login' }
 
   return (
     <>
