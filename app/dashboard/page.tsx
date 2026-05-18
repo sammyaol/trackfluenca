@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import Sidebar from '../components/Sidebar'
 import { useState, useEffect } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
 const tierColor: Record<string, string> = {
   'Nano': 'bg-gray-800/80 text-gray-400 border border-gray-700/50',
@@ -23,12 +24,14 @@ const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-am
 
 
 
+const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+
 export default function Dashboard() {
   const [creators, setCreators] = useState<any[]>([])
   useEffect(() => {
-    fetch('/api/creators').then(r => r.json()).then(data => {
+    sb.auth.getSession().then(({data:s})=>fetch('/api/creators',{headers:{authorization:'Bearer '+(s.session?.access_token||'')}}).then(r=>r.json()).then(data=>{
       if (Array.isArray(data)) setCreators(data)
-    })
+    }))
   }, [])
   const totalUmsatz = creators.reduce((s, c) => s + (c.ges_umsatz || c.org_umsatz || 0), 0)
   const deals = creators.filter(c => c.status === 'Deal').length
