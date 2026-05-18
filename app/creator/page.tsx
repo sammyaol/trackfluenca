@@ -191,9 +191,10 @@ export default function CreatorPage() {
     const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
     const tt = form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : ''
     const d = fetchedData || {}
+    const token = await getToken()
     await fetch('/api/creators', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify({
         name: form.name, ig, tt,
         ig_follower: d.igFollower || 0, tt_follower: d.ttFollower || 0,
