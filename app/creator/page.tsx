@@ -101,7 +101,7 @@ export default function CreatorPage() {
     sb.auth.getSession().then(async ({data: sessionData}) => {
       const userId = sessionData.session?.user?.id
       if (!userId) return
-      const { data } = await supabase.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
+      const { data } = await sb.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
       if (!mounted || !data) return
       setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
@@ -132,7 +132,7 @@ export default function CreatorPage() {
         ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
         tkpReel: c.tkp_reel, _id: c.id,
       })))
-    }))
+    })
     return () => { mounted = false }
   }, [])
   const [search, setSearch] = useState('')
