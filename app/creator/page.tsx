@@ -97,7 +97,10 @@ export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
   useEffect(() => {
     let mounted = true
-    getToken().then(token => fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(data => {
+    supabase.auth.getSession().then(({data: sessionData}) => {
+      const token = sessionData.session?.access_token || ''
+      return fetch('/api/creators', { headers: { authorization: token ? 'Bearer ' + token : '' } }).then(r => r.json())
+    }).then(data => {
       if (!mounted) return
       if (Array.isArray(data)) setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
