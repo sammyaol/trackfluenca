@@ -141,6 +141,7 @@ export default function CreatorPage() {
   const [visibleCols, setVisibleCols] = useState(['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS'])
   const [form, setForm] = useState(emptyForm)
   const [detailTab, setDetailTab] = useState('overview')
+  const [saving, setSaving] = useState(false)
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
   const toggleGroup = (group: string) => {
@@ -174,6 +175,8 @@ export default function CreatorPage() {
 
   const handleSave = async () => {
     if (!form.name || (!form.igHandle && !form.ttHandle)) return
+    if (saving) return
+    setSaving(true)
     const fee = Number(form.fee) || 0
     const produkt = Number(form.produkt) || 0
     const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
@@ -237,6 +240,7 @@ export default function CreatorPage() {
       ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
       tkpReel: c.tkp_reel, _id: c.id,
     })))
+    setSaving(false)
     closeModal()
   }
 
@@ -843,7 +847,7 @@ export default function CreatorPage() {
                       className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
                 </div>
 
-                <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle)}
+                <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle) || saving}
                   className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
                   Creator hinzufügen
                 </button>
