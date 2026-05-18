@@ -1,6 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { createBrowserClient } from '@supabase/ssr'
 
 const nav = [
   {
