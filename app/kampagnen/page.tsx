@@ -20,9 +20,15 @@ export default function Kampagnen() {
   const [form, setForm] = useState({ name: '', status: 'Aktiv', start_datum: '', end_datum: '', budget: '', beschreibung: '' })
   const [editForm, setEditForm] = useState<any>(null)
   const creatorInputRef = useRef<HTMLInputElement>(null)
+  const [allCreators, setAllCreators] = useState<any[]>([])
+  const [showCreatorDropdown, setShowCreatorDropdown] = useState(false)
 
   useEffect(() => {
     sb.auth.getSession().then(async ({data}) => {
+      const token = data.session?.access_token || ''
+      const cr = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
+      const crData = await cr.json()
+      if (Array.isArray(crData)) setAllCreators(crData)
       const token = data.session?.access_token || ''
       setLoading(true)
       const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
