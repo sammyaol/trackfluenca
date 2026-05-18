@@ -142,6 +142,7 @@ export default function CreatorPage() {
   const [form, setForm] = useState(emptyForm)
   const [detailTab, setDetailTab] = useState('overview')
   const [saving, setSaving] = useState(false)
+  const [snapshots, setSnapshots] = useState<any[]>([])
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
   const toggleGroup = (group: string) => {
@@ -393,7 +394,20 @@ export default function CreatorPage() {
                 </thead>
                 <tbody>
                   {filtered.map((c, i) => (
-                    <tr key={c.name} onClick={() => { setSelected(c); setDetailTab('overview') }}
+                    <tr key={c.name} onClick={async () => { 
+                      setSelected(c); setDetailTab('overview')
+                      const id = (c as any)._id
+                      if (id) {
+                        // Save today's snapshot
+                        getToken().then(token => fetch('/api/snapshots', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+                          body: JSON.stringify({ creator_id: id, ig_follower: c.igFollower, tt_follower: c.ttFollower, ig_avg_likes: c.igAvgLikes, ig_er: c.igEr, tt_avg_video_views: c.ttAvgVideoViews, tt_er: c.ttEr })
+                        }))
+                        // Load snapshot history
+                        getToken().then(token => fetch('/api/snapshots?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(d => setSnapshots(Array.isArray(d) ? d : [])))
+                      }
+                    }}
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
                       <td className="px-5 py-4 sticky left-0 bg-[#141414] overflow-visible">
                         <div className="flex items-center gap-3">
@@ -581,6 +595,31 @@ export default function CreatorPage() {
                   </>
                 )}
 
+                {detailTab === 'overview' && snapshots.length > 1 && (
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                    <p className="text-gray-500 text-xs font-medium mb-3">Follower-Entwicklung ({snapshots.length} Tage)</p>
+                    <div className="flex items-end gap-1 h-16">
+                      {snapshots.map((s: any, i: number) => {
+                        const maxIG = Math.max(...snapshots.map((x: any) => x.ig_follower || 0))
+                        const h = maxIG > 0 ? Math.max(((s.ig_follower || 0) / maxIG) * 100, 4) : 4
+                        const isLast = i === snapshots.length - 1
+                        return (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                            <div className={`w-full rounded-t ${isLast ? 'bg-[#7F77DD]' : 'bg-[#7F77DD]/30'}`} style={{height: h + '%'}} title={s.ig_follower?.toLocaleString('de-DE')} />
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-gray-600 text-[10px]">{new Date(snapshots[0]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
+                      <span className="text-gray-400 text-[10px]">
+                        {snapshots.length > 1 && ((snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)) > 0 ? '+' : ''}
+                        {snapshots.length > 1 ? ((snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)).toLocaleString('de-DE') : ''} IG
+                      </span>
+                      <span className="text-gray-600 text-[10px]">{new Date(snapshots[snapshots.length-1]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
+                    </div>
+                  </div>
+                )}
                 {detailTab === 'audience' && (
                   <>
                     {(selected.igGenderMale || selected.igGenderFemale) ? (
