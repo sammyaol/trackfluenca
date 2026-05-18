@@ -109,8 +109,10 @@ export async function GET(req: NextRequest) {
   result.ttWert = ttWert
   result.storyWert = storyWert
   result.affiliatePct = getAffPct(maxFollower)
+  // TKP wird erst nach Fee-Eintrag berechnet (fee / views * 1000)
+  // Vorschau-TKP basiert auf kalkuliertem Wert
   result.tkpReel = tkp(result.igAvgReelViews || 0, reelWert)
-  result.tkpStory = tkp(result.igFollower ? result.igFollower * 0.05 : 0, storyWert)
+  result.tkpStory = tkp(result.igAvgReelViews ? result.igFollower * 0.05 : 0, storyWert)
   result.tkpTT = tkp(result.ttAvgVideoViews || 0, ttWert)
 
   return NextResponse.json(result)
