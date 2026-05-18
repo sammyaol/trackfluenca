@@ -396,9 +396,8 @@ export default function CreatorPage() {
                           <div className="relative flex-shrink-0 w-12 h-9">
                             <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden z-10">
                               {(c.igImage || c.ttImage) ? (
-                                <img src={c.igImage || c.ttImage} alt={c.name} className="w-full h-full object-cover" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display='none' }} />
-                              ) : null}
-                              <span className={(c.igImage || c.ttImage) ? 'hidden' : ''}>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2)}</span>
+                                <img src={c.igImage || c.ttImage} alt={c.name} className="w-full h-full object-cover" onError={(e) => { const t = e.target as HTMLImageElement; t.style.display='none'; if(t.parentElement) t.parentElement.innerHTML = '<span>' + c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2) + '</span>' }} />
+                              ) : <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2)}</span>}
                             </div>
                             <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-[#141414] bg-[#555] flex items-center justify-center overflow-hidden z-20">
                               {c.tt
