@@ -73,15 +73,29 @@ export default function Sidebar() {
         </div>
 
         <div className="p-3 border-t border-white/[0.06]">
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-all group">
-            <div className="w-7 h-7 rounded-full bg-[#7F77DD] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">K</div>
-            <div className="flex-1 min-w-0">
-              <div className="text-white text-xs font-medium truncate">Kolure</div>
-              <div className="text-gray-500 text-xs">Pro Plan</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-600 group-hover:text-gray-400 transition-colors">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+          <div className="relative">
+            <button onClick={() => setShowMenu(p => !p)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-all group">
+              <div className="w-7 h-7 rounded-full bg-[#7F77DD] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+                {email ? email[0].toUpperCase() : 'U'}
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <div className="text-white text-xs font-medium truncate">{email || 'Mein Account'}</div>
+                <div className="text-gray-500 text-xs">Profil</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-600 group-hover:text-gray-400 transition-colors"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            {showMenu && (
+              <div className="absolute bottom-12 left-0 right-0 bg-[#1a1a1a] border border-white/[0.08] rounded-xl p-2 space-y-1">
+                <Link href="/einstellungen" onClick={() => setShowMenu(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.04] text-gray-300 text-xs transition-colors">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                  Profil bearbeiten
+                </Link>
+                <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-950/30 text-red-400 text-xs transition-colors">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Abmelden
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </aside>
