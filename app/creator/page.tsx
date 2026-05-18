@@ -823,9 +823,9 @@ export default function CreatorPage() {
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => updateCreator(selected, selected)}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-500 transition-colors font-medium"
+                    className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors font-medium backdrop-blur-sm"
                   >
-                    💾 Speichern
+                    Speichern
                   </button>
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
                   <button onClick={async () => { if ((selected as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(selected as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(c => c !== selected)); setSelected(null) }}

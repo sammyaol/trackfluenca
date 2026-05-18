@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
@@ -14,17 +14,21 @@ const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-am
 
 export default function Kampagnen() {
   const [kampagnen, setKampagnen] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [selected, setSelected] = useState<any | null>(null)
   const [form, setForm] = useState({ name: '', status: 'Aktiv', start_datum: '', end_datum: '', budget: '', beschreibung: '' })
   const [editForm, setEditForm] = useState<any>(null)
+  const creatorInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     sb.auth.getSession().then(async ({data}) => {
       const token = data.session?.access_token || ''
+      setLoading(true)
       const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
       const d = await res.json()
-      if (Array.isArray(d)) setKampagnen(d.map((k: any, i: number) => ({ ...k, farbe: farben[i % farben.length] })))
+      if (Array.isArray(d)) setKampagnen(d.map((k: any, i: number) => ({ ...k, creators: Array.isArray(k.creators) ? k.creators : [], farbe: farben[i % farben.length] })))
+      setLoading(false)
     })
   }, [])
 
@@ -95,7 +99,12 @@ export default function Kampagnen() {
               </div>
             ))}
           </div>
-          {kampagnen.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-20 gap-3">
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />
+              <span className="text-gray-500 text-sm">Kampagnen werden geladen...</span>
+            </div>
+          ) : kampagnen.length === 0 ? (
             <div className="text-center py-20 text-gray-600">Noch keine Kampagnen. Erstelle deine erste!</div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -195,13 +204,13 @@ export default function Kampagnen() {
                           const updated = (selected.creators || []).filter((_: string, j: number) => j !== i)
                           updateKampagne(selected.id, { creators: updated })
                           setSelected((p: any) => ({ ...p, creators: updated }))
-                        }} className="text-red-500 text-xs hover:text-red-400">✕</button>
+                        }} className="text-red-500 text-xs hover:text-red-400 ml-2">✕</button>
                       </div>
                     ))}
                   </div>
                   <div className="flex gap-2">
                     <input
-                      id="creator-input"
+                      ref={creatorInputRef}
                       type="text"
                       placeholder="Creator hinzufügen (@handle)"
                       className="flex-1 bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600"
@@ -212,18 +221,17 @@ export default function Kampagnen() {
                           const updated = [...(selected.creators || []), val]
                           updateKampagne(selected.id, { creators: updated })
                           setSelected((p: any) => ({ ...p, creators: updated }));
-                          (e.target as HTMLInputElement).value = ''
+                          if (creatorInputRef.current) creatorInputRef.current.value = ''
                         }
                       }}
                     />
                     <button onClick={() => {
-                      const inp = document.getElementById('creator-input') as HTMLInputElement
-                      const val = inp?.value.trim()
+                      const val = creatorInputRef.current?.value.trim()
                       if (!val) return
                       const updated = [...(selected.creators || []), val]
                       updateKampagne(selected.id, { creators: updated })
                       setSelected((p: any) => ({ ...p, creators: updated }))
-                      inp.value = ''
+                      if (creatorInputRef.current) creatorInputRef.current.value = ''
                     }} className="px-3 py-2 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7]">
                       + Add
                     </button>
