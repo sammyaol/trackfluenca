@@ -103,7 +103,7 @@ export default function CreatorPage() {
       if (!userId) return
       const { data } = await supabase.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
       if (!mounted || !data) return
-      setCreators(data.map((c: any) => ({{
+      setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
         igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
         igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
