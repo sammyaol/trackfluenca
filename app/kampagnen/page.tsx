@@ -17,6 +17,7 @@ export default function Kampagnen() {
   const [showModal, setShowModal] = useState(false)
   const [selected, setSelected] = useState<any | null>(null)
   const [form, setForm] = useState({ name: '', status: 'Aktiv', start_datum: '', end_datum: '', budget: '', beschreibung: '' })
+  const [editForm, setEditForm] = useState<any>(null)
 
   useEffect(() => {
     sb.auth.getSession().then(async ({data}) => {
@@ -48,6 +49,18 @@ export default function Kampagnen() {
     await fetch(`/api/kampagnen/${id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })
     setKampagnen(prev => prev.filter(k => k.id !== id))
     setSelected(null)
+  }
+
+  const updateKampagne = async (id: string, fields: any) => {
+    const { data: s } = await sb.auth.getSession()
+    const token = s.session?.access_token || ''
+    await fetch(`/api/kampagnen/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify(fields)
+    })
+    setKampagnen(prev => prev.map(k => k.id === id ? { ...k, ...fields } : k))
+    setSelected((prev: any) => prev ? { ...prev, ...fields } : prev)
   }
 
   const totalBudget = kampagnen.reduce((s, k) => s + (k.budget || 0), 0)
@@ -136,24 +149,42 @@ export default function Kampagnen() {
                 </div>
                 <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
               </div>
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {[
-                    { label: 'Budget', value: `${(selected.budget || 0).toLocaleString('de-DE')} €` },
-                    { label: 'Umsatz', value: (selected.umsatz || 0) > 0 ? `${selected.umsatz.toLocaleString('de-DE')} €` : '—', color: 'text-emerald-400' },
-                    { label: 'ROAS', value: (selected.roas || 0) > 0 ? `${selected.roas}x` : '—', color: roasColor(selected.roas || 0) },
-                    { label: 'Status', value: selected.status },
-                  ].map(m => (
-                    <div key={m.label} className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                      <div className="text-gray-600 text-xs mb-1">{m.label}</div>
-                      <div className={`text-lg font-semibold ${m.color || 'text-white'}`}>{m.value}</div>
-                    </div>
-                  ))}
+              <div className="p-6 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06]">
+                    <div className="text-gray-600 text-xs mb-1">Budget</div>
+                    <div className="text-lg font-semibold text-white">{(selected.budget || 0).toLocaleString('de-DE')} €</div>
+                  </div>
+                  <div className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06]">
+                    <div className="text-gray-600 text-xs mb-1">Status</div>
+                    <select value={selected.status} onChange={e => updateKampagne(selected.id, {status: e.target.value})} className="bg-transparent text-white text-sm font-semibold w-full focus:outline-none">
+                      {['Aktiv','Geplant','Abgeschlossen'].map(s => <option key={s} className="bg-[#1a1a1a]">{s}</option>)}
+                    </select>
+                  </div>
                 </div>
-                {selected.beschreibung && <p className="text-gray-500 text-xs mb-4">{selected.beschreibung}</p>}
-                <div className="flex gap-2">
-                  <button onClick={() => deleteKampagne(selected.id)} className="flex-1 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
+                <div>
+                  <label className="text-gray-600 text-xs block mb-1">Name</label>
+                  <input defaultValue={selected.name} onBlur={e => updateKampagne(selected.id, {name: e.target.value})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none" />
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-gray-600 text-xs block mb-1">Start</label>
+                    <input defaultValue={selected.start_datum} onBlur={e => updateKampagne(selected.id, {start_datum: e.target.value})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-gray-600 text-xs block mb-1">Ende</label>
+                    <input defaultValue={selected.end_datum} onBlur={e => updateKampagne(selected.id, {end_datum: e.target.value})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-gray-600 text-xs block mb-1">Budget €</label>
+                  <input type="number" defaultValue={selected.budget} onBlur={e => updateKampagne(selected.id, {budget: Number(e.target.value)})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-gray-600 text-xs block mb-1">Beschreibung</label>
+                  <textarea defaultValue={selected.beschreibung} onBlur={e => updateKampagne(selected.id, {beschreibung: e.target.value})} rows={2} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none resize-none" />
+                </div>
+                <button onClick={() => deleteKampagne(selected.id)} className="w-full py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
               </div>
             </div>
           </div>
