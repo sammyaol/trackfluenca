@@ -6,8 +6,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+type Context = { params: Promise<{ id: string }> }
+
+export async function PATCH(req: NextRequest, ctx: Context) {
+  const { id } = await ctx.params
   const body = await req.json()
   const { data, error } = await supabase
     .from('creators')
@@ -19,8 +21,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json(data)
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export async function DELETE(req: NextRequest, ctx: Context) {
+  const { id } = await ctx.params
   const { error } = await supabase
     .from('creators')
     .delete()
