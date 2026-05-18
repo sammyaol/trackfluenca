@@ -12,24 +12,6 @@ export async function GET() {
     .select('*')
     .order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Upload avatar to Supabase Storage
-  const imageUrl = body.ig_image || body.tt_image
-  if (imageUrl && data?.id) {
-    try {
-      const imgRes = await fetch(imageUrl)
-      if (imgRes.ok) {
-        const buffer = await imgRes.arrayBuffer()
-        await supabase.storage.from('avatars').upload(`${data.id}.jpg`, buffer, {
-          contentType: 'image/jpeg', upsert: true
-        })
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(`${data.id}.jpg`)
-        await supabase.from('creators').update({ ig_image: urlData.publicUrl }).eq('id', data.id)
-        data.ig_image = urlData.publicUrl
-      }
-    } catch {}
-  }
-
   return NextResponse.json(data)
 }
 
@@ -42,7 +24,6 @@ export async function POST(req: NextRequest) {
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Upload avatar to Supabase Storage
   const imageUrl = body.ig_image || body.tt_image
   if (imageUrl && data?.id) {
     try {
