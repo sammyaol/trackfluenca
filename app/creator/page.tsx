@@ -3,8 +3,7 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
-const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-async function getToken() { const { data } = await supabase.auth.getSession(); return data.session?.access_token || localStorage.getItem('sb_token') || '' }
+
 
 type Creator = {
   name: string; ig: string; tt: string;
@@ -95,14 +94,16 @@ const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio:
 
 export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
+  const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const getToken = async () => { const { data } = await sb.auth.getSession(); return data.session?.access_token || '' }
   useEffect(() => {
     let mounted = true
-    supabase.auth.getSession().then(({data: sessionData}) => {
-      const token = sessionData.session?.access_token || ''
-      return fetch('/api/creators', { headers: { authorization: token ? 'Bearer ' + token : '' } }).then(r => r.json())
-    }).then(data => {
-      if (!mounted) return
-      if (Array.isArray(data)) setCreators(data.map((c: any) => ({
+    sb.auth.getSession().then(async ({data: sessionData}) => {
+      const userId = sessionData.session?.user?.id
+      if (!userId) return
+      const { data } = await supabase.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
+      if (!mounted || !data) return
+      setCreators(data.map((c: any) => ({{
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
         igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
         igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
