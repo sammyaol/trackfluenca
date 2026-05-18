@@ -184,6 +184,51 @@ export default function Kampagnen() {
                   <label className="text-gray-600 text-xs block mb-1">Beschreibung</label>
                   <textarea defaultValue={selected.beschreibung} onBlur={e => updateKampagne(selected.id, {beschreibung: e.target.value})} rows={2} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-sm focus:outline-none resize-none" />
                 </div>
+                {/* Creator-Bereich */}
+                <div>
+                  <label className="text-gray-600 text-xs block mb-2">Creator in dieser Kampagne</label>
+                  <div className="space-y-2 mb-2">
+                    {(selected.creators || []).map((c: string, i: number) => (
+                      <div key={i} className="flex items-center justify-between bg-[#0A0A0A] rounded-lg px-3 py-2 border border-white/[0.06]">
+                        <span className="text-white text-xs">{c}</span>
+                        <button onClick={() => {
+                          const updated = (selected.creators || []).filter((_: string, j: number) => j !== i)
+                          updateKampagne(selected.id, { creators: updated })
+                          setSelected((p: any) => ({ ...p, creators: updated }))
+                        }} className="text-red-500 text-xs hover:text-red-400">✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      id="creator-input"
+                      type="text"
+                      placeholder="Creator hinzufügen (@handle)"
+                      className="flex-1 bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          const val = (e.target as HTMLInputElement).value.trim()
+                          if (!val) return
+                          const updated = [...(selected.creators || []), val]
+                          updateKampagne(selected.id, { creators: updated })
+                          setSelected((p: any) => ({ ...p, creators: updated }));
+                          (e.target as HTMLInputElement).value = ''
+                        }
+                      }}
+                    />
+                    <button onClick={() => {
+                      const inp = document.getElementById('creator-input') as HTMLInputElement
+                      const val = inp?.value.trim()
+                      if (!val) return
+                      const updated = [...(selected.creators || []), val]
+                      updateKampagne(selected.id, { creators: updated })
+                      setSelected((p: any) => ({ ...p, creators: updated }))
+                      inp.value = ''
+                    }} className="px-3 py-2 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7]">
+                      + Add
+                    </button>
+                  </div>
+                </div>
                 <button onClick={() => deleteKampagne(selected.id)} className="w-full py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
               </div>
             </div>

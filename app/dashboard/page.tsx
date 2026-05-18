@@ -53,7 +53,9 @@ export default function Dashboard() {
         <div className="border-b border-white/[0.06] px-8 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
           <div>
             <h1 className="text-white font-semibold text-lg">Dashboard</h1>
-            <p className="text-gray-500 text-xs mt-0.5">Freitag, 16. Mai 2026</p>
+            <p className="text-gray-500 text-xs mt-0.5">
+                {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </p>
           </div>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/[0.08] text-gray-400 text-xs hover:bg-white/[0.04] transition-colors">
