@@ -97,7 +97,7 @@ export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
   useEffect(() => {
     let mounted = true
-    fetch('/api/creators').then(r => r.json()).then(data => {
+    getToken().then(token => fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(data => {
       if (!mounted) return
       if (Array.isArray(data)) setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
@@ -214,7 +214,8 @@ export default function CreatorPage() {
         tt_avg_video_views: d.ttAvgVideoViews || 0,
       })
     })
-    const res = await fetch('/api/creators')
+    const token2 = await getToken()
+    const res = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token2 } })
     const data = await res.json()
     if (Array.isArray(data)) setCreators(data.map((c: any) => ({
       name: c.name || '', ig: c.ig || '', tt: c.tt || '',
