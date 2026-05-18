@@ -128,7 +128,7 @@ export default function CreatorPage() {
         ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
         tkpReel: c.tkp_reel, _id: c.id,
       })))
-    })
+    }))
     return () => { mounted = false }
   }, [])
   const [search, setSearch] = useState('')
