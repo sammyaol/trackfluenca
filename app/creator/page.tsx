@@ -135,6 +135,14 @@ export default function CreatorPage() {
     })
     return () => { mounted = false }
   }, [])
+  useEffect(() => {
+    sb.auth.getSession().then(async ({data}) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      if (Array.isArray(d)) setKampagnenList(d.map((k: any) => k.name))
+    })
+  }, [])
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterTier, setFilterTier] = useState('')
@@ -151,6 +159,7 @@ export default function CreatorPage() {
   const [detailTab, setDetailTab] = useState('overview')
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
+  const [kampagnenList, setKampagnenList] = useState<string[]>([])
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
   const toggleGroup = (group: string) => {
@@ -777,7 +786,10 @@ export default function CreatorPage() {
                       </div>
                       <div>
                         <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
-                        <input value={selected.kampagne || ''} onChange={e => setSelected(p => p ? {...p, kampagne: e.target.value} : p)} onBlur={e => updateCreator(selected, {kampagne: e.target.value})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="z.B. SS25" />
+                        <select value={selected.kampagne || ''} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, kampagne: v} : p); updateCreator(selected, {kampagne: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                          <option value="">— Keine —</option>
+                          {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
+                        </select>
                       </div>
                       <div>
                         <label className="text-gray-600 text-xs block mb-1">Notizen</label>
