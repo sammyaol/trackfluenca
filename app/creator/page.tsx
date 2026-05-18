@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
 const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-async function getToken() { const { data } = await supabase.auth.getSession(); return data.session?.access_token || '' }
+async function getToken() { const { data } = await supabase.auth.getSession(); return data.session?.access_token || localStorage.getItem('sb_token') || '' }
 
 type Creator = {
   name: string; ig: string; tt: string;

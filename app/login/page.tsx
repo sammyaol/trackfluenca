@@ -21,7 +21,13 @@ export default function LoginPage() {
       ? await supabase.auth.signUp({ email, password })
       : await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false) }
-    else window.location.href = '/creator'
+    else {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.access_token) {
+        localStorage.setItem('sb_token', session.access_token)
+      }
+      window.location.href = '/creator'
+    }
   }
 
   return (
