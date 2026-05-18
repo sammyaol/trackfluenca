@@ -391,7 +391,7 @@ export default function CreatorPage() {
                   {filtered.map((c, i) => (
                     <tr key={c.name} onClick={() => { setSelected(c); setDetailTab('overview') }}
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
-                      <td className="px-5 py-4 sticky left-0 bg-[#141414]">
+                      <td className="px-5 py-4 sticky left-0 bg-[#141414] overflow-visible">
                         <div className="flex items-center gap-3">
                           <div className="relative flex-shrink-0 w-12 h-9">
                             <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden z-10">
