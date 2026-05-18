@@ -10,11 +10,15 @@ type Context = { params: Promise<{ id: string }> }
 
 export async function PATCH(req: NextRequest, ctx: Context) {
   const { id } = await ctx.params
+  const token = req.headers.get('authorization')?.replace('Bearer ', '')
+  const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
   const { data, error } = await supabase
     .from('creators')
     .update(body)
     .eq('id', id)
+    .eq('user_id', user.id)
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -23,10 +27,14 @@ export async function PATCH(req: NextRequest, ctx: Context) {
 
 export async function DELETE(req: NextRequest, ctx: Context) {
   const { id } = await ctx.params
+  const token = req.headers.get('authorization')?.replace('Bearer ', '')
+  const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { error } = await supabase
     .from('creators')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
 }
