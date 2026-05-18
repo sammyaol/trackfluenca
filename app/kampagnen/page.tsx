@@ -1,13 +1,9 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
+import { createBrowserClient } from '@supabase/ssr'
 
-const kampagnen = [
-  { name: 'SS25 Launch', status: 'Aktiv', start: '01.05.2026', end: '31.07.2026', creator: 8, budget: 25000, ausgegeben: 18400, umsatz: 77280, roas: 4.2, farbe: 'from-violet-600 to-purple-800' },
-  { name: 'AW25 Schmuck', status: 'Geplant', start: '01.09.2026', end: '30.11.2026', creator: 5, budget: 18000, ausgegeben: 0, umsatz: 0, roas: 0, farbe: 'from-blue-600 to-cyan-800' },
-  { name: 'Black Friday 2026', status: 'Geplant', start: '20.11.2026', end: '30.11.2026', creator: 3, budget: 35000, ausgegeben: 0, umsatz: 0, roas: 0, farbe: 'from-amber-600 to-orange-800' },
-  { name: 'Evergreen', status: 'Abgeschlossen', start: '01.01.2026', end: '30.04.2026', creator: 4, budget: 12000, ausgegeben: 12000, umsatz: 75600, roas: 6.3, farbe: 'from-emerald-600 to-teal-800' },
-]
+
 
 const statusStyle: Record<string, string> = {
   'Aktiv': 'text-emerald-400 bg-emerald-950 border border-emerald-800/30',
