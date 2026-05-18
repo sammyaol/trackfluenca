@@ -445,7 +445,7 @@ export default function CreatorPage() {
                         <td key={col.key} className="px-5 py-4 whitespace-nowrap">{renderCell(c, col.key)}</td>
                       ))}
                       <td className="px-5 py-4">
-                        <button onClick={async e => { e.stopPropagation(); if ((c as any)._id) await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE' }); setCreators(prev => prev.filter(x => x !== c)) }}
+                        <button onClick={async e => { e.stopPropagation(); if ((c as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(x => x !== c)) }}
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
@@ -810,7 +810,7 @@ export default function CreatorPage() {
 
                 <div className="flex gap-2 pt-2">
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
-                  <button onClick={async () => { if ((selected as any)._id) await fetch(`/api/creators/${(selected as any)._id}`, {method:'DELETE'}); setCreators(prev => prev.filter(c => c !== selected)); setSelected(null) }}
+                  <button onClick={async () => { if ((selected as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(selected as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(c => c !== selected)); setSelected(null) }}
                     className="px-4 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">
                     Löschen
                   </button>
