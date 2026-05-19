@@ -669,8 +669,7 @@ export default function CreatorPage() {
                     <div className="flex items-end gap-1 h-16">
                       {snapshots.map((s: any, i: number) => {
                         const maxIG = Math.max(...snapshots.map((x: any) => x.ig_follower || 0))
-                        const minH = 20
-                        const h = maxIG > 0 ? Math.max(((s.ig_follower || 0) / maxIG) * (100 - minH) + minH, minH) : minH
+                        const h = 100
                         const isLast = i === snapshots.length - 1
                         return (
                           <div key={i} className="flex-1 flex flex-col items-center gap-1">
