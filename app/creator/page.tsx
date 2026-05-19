@@ -269,6 +269,23 @@ export default function CreatorPage() {
       ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
       tkpReel: c.tkp_reel, _id: c.id,
     })))
+    // Direkt Snapshot erstellen für den neuen Creator
+    if (c.id) {
+      const t2 = await getToken()
+      await fetch('/api/snapshots', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + t2 },
+        body: JSON.stringify({
+          creator_id: c.id,
+          ig_follower: c.ig_follower || 0,
+          tt_follower: c.tt_follower || 0,
+          ig_avg_likes: c.ig_avg_likes || 0,
+          ig_er: c.ig_er || 0,
+          tt_avg_video_views: c.tt_avg_video_views || 0,
+          tt_er: c.tt_er || 0,
+        })
+      })
+    }
     setSaving(false)
     closeModal()
   }
