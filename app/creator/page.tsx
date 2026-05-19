@@ -989,6 +989,11 @@ export default function CreatorPage() {
                   <button
                     onClick={async () => {
                       setSaveState('loading')
+                      const gesamt = (selected.fee||0) + (selected.produkt||0)
+                      const orgROAS = gesamt > 0 ? Math.round(((selected.orgUmsatz||0) / gesamt) * 100) / 100 : 0
+                      const adROAS = (selected.adSpend||0) > 0 ? Math.round(((selected.adUmsatz||0) / (selected.adSpend||0)) * 100) / 100 : 0
+                      const gesUmsatz = (selected.orgUmsatz||0) + (selected.adUmsatz||0)
+                      const gesROAS = gesamt > 0 ? Math.round((gesUmsatz / gesamt) * 100) / 100 : 0
                       await updateCreator(selected, {
                         status: selected.status,
                         prio: selected.prio,
@@ -1002,7 +1007,9 @@ export default function CreatorPage() {
                         produkt: selected.produkt,
                         promoCode: selected.promoCode,
                         datum: selected.datum,
+                        orgROAS, adROAS, gesUmsatz, gesROAS,
                       })
+                      setSelected((p:any) => p ? {...p, orgROAS, adROAS, gesUmsatz, gesROAS} : p)
                       setSaveState('done')
                       setTimeout(() => setSaveState('idle'), 2000)
                     }}
