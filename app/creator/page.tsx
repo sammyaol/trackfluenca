@@ -164,6 +164,8 @@ export default function CreatorPage() {
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [snapshotLoading, setSnapshotLoading] = useState(false)
+  const [followerDays, setFollowerDays] = useState(30)
+  const [chartHover, setChartHover] = useState<any>(null)
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
