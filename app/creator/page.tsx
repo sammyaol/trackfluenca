@@ -563,7 +563,6 @@ export default function CreatorPage() {
                         </button>
                       </td>
                     </tr>
-                  <>
                     {expandedCreator === (c as any)._id && (
                       <tr>
                         <td colSpan={99} className="bg-[#0D0D0D] px-5 py-3 border-b border-white/[0.04]">
@@ -594,14 +593,10 @@ export default function CreatorPage() {
                                 </div>
                               ))}
                             </div>
-                    )}
-                  </>
+                          )}
                         </td>
                       </tr>
                     )}
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
