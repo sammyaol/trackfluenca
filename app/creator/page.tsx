@@ -725,6 +725,49 @@ export default function CreatorPage() {
                     </div>
                   </div>
                 )}
+                {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
+                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-gray-500 text-xs font-medium">Ø TikTok Views</p>
+                      <span className="text-gray-400 text-[10px]">
+                        {(() => {
+                          const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
+                          const diff = (valid[valid.length-1].tt_avg_video_views||0) - (valid[0].tt_avg_video_views||0)
+                          return `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} Views`
+                        })()}
+                      </span>
+                    </div>
+                    <div className="relative" style={{height: '80px'}}>
+                      {(() => {
+                        const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
+                        const vals = valid.map((s:any) => s.tt_avg_video_views||0)
+                        const minV = Math.min(...vals)
+                        const maxV = Math.max(...vals)
+                        const range = maxV - minV || 1
+                        const w = 100 / (valid.length - 1)
+                        const points = valid.map((s:any, i:number) => {
+                          const x = i * w
+                          const y = 90 - (((s.tt_avg_video_views||0) - minV) / range) * 80
+                          return `${x},${y}`
+                        }).join(' ')
+                        const last = valid[valid.length-1]
+                        const lastX = 100
+                        const lastY = 90 - (((last.tt_avg_video_views||0) - minV) / range) * 80
+                        return (
+                          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                            <polyline points={points} fill="none" stroke="#F59E0B" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+                            <circle cx={lastX} cy={lastY} r="2" fill="#F59E0B" vectorEffect="non-scaling-stroke"/>
+                          </svg>
+                        )
+                      })()}
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-gray-600 text-[10px]">{(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
+                      <span className="text-gray-600 text-[10px]">{snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).length} Tage</span>
+                      <span className="text-gray-400 text-[10px]">{(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).slice(-1)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
+                    </div>
+                  </div>
+                )}
                 {detailTab === 'audience' && (
                   <>
                     {(selected.igGenderMale || selected.igGenderFemale) ? (
