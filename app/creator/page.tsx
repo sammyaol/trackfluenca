@@ -666,14 +666,14 @@ export default function CreatorPage() {
                 {detailTab === 'overview' && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <p className="text-gray-500 text-xs font-medium mb-3">Follower-Entwicklung ({snapshots.length} Tage)</p>
-                    <div className="flex items-end gap-1 h-16">
+                    <div className="flex items-end gap-1" style={{height: "64px"}}>
                       {snapshots.map((s: any, i: number) => {
                         const maxIG = Math.max(...snapshots.map((x: any) => x.ig_follower || 0))
                         const h = 100
                         const isLast = i === snapshots.length - 1
                         return (
                           <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                            <div className={`w-full rounded-t ${isLast ? 'bg-[#7F77DD]' : 'bg-[#7F77DD]/30'}`} style={{height: h + '%'}} title={s.ig_follower?.toLocaleString('de-DE')} />
+                            <div className={`w-full rounded-t ${isLast ? 'bg-[#7F77DD]' : 'bg-[#7F77DD]/30'}`} style={{height: h * 0.64 + 'px'}} title={s.ig_follower?.toLocaleString('de-DE')} />
                           </div>
                         )
                       })}
