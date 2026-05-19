@@ -441,7 +441,7 @@ export default function CreatorPage() {
               <span className="text-gray-500 text-sm">Creator werden geladen...</span>
             </div>
           )}
-          {!tableLoading && <div className="flex gap-3 mb-5 flex-wrap">
+          <div className="flex gap-3 mb-5 flex-wrap" style={{display: tableLoading ? 'none' : 'flex'}}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, Handle oder Code..."
               className="flex-1 min-w-48 bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" />
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
