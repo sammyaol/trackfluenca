@@ -164,6 +164,8 @@ export default function CreatorPage() {
   const [showPostings, setShowPostings] = useState<string|null>(null)
   const [showAddPosting, setShowAddPosting] = useState(false)
   const [postingSaving, setPostingSaving] = useState(false)
+  const [expandedCreator, setExpandedCreator] = useState<string|null>(null)
+  const [expandedPostings, setExpandedPostings] = useState<Record<string,any[]>>({})
   const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
   const [tableLoading, setTableLoading] = useState(true)
   const [saving, setSaving] = useState(false)
