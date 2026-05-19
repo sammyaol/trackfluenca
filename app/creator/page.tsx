@@ -500,8 +500,8 @@ export default function CreatorPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((c, i) => {
-                    return (<>
+                  {filtered.map((c, i) => (
+                    <tr key={c.name} onClick={async () => { 
                       setSelected(c); setDetailTab('overview')
                       const id = (c as any)._id
                       if (id) {
