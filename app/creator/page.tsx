@@ -597,6 +597,8 @@ export default function CreatorPage() {
                         </td>
                       </tr>
                     )}
+                  ))}
+                </tbody>
             </div>
           </div>
         </div>
