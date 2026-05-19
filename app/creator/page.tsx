@@ -682,55 +682,69 @@ export default function CreatorPage() {
                 )}
                 {detailTab === 'overview' && !snapshotLoading && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="url(#igGrad)"><defs><linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="25%" stopColor="#e6683c"/><stop offset="50%" stopColor="#dc2743"/><stop offset="75%" stopColor="#cc2366"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                          {(() => { const d = (snapshots[snapshots.length-1].ig_follower||0)-(snapshots[0].ig_follower||0); return `${d>0?'+':''}${d.toLocaleString('de-DE')}` })()}
-                        </span>
-                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.52V6.76a4.85 4.85 0 01-1.02-.07z"/></svg>
-                          {(() => { const d = (snapshots[snapshots.length-1].tt_follower||0)-(snapshots[0].tt_follower||0); return `${d>0?'+':''}${d.toLocaleString('de-DE')}` })()}
-                        </span>
+                      <div className="flex items-center gap-1">
+                        {[7,15,30].map((d:number) => (
+                          <button key={d} onClick={() => setFollowerDays(d)}
+                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${followerDays===d ? 'bg-[#7F77DD] text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                            {d}T
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <div className="relative" style={{height: '80px'}}>
-                      {(() => {
-                        const igVals = snapshots.map((s:any) => s.ig_follower||0)
-                        const ttVals = snapshots.map((s:any) => s.tt_follower||0)
-                        const allVals = [...igVals, ...ttVals]
-                        const minV = Math.min(...allVals)
-                        const maxV = Math.max(...allVals)
-                        const range = maxV - minV || 1
-                        const w = 100 / (snapshots.length - 1)
-                        const igPoints = snapshots.map((s:any,i:number) => `${i*w},${90-(((s.ig_follower||0)-minV)/range)*80}`).join(' ')
-                        const ttPoints = snapshots.map((s:any,i:number) => `${i*w},${90-(((s.tt_follower||0)-minV)/range)*80}`).join(' ')
-                        const lastIG = snapshots[snapshots.length-1]
-                        const lastTT = snapshots[snapshots.length-1]
-                        return (
+                    {(() => {
+                      const sl = snapshots.slice(-followerDays)
+                      if (sl.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
+                      const igLast = sl[sl.length-1]?.ig_follower||0
+                      const ttLast = sl[sl.length-1]?.tt_follower||0
+                      const igFirst = sl[0]?.ig_follower||0
+                      const ttFirst = sl[0]?.tt_follower||0
+                      const igDiff = igLast - igFirst
+                      const ttDiff = ttLast - ttFirst
+                      const allVals = [...sl.map((s:any)=>s.ig_follower||0),...sl.map((s:any)=>s.tt_follower||0)]
+                      const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV-minV||1
+                      const w = 100/(sl.length-1)
+                      const igPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.ig_follower||0)-minV)/range)*80}`).join(' ')
+                      const ttPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.tt_follower||0)-minV)/range)*80}`).join(' ')
+                      return (<>
+                        <div className="flex items-center gap-4 mb-2">
+                          <span className="flex items-center gap-1.5 text-[10px] text-gray-300">
+                            <span className="w-2 h-0.5 bg-[#E1306C] inline-block rounded"/>
+                            IG {igLast.toLocaleString('de-DE')}
+                            <span className={igDiff>=0?'text-emerald-400':'text-red-400'}>{igDiff>=0?'+':''}{igDiff.toLocaleString('de-DE')}</span>
+                          </span>
+                          <span className="flex items-center gap-1.5 text-[10px] text-gray-300">
+                            <span className="w-2 h-0.5 bg-white/60 inline-block rounded"/>
+                            TT {ttLast.toLocaleString('de-DE')}
+                            <span className={ttDiff>=0?'text-emerald-400':'text-red-400'}>{ttDiff>=0?'+':''}{ttDiff.toLocaleString('de-DE')}</span>
+                          </span>
+                        </div>
+                        <div className="relative" style={{height:'80px'}}
+                          onMouseMove={e => {
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const x = (e.clientX-rect.left)/rect.width
+                            const idx = Math.min(Math.round(x*(sl.length-1)),sl.length-1)
+                            const s = sl[idx]
+                            setChartHover({ig:s.ig_follower||0,tt:s.tt_follower||0,date:new Date(s.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),pct:x*100})
+                          }}
+                          onMouseLeave={()=>setChartHover(null)}>
                           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                            <polyline points={igPoints} fill="none" stroke="#E1306C" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-                            <polyline points={ttPoints} fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="3,2" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={igPts} fill="none" stroke="#E1306C" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={ttPts} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeDasharray="3,2" vectorEffect="non-scaling-stroke"/>
                           </svg>
-                        )
-                      })()}
-                    </div>
-                    <div className="flex justify-between mt-2">
-                      <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <span className="w-2 h-0.5 bg-[#E1306C] rounded inline-block"/>IG {(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}
-                        </span>
-                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
-                          <span className="w-2 h-0.5 bg-white/50 rounded inline-block"/>TT {(snapshots[0]?.tt_follower||0).toLocaleString('de-DE')}
-                        </span>
-                      </div>
-                      <span className="text-gray-600 text-[10px]">{snapshots.length} Tage</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-400 text-[10px]">IG {(snapshots[snapshots.length-1]?.ig_follower||0).toLocaleString('de-DE')}</span>
-                        <span className="text-gray-400 text-[10px]">TT {(snapshots[snapshots.length-1]?.tt_follower||0).toLocaleString('de-DE')}</span>
-                      </div>
-                    </div>
+                          {chartHover && (
+                            <div className="absolute top-0 pointer-events-none z-10" style={{left:`${Math.min(chartHover.pct,70)}%`}}>
+                              <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-1.5 shadow-xl">
+                                <div className="text-gray-400 text-[10px] mb-1">{chartHover.date}</div>
+                                <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#E1306C] rounded-full inline-block"/>IG {chartHover.ig.toLocaleString('de-DE')}</div>
+                                <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-white/60 rounded-full inline-block"/>TT {chartHover.tt.toLocaleString('de-DE')}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>)
+                    })()}
                   </div>
                 )}
                 {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
