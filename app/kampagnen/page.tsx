@@ -29,7 +29,6 @@ export default function Kampagnen() {
       const cr = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
       const crData = await cr.json()
       if (Array.isArray(crData)) setAllCreators(crData)
-      const token = data.session?.access_token || ''
       setLoading(true)
       const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
       const d = await res.json()
