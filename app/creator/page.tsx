@@ -749,6 +749,7 @@ export default function CreatorPage() {
                     })()}
                   </div>
                 )}
+                {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
