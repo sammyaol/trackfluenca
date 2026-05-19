@@ -681,8 +681,13 @@ export default function CreatorPage() {
                     <div className="flex justify-between mt-1">
                       <span className="text-gray-600 text-[10px]">{new Date(snapshots[0]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
                       <span className="text-gray-400 text-[10px]">
-                        {snapshots.length > 1 && ((snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)) > 0 ? '+' : ''}
-                        {snapshots.length > 1 ? ((snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)).toLocaleString('de-DE') : ''} IG
+                        {(() => {
+                          const diff = (snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)
+                          const last = snapshots[snapshots.length-1].ig_follower || 0
+                          return diff === 0
+                            ? `${last.toLocaleString('de-DE')} IG`
+                            : `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} IG`
+                        })()}
                       </span>
                       <span className="text-gray-600 text-[10px]">{new Date(snapshots[snapshots.length-1]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
                     </div>
