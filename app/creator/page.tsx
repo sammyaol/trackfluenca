@@ -681,50 +681,53 @@ export default function CreatorPage() {
                 {detailTab === 'overview' && !snapshotLoading && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px]">📸</span>
-                        <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
+                      <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="url(#igGrad)"><defs><linearGradient id="igGrad" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="25%" stopColor="#e6683c"/><stop offset="50%" stopColor="#dc2743"/><stop offset="75%" stopColor="#cc2366"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                          {(() => { const d = (snapshots[snapshots.length-1].ig_follower||0)-(snapshots[0].ig_follower||0); return `${d>0?'+':''}${d.toLocaleString('de-DE')}` })()}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.79 1.52V6.76a4.85 4.85 0 01-1.02-.07z"/></svg>
+                          {(() => { const d = (snapshots[snapshots.length-1].tt_follower||0)-(snapshots[0].tt_follower||0); return `${d>0?'+':''}${d.toLocaleString('de-DE')}` })()}
+                        </span>
                       </div>
-                      <span className="text-gray-400 text-[10px]">
-                        {(() => {
-                          const diff = (snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)
-                          return `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} IG`
-                        })()}
-                      </span>
                     </div>
                     <div className="relative" style={{height: '80px'}}>
                       {(() => {
-                        const vals = snapshots.map((s: any) => s.ig_follower || 0)
-                        const minV = Math.min(...vals)
-                        const maxV = Math.max(...vals)
+                        const igVals = snapshots.map((s:any) => s.ig_follower||0)
+                        const ttVals = snapshots.map((s:any) => s.tt_follower||0)
+                        const allVals = [...igVals, ...ttVals]
+                        const minV = Math.min(...allVals)
+                        const maxV = Math.max(...allVals)
                         const range = maxV - minV || 1
                         const w = 100 / (snapshots.length - 1)
-                        const points = snapshots.map((s: any, i: number) => {
-                          const x = i * w
-                          const y = 90 - ((( s.ig_follower || 0) - minV) / range) * 80
-                          return `${x},${y}`
-                        }).join(' ')
-                        const last = snapshots[snapshots.length - 1]
-                        const lastX = 100
-                        const lastY = 90 - (((last.ig_follower || 0) - minV) / range) * 80
+                        const igPoints = snapshots.map((s:any,i:number) => `${i*w},${90-(((s.ig_follower||0)-minV)/range)*80}`).join(' ')
+                        const ttPoints = snapshots.map((s:any,i:number) => `${i*w},${90-(((s.tt_follower||0)-minV)/range)*80}`).join(' ')
+                        const lastIG = snapshots[snapshots.length-1]
+                        const lastTT = snapshots[snapshots.length-1]
                         return (
                           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                            <defs>
-                              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#7F77DD" stopOpacity="0.3"/>
-                                <stop offset="100%" stopColor="#7F77DD" stopOpacity="0"/>
-                              </linearGradient>
-                            </defs>
-                            <polyline points={points} fill="none" stroke="#7F77DD" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-                            <circle cx={lastX} cy={lastY} r="2" fill="#7F77DD" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={igPoints} fill="none" stroke="#E1306C" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={ttPoints} fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="3,2" vectorEffect="non-scaling-stroke"/>
                           </svg>
                         )
                       })()}
                     </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-gray-600 text-[10px] flex items-center gap-1">📸 {(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}</span>
+                    <div className="flex justify-between mt-2">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <span className="w-2 h-0.5 bg-[#E1306C] rounded inline-block"/>IG {(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                          <span className="w-2 h-0.5 bg-white/50 rounded inline-block"/>TT {(snapshots[0]?.tt_follower||0).toLocaleString('de-DE')}
+                        </span>
+                      </div>
                       <span className="text-gray-600 text-[10px]">{snapshots.length} Tage</span>
-                      <span className="text-gray-400 text-[10px]">{(snapshots[snapshots.length-1]?.ig_follower||0).toLocaleString('de-DE')}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-gray-400 text-[10px]">IG {(snapshots[snapshots.length-1]?.ig_follower||0).toLocaleString('de-DE')}</span>
+                        <span className="text-gray-400 text-[10px]">TT {(snapshots[snapshots.length-1]?.tt_follower||0).toLocaleString('de-DE')}</span>
+                      </div>
                     </div>
                   </div>
                 )}
