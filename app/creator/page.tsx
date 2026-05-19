@@ -562,8 +562,8 @@ export default function CreatorPage() {
                           Löschen
                         </button>
                       </td>
-                  <>
                     </tr>
+                  <>
                     {expandedCreator === (c as any)._id && (
                       <tr>
                         <td colSpan={99} className="bg-[#0D0D0D] px-5 py-3 border-b border-white/[0.04]">
