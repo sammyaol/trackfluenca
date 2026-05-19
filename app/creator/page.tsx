@@ -270,19 +270,21 @@ export default function CreatorPage() {
       tkpReel: c.tkp_reel, _id: c.id,
     })))
     // Direkt Snapshot erstellen für den neuen Creator
-    if (c.id) {
+    // Snapshot für neuen Creator — hole die ID aus der frisch geladenen Liste
+    const newCreator = Array.isArray(data) ? data[0] : null
+    if (newCreator?.id) {
       const t2 = await getToken()
       await fetch('/api/snapshots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + t2 },
         body: JSON.stringify({
-          creator_id: c.id,
-          ig_follower: c.ig_follower || 0,
-          tt_follower: c.tt_follower || 0,
-          ig_avg_likes: c.ig_avg_likes || 0,
-          ig_er: c.ig_er || 0,
-          tt_avg_video_views: c.tt_avg_video_views || 0,
-          tt_er: c.tt_er || 0,
+          creator_id: newCreator.id,
+          ig_follower: newCreator.ig_follower || 0,
+          tt_follower: newCreator.tt_follower || 0,
+          ig_avg_likes: newCreator.ig_avg_likes || 0,
+          ig_er: newCreator.ig_er || 0,
+          tt_avg_video_views: newCreator.tt_avg_video_views || 0,
+          tt_er: newCreator.tt_er || 0,
         })
       })
     }
