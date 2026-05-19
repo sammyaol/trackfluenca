@@ -166,6 +166,8 @@ export default function CreatorPage() {
   const [snapshotLoading, setSnapshotLoading] = useState(false)
   const [followerDays, setFollowerDays] = useState(30)
   const [chartHover, setChartHover] = useState<any>(null)
+  const [viewsDays, setViewsDays] = useState(30)
+  const [viewsHover, setViewsHover] = useState<any>(null)
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
@@ -747,54 +749,60 @@ export default function CreatorPage() {
                     })()}
                   </div>
                 )}
-                {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px]">♪</span>
                         <p className="text-gray-500 text-xs font-medium">Ø TikTok Views</p>
                       </div>
-                      <span className="text-gray-400 text-[10px]">
-                        {(() => {
-                          const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
-                          const diff = (valid[valid.length-1].tt_avg_video_views||0) - (valid[0].tt_avg_video_views||0)
-                          const last = valid[valid.length-1].tt_avg_video_views||0
-                          return diff===0 ? last.toLocaleString('de-DE')+' Views' : `${diff>0?'+':''}${diff.toLocaleString('de-DE')} Views`
-                        })()}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {[7,15,30].map((d:number) => (
+                          <button key={d} onClick={() => setViewsDays(d)}
+                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${viewsDays===d ? 'bg-[#F59E0B] text-black' : 'text-gray-500 hover:text-gray-300'}`}>
+                            {d}T
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    <div className="relative" style={{height: '80px'}}>
-                      {(() => {
-                        const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
-                        const vals = valid.map((s:any) => s.tt_avg_video_views||0)
-                        const minV = Math.min(...vals)
-                        const maxV = Math.max(...vals)
-                        const range = maxV - minV || 1
-                        const w = 100 / (valid.length - 1)
-                        const points = valid.map((s:any, i:number) => {
-                          const x = i * w
-                          const y = 90 - (((s.tt_avg_video_views||0) - minV) / range) * 80
-                          return `${x},${y}`
-                        }).join(' ')
-                        const last = valid[valid.length-1]
-                        const lastX = 100
-                        const lastY = 90 - (((last.tt_avg_video_views||0) - minV) / range) * 80
-                        return (
+                    {(() => {
+                      const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).slice(-viewsDays)
+                      if (valid.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
+                      const last = valid[valid.length-1].tt_avg_video_views||0
+                      const first = valid[0].tt_avg_video_views||0
+                      const diff = last - first
+                      const vals = valid.map((s:any)=>s.tt_avg_video_views||0)
+                      const minV = Math.min(...vals), maxV = Math.max(...vals), range = maxV-minV||1
+                      const w = 100/(valid.length-1)
+                      const pts = valid.map((s:any,i:number)=>`${i*w},${90-(((s.tt_avg_video_views||0)-minV)/range)*80}`).join(' ')
+                      return (<>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] text-gray-300">{last.toLocaleString('de-DE')} Views</span>
+                          <span className={`text-[10px] ${diff>=0?'text-emerald-400':'text-red-400'}`}>{diff>=0?'+':''}{diff.toLocaleString('de-DE')}</span>
+                        </div>
+                        <div className="relative" style={{height:'80px'}}
+                          onMouseMove={e => {
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const x = (e.clientX-rect.left)/rect.width
+                            const idx = Math.min(Math.round(x*(valid.length-1)),valid.length-1)
+                            const s = valid[idx]
+                            setViewsHover({views:s.tt_avg_video_views||0,date:new Date(s.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}),pct:x*100})
+                          }}
+                          onMouseLeave={()=>setViewsHover(null)}>
                           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                            <polyline points={points} fill="none" stroke="#F59E0B" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
-                            <circle cx={lastX} cy={lastY} r="2" fill="#F59E0B" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={pts} fill="none" stroke="#F59E0B" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
                           </svg>
-                        )
-                      })()}
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-gray-600 text-[10px] flex items-center gap-1">♪ {(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
-                      <span className="text-gray-600 text-[10px]">{snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).length} Tage</span>
-                      <span className="text-gray-400 text-[10px]">{(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).slice(-1)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
-                    </div>
+                          {viewsHover && (
+                            <div className="absolute top-0 pointer-events-none z-10" style={{left:`${Math.min(viewsHover.pct,70)}%`}}>
+                              <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-1.5 shadow-xl">
+                                <div className="text-gray-400 text-[10px] mb-1">{viewsHover.date}</div>
+                                <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#F59E0B] rounded-full inline-block"/>⌀ {viewsHover.views.toLocaleString('de-DE')}</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>)
+                    })()}
                   </div>
-                )}
-                {detailTab === 'audience' && (
                   <>
                     {(selected.igGenderMale || selected.igGenderFemale) ? (
                       <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
