@@ -542,12 +542,61 @@ export default function CreatorPage() {
                         <td key={col.key} className="px-5 py-4 whitespace-nowrap">{renderCell(c, col.key)}</td>
                       ))}
                       <td className="px-5 py-4">
+                        <button onClick={async e => {
+                          e.stopPropagation()
+                          const id = (c as any)._id
+                          if (!id) return
+                          if (expandedCreator === id) { setExpandedCreator(null); return }
+                          setExpandedCreator(id)
+                          if (!expandedPostings[id]) {
+                            const token = await getToken()
+                            const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
+                            const d = await res.json()
+                            setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
+                          }
+                        }} className="text-gray-500 hover:text-white text-sm px-2 transition-colors">
+                          {expandedCreator === (c as any)._id ? '▲' : '▼'}
+                        </button>
                         <button onClick={async e => { e.stopPropagation(); if ((c as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(x => x !== c)) }}
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
                       </td>
                     </tr>
+                    {expandedCreator === (c as any)._id && (
+                      <tr>
+                        <td colSpan={99} className="bg-[#0D0D0D] px-5 py-3 border-b border-white/[0.04]">
+                          {!expandedPostings[(c as any)._id] ? (
+                            <div className="flex items-center gap-2 text-gray-500 text-xs py-2">
+                              <span className="w-3 h-3 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"/>
+                              Postings laden...
+                            </div>
+                          ) : expandedPostings[(c as any)._id].length === 0 ? (
+                            <div className="text-gray-600 text-xs py-2">Noch keine Postings</div>
+                          ) : (
+                            <div className="flex flex-col gap-2">
+                              {expandedPostings[(c as any)._id].map((p:any) => (
+                                <div key={p.id} className="flex items-center gap-6 bg-[#141414] rounded-lg px-4 py-2.5 border border-white/[0.04]">
+                                  <div className="min-w-[110px]">
+                                    <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
+                                    <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                                  </div>
+                                  <div className="flex items-center gap-5 text-xs flex-wrap">
+                                    <div><div className="text-gray-600 text-[10px]">Fee</div><div className="text-white">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
+                                    <div><div className="text-gray-600 text-[10px]">Org. Umsatz</div><div className="text-emerald-400">{(p.org_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                    <div><div className="text-gray-600 text-[10px]">Org. ROAS</div><div className={p.org_roas>=3?'text-emerald-400':p.org_roas>=1?'text-amber-400':'text-gray-400'}>{p.org_roas>0?`${p.org_roas}x`:'—'}</div></div>
+                                    <div><div className="text-gray-600 text-[10px]">Ad Spend</div><div className="text-white">{(p.ad_spend||0).toLocaleString('de-DE')} €</div></div>
+                                    <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                    <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?`${p.ges_roas}x`:'—'}</div></div>
+                                    {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
                   ))}
                 </tbody>
               </table>
