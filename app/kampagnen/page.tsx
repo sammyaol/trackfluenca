@@ -251,7 +251,16 @@ export default function Kampagnen() {
                     )}
                   </div>
                 </div>
-                <button onClick={() => deleteKampagne(selected.id)} className="w-full py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
+                <div className="flex gap-2">
+                  <button onClick={async () => {
+                    const t = await sb.auth.getSession()
+                    // already saves onBlur, this is a manual confirm
+                    setKampagnen(prev => prev.map(k => k.id === selected.id ? {...k, ...selected} : k))
+                  }} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors">
+                    Speichern
+                  </button>
+                  <button onClick={() => deleteKampagne(selected.id)} className="flex-1 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
+                </div>
               </div>
             </div>
           </div>

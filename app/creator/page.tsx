@@ -998,6 +998,10 @@ export default function CreatorPage() {
                         orgKlicks: selected.orgKlicks,
                         adSpend: selected.adSpend,
                         adUmsatz: selected.adUmsatz,
+                        fee: selected.fee,
+                        produkt: selected.produkt,
+                        promoCode: selected.promoCode,
+                        datum: selected.datum,
                       })
                       setSaveState('done')
                       setTimeout(() => setSaveState('idle'), 2000)
