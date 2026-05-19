@@ -158,6 +158,7 @@ export default function CreatorPage() {
   const [form, setForm] = useState(emptyForm)
   const [detailTab, setDetailTab] = useState('overview')
   const [saveState, setSaveState] = useState<'idle'|'loading'|'done'>('idle')
+  const [refreshing, setRefreshing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
@@ -379,9 +380,55 @@ export default function CreatorPage() {
                 </div>
               )}
             </div>
-            <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
-              + Creator hinzufügen
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  setRefreshing(true)
+                  const token = await getToken()
+                  const res = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
+                  const data = await res.json()
+                  if (Array.isArray(data)) {
+                    setCreators(data.map((c: any) => ({
+                      name: c.name || '', ig: c.ig || '', tt: c.tt || '',
+                      igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
+                      igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
+                      igEr: c.ig_er || 0, ttEr: c.tt_er || 0,
+                      ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
+                      overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
+                      status: c.status || 'Offen', prio: c.prio || 'Mittel',
+                      kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
+                      notizen: c.notizen || '', kampagne: c.kampagne || '',
+                      buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
+                      produkt: c.produkt || 0, gesamt: c.gesamt || 0,
+                      promoCode: c.promo_code || '', datum: c.datum || '',
+                      orgUmsatz: c.org_umsatz || 0, orgKlicks: c.org_klicks || 0,
+                      orgCPK: 0, orgROAS: c.org_roas || 0, orgBestellungen: c.org_bestellungen || 0, orgBW: 0,
+                      adSpend: c.ad_spend || 0, adUmsatz: c.ad_umsatz || 0,
+                      adKlicks: c.ad_klicks || 0, adCPK: 0, adROAS: c.ad_roas || 0,
+                      adBestellungen: c.ad_bestellungen || 0,
+                      gesUmsatz: c.ges_umsatz || 0, gesROAS: c.ges_roas || 0,
+                      gesKlicks: c.ges_klicks || 0, storyViews: 0,
+                      storyWert: c.story_wert || 0, ttWert: c.tt_wert || 0,
+                      reelWert: c.reel_wert || 0, affiliatePct: c.affiliate_pct || '15%',
+                      tkpTT: c.tkp_tt || 0, tkpStory: c.tkp_story || 0, tkpPost: c.tkp_reel || 0,
+                      igImage: c.ig_image, igVerified: c.ig_verified,
+                      igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
+                      igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
+                      ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+                      tkpReel: c.tkp_reel, _id: c.id,
+                    })))
+                  }
+                  setRefreshing(false)
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 text-xs hover:bg-white/[0.04] transition-colors"
+              >
+                <span className={refreshing ? 'animate-spin inline-block' : ''}>↻</span>
+                {refreshing ? 'Lädt...' : 'Aktualisieren'}
+              </button>
+              <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
+                + Creator hinzufügen
+              </button>
+            </div>
           </div>
         </div>
 
