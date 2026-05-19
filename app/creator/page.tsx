@@ -681,7 +681,10 @@ export default function CreatorPage() {
                 {detailTab === 'overview' && !snapshotLoading && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]">📸</span>
+                        <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
+                      </div>
                       <span className="text-gray-400 text-[10px]">
                         {(() => {
                           const diff = (snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)
@@ -719,7 +722,7 @@ export default function CreatorPage() {
                       })()}
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-gray-600 text-[10px]">{(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}</span>
+                      <span className="text-gray-600 text-[10px] flex items-center gap-1">📸 {(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}</span>
                       <span className="text-gray-600 text-[10px]">{snapshots.length} Tage</span>
                       <span className="text-gray-400 text-[10px]">{(snapshots[snapshots.length-1]?.ig_follower||0).toLocaleString('de-DE')}</span>
                     </div>
@@ -728,7 +731,10 @@ export default function CreatorPage() {
                 {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-gray-500 text-xs font-medium">Ø TikTok Views</p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px]">♪</span>
+                        <p className="text-gray-500 text-xs font-medium">Ø TikTok Views</p>
+                      </div>
                       <span className="text-gray-400 text-[10px]">
                         {(() => {
                           const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
@@ -762,7 +768,7 @@ export default function CreatorPage() {
                       })()}
                     </div>
                     <div className="flex justify-between mt-1">
-                      <span className="text-gray-600 text-[10px]">{(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
+                      <span className="text-gray-600 text-[10px] flex items-center gap-1">♪ {(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
                       <span className="text-gray-600 text-[10px]">{snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).length} Tage</span>
                       <span className="text-gray-400 text-[10px]">{(snapshots.filter((s:any)=>(s.tt_avg_video_views||0)>0).slice(-1)[0]?.tt_avg_video_views||0).toLocaleString('de-DE')}</span>
                     </div>
