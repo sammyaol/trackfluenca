@@ -19,7 +19,16 @@ export async function POST(req: NextRequest) {
     .gte('created_at', today)
     .single()
 
-  if (existing) return NextResponse.json({ skipped: true })
+  if (!ig_follower && !tt_follower) return NextResponse.json({ skipped: true })
+
+  if (existing) {
+    const { data: ex } = await supabase.from('creator_snapshots').select('ig_follower,tt_follower').eq('id', existing.id).single()
+    if (ex && (ex.ig_follower || 0) === 0 && (ex.tt_follower || 0) === 0) {
+      await supabase.from('creator_snapshots').update({ ig_follower, tt_follower, ig_avg_likes, ig_er, tt_avg_video_views, tt_er }).eq('id', existing.id)
+      return NextResponse.json({ updated: true })
+    }
+    return NextResponse.json({ skipped: true })
+  }
 
   const { data, error } = await supabase
     .from('creator_snapshots')
