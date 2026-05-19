@@ -742,7 +742,8 @@ export default function CreatorPage() {
                         {(() => {
                           const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0)
                           const diff = (valid[valid.length-1].tt_avg_video_views||0) - (valid[0].tt_avg_video_views||0)
-                          return `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} Views`
+                          const last = valid[valid.length-1].tt_avg_video_views||0
+                          return diff===0 ? last.toLocaleString('de-DE')+' Views' : `${diff>0?'+':''}${diff.toLocaleString('de-DE')} Views`
                         })()}
                       </span>
                     </div>
