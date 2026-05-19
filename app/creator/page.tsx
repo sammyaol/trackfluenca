@@ -585,7 +585,7 @@ export default function CreatorPage() {
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
-                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['deal', 'Ergebnisse']].map(([id, label]) => (
+                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['deal', 'Ergebnisse'], ['postings', 'Postings']].map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
                     {label}
@@ -826,6 +826,105 @@ export default function CreatorPage() {
                         </div>
                       </>)
                     })()}
+                  </div>
+                )}
+                {detailTab === 'postings' && (
+                  <div className="space-y-3">
+                    <button onClick={() => setShowAddPosting(true)}
+                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-gray-500 text-xs hover:border-[#7F77DD] hover:text-[#7F77DD] transition-colors">
+                      + Neues Posting hinzufügen
+                    </button>
+                    {showAddPosting && (
+                      <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
+                        <p className="text-white text-xs font-medium">Neues Posting</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {([
+                            {label:'Kampagne',key:'kampagne',type:'text'},
+                            {label:'Buchungstyp',key:'buchungstyp',type:'text'},
+                            {label:'Datum',key:'datum',type:'date'},
+                            {label:'Fee €',key:'fee',type:'number'},
+                            {label:'Produkt €',key:'produkt',type:'number'},
+                            {label:'Promo Code',key:'promo_code',type:'text'},
+                            {label:'Org. Umsatz €',key:'org_umsatz',type:'number'},
+                            {label:'Org. Klicks',key:'org_klicks',type:'number'},
+                            {label:'Ad Spend €',key:'ad_spend',type:'number'},
+                            {label:'Ad Umsatz €',key:'ad_umsatz',type:'number'},
+                          ] as {label:string,key:string,type:string}[]).map(({label,key,type}) => (
+                            <div key={key}>
+                              <label className="text-gray-600 text-xs block mb-1">{label}</label>
+                              <input type={type} value={(postingForm as any)[key]}
+                                onChange={e => setPostingForm((p:any) => ({...p, [key]: type==='number' ? Number(e.target.value)||0 : e.target.value}))}
+                                className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Notizen</label>
+                          <textarea value={postingForm.notizen} onChange={e => setPostingForm((p:any)=>({...p,notizen:e.target.value}))} rows={2}
+                            className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none"/>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={async () => {
+                            const token = await getToken()
+                            const gesamt = postingForm.fee + postingForm.produkt
+                            const org_roas = gesamt > 0 ? Math.round(postingForm.org_umsatz/gesamt*100)/100 : 0
+                            const ad_roas = postingForm.ad_spend > 0 ? Math.round(postingForm.ad_umsatz/postingForm.ad_spend*100)/100 : 0
+                            const ges_umsatz = postingForm.org_umsatz + postingForm.ad_umsatz
+                            const ges_roas = (gesamt+postingForm.ad_spend) > 0 ? Math.round(ges_umsatz/(gesamt+postingForm.ad_spend)*100)/100 : 0
+                            const res = await fetch('/api/postings', {
+                              method: 'POST',
+                              headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
+                              body: JSON.stringify({...postingForm, creator_id: (selected as any)._id, org_roas, ad_roas, ges_umsatz, ges_roas})
+                            })
+                            const d = await res.json()
+                            if (d.id) { setPostings((p:any) => [d, ...p]); setShowAddPosting(false); setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''}) }
+                          }} className="flex-1 py-2 rounded-xl bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7]">
+                            Speichern
+                          </button>
+                          <button onClick={() => setShowAddPosting(false)} className="px-4 py-2 rounded-xl border border-white/10 text-gray-500 text-xs">
+                            Abbrechen
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {postings.length === 0 && !showAddPosting && (
+                      <div className="text-center py-8 text-gray-600 text-xs">Noch keine Postings</div>
+                    )}
+                    {postings.map((p:any) => (
+                      <div key={p.id} className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <div className="text-white text-xs font-medium">{p.kampagne || '—'}</div>
+                            <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum || '—'}</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
+                            <button onClick={async () => {
+                              const token = await getToken()
+                              await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
+                              setPostings((prev:any) => prev.filter((x:any) => x.id !== p.id))
+                            }} className="text-red-500/50 hover:text-red-500 text-xs">✕</button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            ['Fee', `${(p.fee||0)+(p.produkt||0)} €`],
+                            ['Org. Umsatz', `${p.org_umsatz||0} €`],
+                            ['Org. ROAS', p.org_roas>0?`${p.org_roas}x`:'—'],
+                            ['Ad Spend', `${p.ad_spend||0} €`],
+                            ['Ad Umsatz', `${p.ad_umsatz||0} €`],
+                            ['Ges. ROAS', p.ges_roas>0?`${p.ges_roas}x`:'—'],
+                          ].map(([l,v]) => (
+                            <div key={l} className="bg-[#111] rounded-lg p-2">
+                              <div className="text-gray-600 text-[10px] mb-0.5">{l}</div>
+                              <div className="text-white text-xs font-medium">{v}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {p.promo_code && <div className="mt-2 text-gray-500 text-[10px]">Code: <span className="text-[#7F77DD]">{p.promo_code}</span></div>}
+                        {p.notizen && <div className="mt-1 text-gray-600 text-[10px]">{p.notizen}</div>}
+                      </div>
+                    ))}
                   </div>
                 )}
                 {detailTab === 'audience' && (
