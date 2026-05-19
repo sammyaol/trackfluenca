@@ -214,33 +214,42 @@ export default function Kampagnen() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      ref={creatorInputRef}
-                      type="text"
-                      placeholder="Creator hinzufügen (@handle)"
-                      className="flex-1 bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600"
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          const val = (e.target as HTMLInputElement).value.trim()
-                          if (!val) return
-                          const updated = [...(selected.creators || []), val]
-                          updateKampagne(selected.id, { creators: updated })
-                          setSelected((p: any) => ({ ...p, creators: updated }));
-                          if (creatorInputRef.current) creatorInputRef.current.value = ''
-                        }
-                      }}
-                    />
-                    <button onClick={() => {
-                      const val = creatorInputRef.current?.value.trim()
-                      if (!val) return
-                      const updated = [...(selected.creators || []), val]
-                      updateKampagne(selected.id, { creators: updated })
-                      setSelected((p: any) => ({ ...p, creators: updated }))
-                      if (creatorInputRef.current) creatorInputRef.current.value = ''
-                    }} className="px-3 py-2 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7]">
-                      + Add
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowCreatorDropdown(p => !p)}
+                      className="w-full flex items-center justify-between bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-xs hover:border-white/20 transition-colors"
+                    >
+                      <span className="text-gray-500">Creator auswählen...</span>
+                      <span className="text-gray-600">▾</span>
                     </button>
+                    {showCreatorDropdown && (
+                      <div className="absolute bottom-full mb-1 left-0 right-0 bg-[#1a1a1a] border border-white/[0.08] rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto shadow-xl">
+                        {allCreators.filter(c => !(selected.creators || []).includes(c.name)).length === 0 ? (
+                          <div className="px-3 py-3 text-gray-600 text-xs text-center">Alle Creator bereits hinzugefügt</div>
+                        ) : allCreators.filter(c => !(selected.creators || []).includes(c.name)).map((c: any) => (
+                          <button
+                            key={c.id}
+                            onClick={() => {
+                              const updated = [...(selected.creators || []), c.name]
+                              updateKampagne(selected.id, { creators: updated })
+                              setSelected((p: any) => ({ ...p, creators: updated }))
+                              setShowCreatorDropdown(false)
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.04] transition-colors text-left"
+                          >
+                            {c.ig_image ? (
+                              <img src={c.ig_image} className="w-6 h-6 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-xs text-[#7F77DD]">{c.name?.[0]?.toUpperCase()}</div>
+                            )}
+                            <div>
+                              <div className="text-white text-xs font-medium">{c.name}</div>
+                              <div className="text-gray-600 text-xs">{c.igHandle ? '@' + c.igHandle : ''}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => deleteKampagne(selected.id)} className="w-full py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
