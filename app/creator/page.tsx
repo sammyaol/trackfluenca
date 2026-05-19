@@ -665,31 +665,48 @@ export default function CreatorPage() {
 
                 {detailTab === 'overview' && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
-                    <p className="text-gray-500 text-xs font-medium mb-3">Follower-Entwicklung ({snapshots.length} Tage)</p>
-                    <div className="flex items-end gap-1" style={{height: "64px"}}>
-                      {snapshots.map((s: any, i: number) => {
-                        const maxIG = Math.max(...snapshots.map((x: any) => x.ig_follower || 0))
-                        const h = 100
-                        const isLast = i === snapshots.length - 1
-                        return (
-                          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                            <div className={`w-full rounded-t ${isLast ? 'bg-[#7F77DD]' : 'bg-[#7F77DD]/30'}`} style={{height: h * 0.64 + 'px'}} title={s.ig_follower?.toLocaleString('de-DE')} />
-                          </div>
-                        )
-                      })}
-                    </div>
-                    <div className="flex justify-between mt-1">
-                      <span className="text-gray-600 text-[10px]">{new Date(snapshots[0]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
                       <span className="text-gray-400 text-[10px]">
                         {(() => {
                           const diff = (snapshots[snapshots.length-1].ig_follower || 0) - (snapshots[0].ig_follower || 0)
-                          const last = snapshots[snapshots.length-1].ig_follower || 0
-                          return diff === 0
-                            ? `${last.toLocaleString('de-DE')} IG`
-                            : `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} IG`
+                          return `${diff > 0 ? '+' : ''}${diff.toLocaleString('de-DE')} IG`
                         })()}
                       </span>
-                      <span className="text-gray-600 text-[10px]">{new Date(snapshots[snapshots.length-1]?.created_at).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit'})}</span>
+                    </div>
+                    <div className="relative" style={{height: '80px'}}>
+                      {(() => {
+                        const vals = snapshots.map((s: any) => s.ig_follower || 0)
+                        const minV = Math.min(...vals)
+                        const maxV = Math.max(...vals)
+                        const range = maxV - minV || 1
+                        const w = 100 / (snapshots.length - 1)
+                        const points = snapshots.map((s: any, i: number) => {
+                          const x = i * w
+                          const y = 90 - ((( s.ig_follower || 0) - minV) / range) * 80
+                          return `${x},${y}`
+                        }).join(' ')
+                        const last = snapshots[snapshots.length - 1]
+                        const lastX = 100
+                        const lastY = 90 - (((last.ig_follower || 0) - minV) / range) * 80
+                        return (
+                          <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                            <defs>
+                              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#7F77DD" stopOpacity="0.3"/>
+                                <stop offset="100%" stopColor="#7F77DD" stopOpacity="0"/>
+                              </linearGradient>
+                            </defs>
+                            <polyline points={points} fill="none" stroke="#7F77DD" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+                            <circle cx={lastX} cy={lastY} r="2" fill="#7F77DD" vectorEffect="non-scaling-stroke"/>
+                          </svg>
+                        )
+                      })()}
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-gray-600 text-[10px]">{(snapshots[0]?.ig_follower||0).toLocaleString('de-DE')}</span>
+                      <span className="text-gray-600 text-[10px]">{snapshots.length} Tage</span>
+                      <span className="text-gray-400 text-[10px]">{(snapshots[snapshots.length-1]?.ig_follower||0).toLocaleString('de-DE')}</span>
                     </div>
                   </div>
                 )}
