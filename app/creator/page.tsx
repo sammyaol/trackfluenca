@@ -163,6 +163,7 @@ export default function CreatorPage() {
   const [postings, setPostings] = useState<any[]>([])
   const [showPostings, setShowPostings] = useState<string|null>(null)
   const [showAddPosting, setShowAddPosting] = useState(false)
+  const [postingSaving, setPostingSaving] = useState(false)
   const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
   const [tableLoading, setTableLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -865,21 +866,44 @@ export default function CreatorPage() {
                         </div>
                         <div className="flex gap-2">
                           <button onClick={async () => {
-                            const token = await getToken()
-                            const gesamt = postingForm.fee + postingForm.produkt
-                            const org_roas = gesamt > 0 ? Math.round(postingForm.org_umsatz/gesamt*100)/100 : 0
-                            const ad_roas = postingForm.ad_spend > 0 ? Math.round(postingForm.ad_umsatz/postingForm.ad_spend*100)/100 : 0
-                            const ges_umsatz = postingForm.org_umsatz + postingForm.ad_umsatz
-                            const ges_roas = (gesamt+postingForm.ad_spend) > 0 ? Math.round(ges_umsatz/(gesamt+postingForm.ad_spend)*100)/100 : 0
-                            const res = await fetch('/api/postings', {
-                              method: 'POST',
-                              headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
-                              body: JSON.stringify({...postingForm, creator_id: (selected as any)._id, org_roas, ad_roas, ges_umsatz, ges_roas})
-                            })
-                            const d = await res.json()
-                            if (d.id) { setPostings((p:any) => [d, ...p]); setShowAddPosting(false); setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''}) }
-                          }} className="flex-1 py-2 rounded-xl bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7]">
-                            Speichern
+                            if ((window as any).__postingSaving) return
+                            ;(window as any).__postingSaving = true
+                            setPostingSaving(true)
+                            try {
+                              const token = await getToken()
+                              const gesamt = postingForm.fee + postingForm.produkt
+                              const org_roas = gesamt > 0 ? Math.round(postingForm.org_umsatz/gesamt*100)/100 : 0
+                              const ad_roas = postingForm.ad_spend > 0 ? Math.round(postingForm.ad_umsatz/postingForm.ad_spend*100)/100 : 0
+                              const ges_umsatz = postingForm.org_umsatz + postingForm.ad_umsatz
+                              const ges_roas = (gesamt+postingForm.ad_spend) > 0 ? Math.round(ges_umsatz/(gesamt+postingForm.ad_spend)*100)/100 : 0
+                              const res = await fetch('/api/postings', {
+                                method: 'POST',
+                                headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
+                                body: JSON.stringify({...postingForm, creator_id: (selected as any)._id, org_roas, ad_roas, ges_umsatz, ges_roas})
+                              })
+                              const d = await res.json()
+                              if (d.id) {
+                                const newPostings = [d, ...postings]
+                                setPostings(newPostings)
+                                setShowAddPosting(false)
+                                setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
+                                // Update Creator ROAS aus allen Postings
+                                const totalOrgU = newPostings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
+                                const totalAd = newPostings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
+                                const totalFee = newPostings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
+                                const totalAdSpend = newPostings.reduce((s:number,p:any)=>s+(p.ad_spend||0),0)
+                                const newGesROAS = (totalFee+totalAdSpend) > 0 ? Math.round((totalOrgU+totalAd)/(totalFee+totalAdSpend)*100)/100 : 0
+                                const newOrgROAS = totalFee > 0 ? Math.round(totalOrgU/totalFee*100)/100 : 0
+                                await updateCreator(selected, { orgUmsatz: totalOrgU, adUmsatz: totalAd, gesUmsatz: totalOrgU+totalAd, gesROAS: newGesROAS, orgROAS: newOrgROAS })
+                                setSelected((p:any) => p ? {...p, gesROAS: newGesROAS, orgROAS: newOrgROAS, orgUmsatz: totalOrgU, adUmsatz: totalAd, gesUmsatz: totalOrgU+totalAd} : p)
+                              }
+                            } finally {
+                              setPostingSaving(false)
+                              ;(window as any).__postingSaving = false
+                            }
+                          }} disabled={postingSaving} className={`flex-1 py-2 rounded-xl text-white text-xs transition-colors flex items-center justify-center gap-2 ${postingSaving ? 'bg-[#7F77DD]/50 cursor-not-allowed' : 'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                            {postingSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
+                            {postingSaving ? 'Wird gespeichert...' : 'Speichern'}
                           </button>
                           <button onClick={() => setShowAddPosting(false)} className="px-4 py-2 rounded-xl border border-white/10 text-gray-500 text-xs">
                             Abbrechen
