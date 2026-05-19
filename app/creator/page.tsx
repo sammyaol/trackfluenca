@@ -563,9 +563,11 @@ export default function CreatorPage() {
                         </button>
                       </td>
                     </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
 
         {/* Postings Dropdown Panel */}
         {expandedCreator && expandedPostings[expandedCreator] && (
