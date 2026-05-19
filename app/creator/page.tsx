@@ -282,9 +282,10 @@ export default function CreatorPage() {
     if ('adROAS' in fields) body.ad_roas = fields.adROAS
     if ('gesUmsatz' in fields) body.ges_umsatz = fields.gesUmsatz
     if ('gesROAS' in fields) body.ges_roas = fields.gesROAS
+    const token = await getToken()
     await fetch(`/api/creators/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify(body)
     })
   }
