@@ -822,7 +822,16 @@ export default function CreatorPage() {
 
                 <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => updateCreator(selected, selected)}
+                    onClick={() => updateCreator(selected, {
+                    status: selected.status,
+                    prio: selected.prio,
+                    kampagne: selected.kampagne,
+                    notizen: selected.notizen,
+                    orgUmsatz: selected.orgUmsatz,
+                    orgKlicks: selected.orgKlicks,
+                    adSpend: selected.adSpend,
+                    adUmsatz: selected.adUmsatz,
+                  })}
                     className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors font-medium backdrop-blur-sm"
                   >
                     Speichern
