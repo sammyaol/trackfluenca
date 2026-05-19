@@ -157,6 +157,7 @@ export default function CreatorPage() {
   const [visibleCols, setVisibleCols] = useState(['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS'])
   const [form, setForm] = useState(emptyForm)
   const [detailTab, setDetailTab] = useState('overview')
+  const [saveState, setSaveState] = useState<'idle'|'loading'|'done'>('idle')
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
@@ -823,19 +824,30 @@ export default function CreatorPage() {
 
                 <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => updateCreator(selected, {
-                    status: selected.status,
-                    prio: selected.prio,
-                    kampagne: selected.kampagne,
-                    notizen: selected.notizen,
-                    orgUmsatz: selected.orgUmsatz,
-                    orgKlicks: selected.orgKlicks,
-                    adSpend: selected.adSpend,
-                    adUmsatz: selected.adUmsatz,
-                  })}
-                    className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors font-medium backdrop-blur-sm"
+                    onClick={async () => {
+                      setSaveState('loading')
+                      await updateCreator(selected, {
+                        status: selected.status,
+                        prio: selected.prio,
+                        kampagne: selected.kampagne,
+                        notizen: selected.notizen,
+                        orgUmsatz: selected.orgUmsatz,
+                        orgKlicks: selected.orgKlicks,
+                        adSpend: selected.adSpend,
+                        adUmsatz: selected.adUmsatz,
+                      })
+                      setSaveState('done')
+                      setTimeout(() => setSaveState('idle'), 2000)
+                    }}
+                    disabled={saveState === 'loading'}
+                    className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2
+                      ${saveState === 'done' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/30' :
+                        saveState === 'loading' ? 'border-white/10 text-gray-500 cursor-not-allowed' :
+                        'border-white/20 text-white hover:bg-white/[0.06]'}`}
                   >
-                    Speichern
+                    {saveState === 'loading' && <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />}
+                    {saveState === 'done' && <span>✓</span>}
+                    {saveState === 'loading' ? 'Speichern...' : saveState === 'done' ? 'Gespeichert' : 'Speichern'}
                   </button>
                   <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
                   <button onClick={async () => { if ((selected as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(selected as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(c => c !== selected)); setSelected(null) }}
