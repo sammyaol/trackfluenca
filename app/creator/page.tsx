@@ -163,6 +163,7 @@ export default function CreatorPage() {
   const [tableLoading, setTableLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
+  const [snapshotLoading, setSnapshotLoading] = useState(false)
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
@@ -481,7 +482,7 @@ export default function CreatorPage() {
                           body: JSON.stringify({ creator_id: id, ig_follower: c.igFollower, tt_follower: c.ttFollower, ig_avg_likes: c.igAvgLikes, ig_er: c.igEr, tt_avg_video_views: c.ttAvgVideoViews, tt_er: c.ttEr })
                         }))
                         // Load snapshot history
-                        getToken().then(token => fetch('/api/snapshots?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(d => setSnapshots(Array.isArray(d) ? d : [])))
+                        setSnapshotLoading(true); getToken().then(token => fetch('/api/snapshots?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(d => { setSnapshots(Array.isArray(d) ? d : []); setSnapshotLoading(false) }))
                       }
                     }}
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
@@ -671,7 +672,13 @@ export default function CreatorPage() {
                   </>
                 )}
 
-                {detailTab === 'overview' && snapshots.length > 1 && (
+                {detailTab === 'overview' && snapshotLoading && (
+                  <div className="flex items-center gap-2 py-4 justify-center">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
+                    <span className="text-gray-500 text-xs">Verlauf wird geladen...</span>
+                  </div>
+                )}
+                {detailTab === 'overview' && !snapshotLoading && snapshots.length > 1 && (
                   <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
@@ -960,7 +967,7 @@ export default function CreatorPage() {
                   </div>
                   <button onClick={doFetch} disabled={fetching || (!form.igHandle && !form.ttHandle)}
                     className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
-                    {fetching ? 'Lade Daten...' : fetchDone ? '✓ Daten geladen ✓' : fetchError ? fetchError : 'Echte Daten laden (IG + TT + Demographics)'}
+                    {fetching ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Lade Daten...</span> : fetchDone ? '✓ Daten geladen' : fetchError ? fetchError : 'Echte Daten laden (IG + TT)'}
                   </button>
                   {fetchDone && fetchedData && (
                     <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3 text-xs text-emerald-500 space-y-0.5">
