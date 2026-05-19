@@ -994,7 +994,8 @@ export default function CreatorPage() {
                       const orgROAS = gesamt > 0 ? Math.round(((selected.orgUmsatz||0) / gesamt) * 100) / 100 : 0
                       const adROAS = (selected.adSpend||0) > 0 ? Math.round(((selected.adUmsatz||0) / (selected.adSpend||0)) * 100) / 100 : 0
                       const gesUmsatz = (selected.orgUmsatz||0) + (selected.adUmsatz||0)
-                      const gesROAS = gesamt > 0 ? Math.round((gesUmsatz / gesamt) * 100) / 100 : 0
+                      const gesamtKosten = gesamt + (selected.adSpend||0)
+                      const gesROAS = gesamtKosten > 0 ? Math.round((gesUmsatz / gesamtKosten) * 100) / 100 : 0
                       await updateCreator(selected, {
                         status: selected.status,
                         prio: selected.prio,
