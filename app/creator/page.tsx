@@ -562,6 +562,7 @@ export default function CreatorPage() {
                           Löschen
                         </button>
                       </td>
+                  <>
                     </tr>
                     {expandedCreator === (c as any)._id && (
                       <tr>
@@ -593,7 +594,8 @@ export default function CreatorPage() {
                                 </div>
                               ))}
                             </div>
-                          )}
+                    )}
+                  </>
                         </td>
                       </tr>
                     )}
