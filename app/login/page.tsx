@@ -56,7 +56,7 @@ export default function LoginPage() {
           {error && <p className="text-red-400 text-xs">{error}</p>}
           <button onClick={handle} disabled={loading || !email || !password}
             className="w-full py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm font-medium hover:bg-[#534AB7] transition-colors disabled:opacity-50">
-            {loading ? 'Laden...' : isSignup ? 'Account erstellen' : 'Anmelden'}
+            {loading ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>{isSignup ? 'Erstellen...' : 'Anmelden...'}</span> : isSignup ? 'Account erstellen' : 'Anmelden'}
           </button>
           <button onClick={() => setIsSignup(p => !p)} className="w-full text-gray-500 text-xs hover:text-gray-300 transition-colors">
             {isSignup ? 'Bereits einen Account? Anmelden' : 'Noch kein Account? Registrieren'}

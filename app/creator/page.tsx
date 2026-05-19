@@ -103,6 +103,7 @@ export default function CreatorPage() {
       if (!userId) return
       const { data } = await sb.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
       if (!mounted || !data) return
+      setTableLoading(false)
       setCreators(data.map((c: any) => ({
         name: c.name || '', ig: c.ig || '', tt: c.tt || '',
         igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
@@ -159,6 +160,7 @@ export default function CreatorPage() {
   const [detailTab, setDetailTab] = useState('overview')
   const [saveState, setSaveState] = useState<'idle'|'loading'|'done'>('idle')
   const [refreshing, setRefreshing] = useState(false)
+  const [tableLoading, setTableLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
@@ -433,7 +435,13 @@ export default function CreatorPage() {
         </div>
 
         <div className="p-6">
-          <div className="flex gap-3 mb-5 flex-wrap">
+          {tableLoading && (
+            <div className="flex items-center justify-center py-20 gap-3">
+              <div className="w-5 h-5 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
+              <span className="text-gray-500 text-sm">Creator werden geladen...</span>
+            </div>
+          )}
+          {!tableLoading && <div className="flex gap-3 mb-5 flex-wrap">
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, Handle oder Code..."
               className="flex-1 min-w-48 bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" />
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
