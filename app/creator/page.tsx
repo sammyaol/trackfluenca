@@ -804,6 +804,7 @@ export default function CreatorPage() {
                     })()}
                   </div>
                 )}
+                )}
                 {detailTab === 'audience' && (
                 {detailTab === 'audience' && (
                   <>
