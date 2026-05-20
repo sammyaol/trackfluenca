@@ -498,6 +498,19 @@ export default function CreatorPage() {
                       className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
                       <td className="px-5 py-4 sticky left-0 bg-[#141414] overflow-visible">
                         <div className="flex items-center gap-3">
+                          <button onClick={async e => {
+                            e.stopPropagation()
+                            const id = (c as any)._id
+                            if (!id) return
+                            if (expandedCreator === id) { setExpandedCreator(null); return }
+                            setExpandedCreator(id)
+                            const token = await getToken()
+                            const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
+                            const d = await res.json()
+                            setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
+                          }} className="text-gray-600 hover:text-white text-xs transition-colors flex-shrink-0">
+                            {expandedCreator === (c as any)._id ? '▲' : '▼'}
+                          </button>
                           <div className="relative flex-shrink-0 w-12 h-9">
                             <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</span>
@@ -526,19 +539,7 @@ export default function CreatorPage() {
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
-                        <button onClick={async e => {
-                          e.stopPropagation()
-                          const id = (c as any)._id
-                          if (!id) return
-                          if (expandedCreator === id) { setExpandedCreator(null); return }
-                          setExpandedCreator(id)
-                          const token = await getToken()
-                          const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
-                          const d = await res.json()
-                          setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
-                        }} className="text-gray-500 hover:text-white text-xs px-2 py-1 transition-colors">
-                          {expandedCreator === (c as any)._id ? '▲' : '▼'}
-                        </button>
+
                       </td>
                     </tr>
                   ))}
@@ -548,7 +549,7 @@ export default function CreatorPage() {
           </div>
         </div>
 
-        {expandedCreator && (
+        {expandedCreator && expandedPostings[expandedCreator] !== undefined && (
           <div className="mx-6 mb-4 bg-[#0D0D0D] rounded-2xl border border-white/[0.06] overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
               <span className="text-white text-xs font-medium">Postings — {creators.find(c => (c as any)._id === expandedCreator)?.name}</span>
