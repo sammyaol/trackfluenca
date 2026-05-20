@@ -167,6 +167,8 @@ export default function CreatorPage() {
   const [postings, setPostings] = useState<any[]>([])
   const [showAddPosting, setShowAddPosting] = useState(false)
   const [postingSaving, setPostingSaving] = useState(false)
+  const [deletingPosting, setDeletingPosting] = useState<string|null>(null)
+  const [loadingPostings, setLoadingPostings] = useState<string|null>(null)
   const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [snapshotLoading, setSnapshotLoading] = useState(false)
@@ -504,13 +506,17 @@ export default function CreatorPage() {
                             if (!id) return
                             if (expandedCreator === id) { setExpandedCreator(null); return }
                             setExpandedCreator(id)
+                            setLoadingPostings(id)
                             setExpandedPostings((prev:any) => ({...prev, [id]: prev[id] || []}))
                             const token = await getToken()
                             const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
                             const d = await res.json()
                             setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
-                          }} className="text-gray-600 hover:text-white text-xs transition-colors flex-shrink-0">
-                            {expandedCreator === (c as any)._id ? '▲' : '▼'}
+                            setLoadingPostings(null)
+                          }} className="text-gray-600 hover:text-white text-xs transition-colors flex-shrink-0 w-4 flex items-center justify-center">
+                            {loadingPostings === (c as any)._id
+                              ? <span className="w-3 h-3 border-2 border-white/20 border-t-white/80 rounded-full animate-spin inline-block"/>
+                              : expandedCreator === (c as any)._id ? '▲' : '▼'}
                           </button>
                           <div className="relative flex-shrink-0 w-12 h-9">
                             <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden z-10">
@@ -579,10 +585,15 @@ export default function CreatorPage() {
                                   {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
                                   <button onClick={async e => {
                                     e.stopPropagation()
+                                    setDeletingPosting(p.id)
                                     const token = await getToken()
                                     await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
                                     setExpandedPostings((prev:any) => ({...prev, [(c as any)._id]: (prev[(c as any)._id]||[]).filter((x:any) => x.id !== p.id)}))
-                                  }} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors ml-auto">Löschen</button>
+                                    setDeletingPosting(null)
+                                  }} disabled={deletingPosting===p.id} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors ml-auto flex items-center gap-1">
+                                    {deletingPosting===p.id && <span className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>}
+                                    Löschen
+                                  </button>
                                 </div>
                               </div>
                             ))}
@@ -968,12 +979,17 @@ export default function CreatorPage() {
                           <div className="flex items-center gap-2">
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
                             <button onClick={async () => {
+                              setDeletingPosting(p.id)
                               const token = await getToken()
                               await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
                               const newPostings = postings.filter((x:any) => x.id !== p.id)
                               setPostings(newPostings)
                               setExpandedPostings((prev:any) => ({...prev, [(selected as any)._id]: newPostings}))
-                            }} className="text-red-500/50 hover:text-red-400 text-xs ml-2 px-2 py-1 rounded hover:bg-red-950/30 transition-colors">Löschen</button>
+                              setDeletingPosting(null)
+                            }} disabled={deletingPosting===p.id} className="text-red-500/50 hover:text-red-400 text-xs ml-2 px-2 py-1 rounded hover:bg-red-950/30 transition-colors flex items-center gap-1">
+                              {deletingPosting===p.id && <span className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>}
+                              Löschen
+                            </button>
                           </div>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
