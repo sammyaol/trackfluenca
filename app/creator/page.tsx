@@ -387,6 +387,7 @@ export default function CreatorPage() {
                           </div>
                           <span className="text-gray-300 text-xs">{col.label}</span>
                         </label>
+                      ))}
                     </div>
                   ))}
                 </div>
