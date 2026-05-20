@@ -387,7 +387,8 @@ export default function CreatorPage() {
                           </div>
                           <span className="text-gray-300 text-xs">{col.label}</span>
                         </label>
-                      ))}
+                  </>)
+                  })}
                     </div>
                   ))}
                 </div>
@@ -480,7 +481,7 @@ export default function CreatorPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((c, i) => (
+                  {filtered.map((c, i) => { return (<>
                     <tr key={c.name} onClick={async () => { 
                       setSelected(c); setDetailTab('overview')
                       const id = (c as any)._id
@@ -569,7 +570,8 @@ export default function CreatorPage() {
                         </td>
                       </tr>
                     )}
-                  ))}
+                  </>)
+                  })}
                 </tbody>
               </table>
             </div>
