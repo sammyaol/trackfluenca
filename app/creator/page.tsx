@@ -487,6 +487,24 @@ export default function CreatorPage() {
                       setSelected(c); setDetailTab('overview')
                       const id = (c as any)._id
                       if (id) {
+                        // Lade Postings und berechne Ergebnisse
+                        getToken().then(async token => {
+                          const r = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
+                          const d = await r.json()
+                          if (Array.isArray(d) && d.length > 0) {
+                            setPostings(d)
+                            setExpandedPostings((prev:any) => ({...prev, [id]: d}))
+                            const totalOrgU = d.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
+                            const totalAdU = d.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
+                            const totalFee = d.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
+                            const totalAdS = d.reduce((s:number,p:any)=>s+(p.ad_spend||0),0)
+                            const gesROAS = (totalFee+totalAdS)>0 ? Math.round((totalOrgU+totalAdU)/(totalFee+totalAdS)*100)/100 : 0
+                            setSelected((p:any) => p ? {...p, orgUmsatz:totalOrgU, adUmsatz:totalAdU, gesUmsatz:totalOrgU+totalAdU, gesROAS} : p)
+                            setCreators(prev => prev.map(x => (x as any)._id === id ? {...x, gesROAS, orgUmsatz:totalOrgU} : x))
+                          } else {
+                            setPostings([])
+                          }
+                        })
                         // Save today's snapshot
                         getToken().then(token => fetch('/api/snapshots', {
                           method: 'POST',
@@ -583,17 +601,26 @@ export default function CreatorPage() {
                                   <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
                                   <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
                                   {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
-                                  <button onClick={async e => {
-                                    e.stopPropagation()
-                                    setDeletingPosting(p.id)
-                                    const token = await getToken()
-                                    await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
-                                    setExpandedPostings((prev:any) => ({...prev, [(c as any)._id]: (prev[(c as any)._id]||[]).filter((x:any) => x.id !== p.id)}))
-                                    setDeletingPosting(null)
-                                  }} disabled={deletingPosting===p.id} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors ml-auto flex items-center gap-1">
-                                    {deletingPosting===p.id && <span className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>}
-                                    Löschen
-                                  </button>
+                                  <div className="flex items-center gap-1 ml-auto">
+                                    <button onClick={e => {
+                                      e.stopPropagation()
+                                      setSelected(c)
+                                      setDetailTab('postings')
+                                      setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||''})
+                                      setShowAddPosting(true)
+                                    }} className="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
+                                    <button onClick={async e => {
+                                      e.stopPropagation()
+                                      setDeletingPosting(p.id)
+                                      const token = await getToken()
+                                      await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
+                                      setExpandedPostings((prev:any) => ({...prev, [(c as any)._id]: (prev[(c as any)._id]||[]).filter((x:any) => x.id !== p.id)}))
+                                      setDeletingPosting(null)
+                                    }} disabled={deletingPosting===p.id} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors flex items-center gap-1">
+                                      {deletingPosting===p.id && <span className="w-3 h-3 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin"/>}
+                                      Löschen
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             ))}
