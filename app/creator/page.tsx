@@ -577,6 +577,12 @@ export default function CreatorPage() {
                                   <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
                                   <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
                                   {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
+                                  <button onClick={async e => {
+                                    e.stopPropagation()
+                                    const token = await getToken()
+                                    await fetch('/api/postings/'+p.id, {method:'DELETE', headers:{authorization:'Bearer '+token}})
+                                    setExpandedPostings((prev:any) => ({...prev, [(c as any)._id]: (prev[(c as any)._id]||[]).filter((x:any) => x.id !== p.id)}))
+                                  }} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors ml-auto">Löschen</button>
                                 </div>
                               </div>
                             ))}
