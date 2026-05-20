@@ -547,6 +547,13 @@ export default function CreatorPage() {
                       <tr>
                         <td colSpan={20} className="p-0 bg-[#0A0A0A]">
                           <div className="border-t border-b border-[#7F77DD]/20 bg-[#0D0D0D]">
+                            <div className="flex items-center justify-between px-8 py-2 border-b border-white/[0.04]">
+                              <span className="text-gray-500 text-[10px]">{expandedPostings[(c as any)._id].length} Posting(s)</span>
+                              <button onClick={e => { e.stopPropagation(); setSelected(c); setDetailTab('postings'); setShowAddPosting(true) }}
+                                className="text-[10px] px-2 py-1 rounded-lg bg-[#7F77DD]/20 text-[#7F77DD] hover:bg-[#7F77DD]/30 transition-colors">
+                                + Posting hinzufügen
+                              </button>
+                            </div>
                             {expandedPostings[(c as any)._id].length === 0 ? (
                               <div className="px-8 py-3 text-gray-600 text-xs">Noch keine Postings</div>
                             ) : expandedPostings[(c as any)._id].map((p:any) => (
