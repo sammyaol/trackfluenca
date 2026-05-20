@@ -504,6 +504,7 @@ export default function CreatorPage() {
                             if (!id) return
                             if (expandedCreator === id) { setExpandedCreator(null); return }
                             setExpandedCreator(id)
+                            setExpandedPostings((prev:any) => ({...prev, [id]: prev[id] || []}))
                             const token = await getToken()
                             const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
                             const d = await res.json()
