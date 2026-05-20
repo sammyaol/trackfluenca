@@ -567,6 +567,8 @@ export default function CreatorPage() {
           </div>
         </div>
 
+          </div>
+            </div>
         {/* Postings Dropdown Panel */}
         {expandedCreator && expandedPostings[expandedCreator] && (
           <div className="mx-6 mb-4 bg-[#0D0D0D] rounded-2xl border border-white/[0.06] overflow-hidden">
@@ -1315,6 +1317,12 @@ export default function CreatorPage() {
             </div>
           </div>
         )}
+          </div>
+          </div>
+          </div>
+          </div>
+          </div>
+          </div>
       </main>
     </div>
   )
