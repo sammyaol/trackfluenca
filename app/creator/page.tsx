@@ -805,6 +805,7 @@ export default function CreatorPage() {
                   </div>
                 )}
                 {detailTab === 'audience' && (
+                {detailTab === 'audience' && (
                   <>
                     {(selected.igGenderMale || selected.igGenderFemale) ? (
                       <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
