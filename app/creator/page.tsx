@@ -526,6 +526,19 @@ export default function CreatorPage() {
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
+                        <button onClick={async e => {
+                          e.stopPropagation()
+                          const id = (c as any)._id
+                          if (!id) return
+                          if (expandedCreator === id) { setExpandedCreator(null); return }
+                          setExpandedCreator(id)
+                          const token = await getToken()
+                          const res = await fetch('/api/postings?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } })
+                          const d = await res.json()
+                          setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
+                        }} className="text-gray-500 hover:text-white text-xs px-2 py-1 transition-colors">
+                          {expandedCreator === (c as any)._id ? '▲' : '▼'}
+                        </button>
                       </td>
                     </tr>
                   ))}
