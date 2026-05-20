@@ -925,8 +925,8 @@ export default function CreatorPage() {
                         <p className="text-white text-xs font-medium">Neues Posting</p>
                         <div className="grid grid-cols-2 gap-2">
                           {([
-                            {label:'Kampagne',key:'kampagne',type:'text'},
-                            {label:'Buchungstyp',key:'buchungstyp',type:'text'},
+                            {label:'Kampagne',key:'kampagne',type:'kampagne'},
+                            {label:'Buchungstyp',key:'buchungstyp',type:'buchungstyp'},
                             {label:'Datum',key:'datum',type:'date'},
                             {label:'Fee €',key:'fee',type:'number'},
                             {label:'Produkt €',key:'produkt',type:'number'},
@@ -938,9 +938,38 @@ export default function CreatorPage() {
                           ] as {label:string,key:string,type:string}[]).map(({label,key,type}) => (
                             <div key={key}>
                               <label className="text-gray-600 text-xs block mb-1">{label}</label>
-                              <input type={type} value={(postingForm as any)[key]}
-                                onChange={e => setPostingForm((p:any) => ({...p, [key]: type==='number' ? Number(e.target.value)||0 : e.target.value}))}
-                                className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                              {type === 'kampagne' ? (
+                                <div>
+                                  <select value={(postingForm as any)[key]} onChange={e => e.target.value !== '__add__' && setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
+                                    className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                                    <option value="">— wählen —</option>
+                                    {kampagnenList.map((k:string) => <option key={k} value={k}>{k}</option>)}
+                                    <option value="__add__" className="text-[#7F77DD]">+ Neue Kampagne</option>
+                                  </select>
+                                  {(postingForm as any)[key] === '__add__' || !(kampagnenList.includes((postingForm as any)[key] || '')) && (postingForm as any)[key] ? (
+                                    <input type="text" placeholder="Kampagnenname eingeben" value={(postingForm as any)[key] === '__add__' ? '' : (postingForm as any)[key]}
+                                      onChange={e => setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
+                                      className="w-full mt-1 bg-[#111] border border-[#7F77DD]/50 rounded-lg px-2 py-1.5 text-white text-xs"/>
+                                  ) : null}
+                                </div>
+                              ) : type === 'buchungstyp' ? (
+                                <div>
+                                  <select value={(postingForm as any)[key]} onChange={e => e.target.value !== '__add__' ? setPostingForm((p:any) => ({...p, [key]: e.target.value})) : setPostingForm((p:any) => ({...p, [key]: ''}))}
+                                    className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                                    {['Reel','TikTok Post','Story','Story + Reel','Story + TikTok','Reel + TikTok','Bundle','UGC'].map(b => <option key={b} value={b}>{b}</option>)}
+                                    <option value="__add__" className="text-[#7F77DD]">+ Neuer Typ</option>
+                                  </select>
+                                  {(postingForm as any)[key] === '' ? (
+                                    <input type="text" placeholder="Buchungstyp eingeben"
+                                      onChange={e => setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
+                                      className="w-full mt-1 bg-[#111] border border-[#7F77DD]/50 rounded-lg px-2 py-1.5 text-white text-xs"/>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <input type={type} value={(postingForm as any)[key]}
+                                  onChange={e => setPostingForm((p:any) => ({...p, [key]: type==='number' ? Number(e.target.value)||0 : e.target.value}))}
+                                  className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                              )}
                             </div>
                           ))}
                         </div>
