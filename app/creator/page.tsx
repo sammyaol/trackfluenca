@@ -542,6 +542,33 @@ export default function CreatorPage() {
 
                       </td>
                     </tr>
+                    {expandedCreator === (c as any)._id && expandedPostings[(c as any)._id] !== undefined && (
+                      <tr>
+                        <td colSpan={20} className="p-0 bg-[#0A0A0A]">
+                          <div className="border-t border-b border-[#7F77DD]/20 bg-[#0D0D0D]">
+                            {expandedPostings[(c as any)._id].length === 0 ? (
+                              <div className="px-8 py-3 text-gray-600 text-xs">Noch keine Postings</div>
+                            ) : expandedPostings[(c as any)._id].map((p:any) => (
+                              <div key={p.id} className="flex items-center gap-6 px-8 py-2.5 border-b border-white/[0.03] last:border-0 flex-wrap">
+                                <div className="min-w-[120px]">
+                                  <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
+                                  <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                                </div>
+                                <div className="flex items-center gap-5 text-xs flex-wrap">
+                                  <div><div className="text-gray-600 text-[10px]">Fee</div><div className="text-white">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-gray-600 text-[10px]">Org. Umsatz</div><div className="text-emerald-400">{(p.org_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-gray-600 text-[10px]">Org. ROAS</div><div className={p.org_roas>=3?'text-emerald-400':p.org_roas>=1?'text-amber-400':'text-gray-400'}>{p.org_roas>0?p.org_roas+'x':'—'}</div></div>
+                                  <div><div className="text-gray-600 text-[10px]">Ad Spend</div><div className="text-white">{(p.ad_spend||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
+                                  {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                   ))}
                 </tbody>
               </table>
@@ -549,39 +576,7 @@ export default function CreatorPage() {
           </div>
         </div>
 
-        {expandedCreator && expandedPostings[expandedCreator] !== undefined && (
-          <div className="mx-6 mb-4 bg-[#0D0D0D] rounded-2xl border border-white/[0.06] overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04]">
-              <span className="text-white text-xs font-medium">Postings — {creators.find(c => (c as any)._id === expandedCreator)?.name}</span>
-              <button onClick={() => setExpandedCreator(null)} className="text-gray-500 hover:text-white text-xs">✕</button>
-            </div>
-            {!expandedPostings[expandedCreator] ? (
-              <div className="px-5 py-4 text-gray-500 text-xs">Laden...</div>
-            ) : expandedPostings[expandedCreator].length === 0 ? (
-              <div className="px-5 py-4 text-gray-600 text-xs">Noch keine Postings — im Detail-Panel unter Postings hinzufügen</div>
-            ) : (
-              <div className="divide-y divide-white/[0.04]">
-                {expandedPostings[expandedCreator].map((p:any) => (
-                  <div key={p.id} className="flex items-center gap-6 px-5 py-3 flex-wrap">
-                    <div className="min-w-[120px]">
-                      <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
-                      <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
-                    </div>
-                    <div className="flex items-center gap-5 text-xs flex-wrap">
-                      <div><div className="text-gray-600 text-[10px]">Fee</div><div className="text-white">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
-                      <div><div className="text-gray-600 text-[10px]">Org. Umsatz</div><div className="text-emerald-400">{(p.org_umsatz||0).toLocaleString('de-DE')} €</div></div>
-                      <div><div className="text-gray-600 text-[10px]">Org. ROAS</div><div className={p.org_roas>=3?'text-emerald-400':p.org_roas>=1?'text-amber-400':'text-gray-400'}>{p.org_roas>0?p.org_roas+'x':'—'}</div></div>
-                      <div><div className="text-gray-600 text-[10px]">Ad Spend</div><div className="text-white">{(p.ad_spend||0).toLocaleString('de-DE')} €</div></div>
-                      <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
-                      <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
-                      {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* Detail Slide-over */}
         {selected && (
