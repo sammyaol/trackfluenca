@@ -555,7 +555,7 @@ export default function CreatorPage() {
                             setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
                           }
                         }} className="text-gray-500 hover:text-white text-sm px-2 transition-colors">
-                          {expandedCreator === (c as any)._id ? '▲' : '▼'} Postings
+                          {expandedCreator === (c as any)._id ? '▲' : '▼'}
                         </button>
                         <button onClick={async e => { e.stopPropagation(); if ((c as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); } setCreators(prev => prev.filter(x => x !== c)) }}
                           className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
@@ -563,12 +563,10 @@ export default function CreatorPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
             </div>
           </div>
         </div>
+
         {/* Postings Dropdown Panel */}
         {expandedCreator && expandedPostings[expandedCreator] && (
           <div className="mx-6 mb-4 bg-[#0D0D0D] rounded-2xl border border-white/[0.06] overflow-hidden">
