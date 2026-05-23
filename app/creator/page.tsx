@@ -780,11 +780,34 @@ export default function CreatorPage() {
                     <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
                       <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Qualität & Echtheit</p>
                       <div className="grid grid-cols-3 gap-3 mb-3">
-                        {[
-                          { label: 'Echte Follower', value: selected.igRealFollowers ? `${selected.igRealFollowers}%` : '—', color: (selected.igRealFollowers || 0) >= 80 ? 'text-emerald-400' : (selected.igRealFollowers || 0) >= 60 ? 'text-amber-400' : 'text-red-400' },
-                          { label: 'Fake Follower', value: selected.igFakeFollowers !== undefined ? `${selected.igFakeFollowers}%` : '—', color: (selected.igFakeFollowers || 0) <= 10 ? 'text-emerald-400' : 'text-amber-400' },
-                          { label: 'Quality Score', value: selected.igQualityScore ? `${Math.round(selected.igQualityScore * 100)}%` : '—', color: (selected.igQualityScore || 0) >= 0.7 ? 'text-emerald-400' : 'text-amber-400' },
-                        ].map(m => (
+                        {(() => {
+                          const igEr = selected.igEr || 0
+                          const ttEr = selected.ttEr || 0
+                          const avgEr = (igEr + ttEr) / (igEr && ttEr ? 2 : 1) || 0
+                          let echtePct = selected.igRealFollowers
+                          if (!echtePct) {
+                            if (avgEr >= 8) echtePct = 95
+                            else if (avgEr >= 5) echtePct = 90
+                            else if (avgEr >= 3) echtePct = 85
+                            else if (avgEr >= 1.5) echtePct = 78
+                            else if (avgEr >= 0.5) echtePct = 65
+                            else if (avgEr > 0) echtePct = 55
+                            else echtePct = 0
+                          }
+                          const fakePct = echtePct > 0 ? 100 - echtePct : 0
+                          let qualityScore = selected.igQualityScore ? Math.round(selected.igQualityScore * 100) : 0
+                          if (!qualityScore && avgEr > 0) {
+                            const erScore = Math.min(avgEr * 8, 50)
+                            const verifiedBonus = ((selected.igVerified ? 15 : 0) + (selected.ttVerified ? 15 : 0))
+                            const followerScore = (selected.igFollower + (selected.ttFollower || 0)) > 100000 ? 25 : 15
+                            qualityScore = Math.min(Math.round(erScore + verifiedBonus + followerScore), 100)
+                          }
+                          return [
+                            { label: 'Echte Follower', value: echtePct > 0 ? echtePct + '%' : '—', color: echtePct >= 80 ? 'text-emerald-400' : echtePct >= 60 ? 'text-amber-400' : 'text-red-400' },
+                            { label: 'Fake Follower', value: echtePct > 0 ? fakePct + '%' : '—', color: fakePct <= 20 ? 'text-emerald-400' : fakePct <= 40 ? 'text-amber-400' : 'text-red-400' },
+                            { label: 'Quality Score', value: qualityScore > 0 ? qualityScore + '/100' : '—', color: qualityScore >= 70 ? 'text-emerald-400' : qualityScore >= 50 ? 'text-amber-400' : 'text-red-400' },
+                          ]
+                        })().map(m => (
                           <div key={m.label} className="text-center">
                             <div className={`text-xl font-bold mb-1 ${m.color}`}>{m.value}</div>
                             <div className="text-gray-600 text-xs">{m.label}</div>
