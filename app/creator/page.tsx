@@ -859,7 +859,7 @@ export default function CreatorPage() {
                       const igDiff = igLast - igFirst
                       const ttDiff = ttLast - ttFirst
                       const allVals = [...sl.map((s:any)=>s.ig_follower||0),...sl.map((s:any)=>s.tt_follower||0)]
-                      const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = maxV-minV||1
+                      const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = Math.max(maxV-minV, maxV*0.005)||1
                       const w = 100/(sl.length-1)
                       const igPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.ig_follower||0)-minV)/range)*80}`).join(' ')
                       const ttPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.tt_follower||0)-minV)/range)*80}`).join(' ')
@@ -926,7 +926,7 @@ export default function CreatorPage() {
                       const first = valid[0].tt_avg_video_views||0
                       const diff = last - first
                       const vals = valid.map((s:any)=>s.tt_avg_video_views||0)
-                      const minV = Math.min(...vals), maxV = Math.max(...vals), range = maxV-minV||1
+                      const minV = Math.min(...vals), maxV = Math.max(...vals), range = Math.max(maxV-minV, maxV*0.005)||1
                       const w = 100/(valid.length-1)
                       const pts = valid.map((s:any,i:number)=>`${i*w},${90-(((s.tt_avg_video_views||0)-minV)/range)*80}`).join(' ')
                       return (<>
