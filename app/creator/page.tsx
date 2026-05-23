@@ -858,11 +858,13 @@ export default function CreatorPage() {
                       const ttFirst = sl[0]?.tt_follower||0
                       const igDiff = igLast - igFirst
                       const ttDiff = ttLast - ttFirst
-                      const allVals = [...sl.map((s:any)=>s.ig_follower||0),...sl.map((s:any)=>s.tt_follower||0)]
-                      const minV = Math.min(...allVals), maxV = Math.max(...allVals), range = Math.max(maxV-minV, maxV*0.0002)||1
+                      const igVals = sl.map((s:any)=>s.ig_follower||0)
+                      const ttVals = sl.map((s:any)=>s.tt_follower||0)
+                      const igMin = Math.min(...igVals), igMax = Math.max(...igVals), igRange = Math.max(igMax-igMin, igMax*0.0002)||1
+                      const ttMin = Math.min(...ttVals), ttMax = Math.max(...ttVals), ttRange = Math.max(ttMax-ttMin, ttMax*0.0002)||1
                       const w = 100/(sl.length-1)
-                      const igPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.ig_follower||0)-minV)/range)*80}`).join(' ')
-                      const ttPts = sl.map((s:any,i:number)=>`${i*w},${90-(((s.tt_follower||0)-minV)/range)*80}`).join(' ')
+                      const igPts = sl.map((s:any,idx:number)=>`${idx*w},${90-(((s.ig_follower||0)-igMin)/igRange)*80}`).join(' ')
+                      const ttPts = sl.map((s:any,idx:number)=>`${idx*w},${90-(((s.tt_follower||0)-ttMin)/ttRange)*80}`).join(' ')
                       return (<>
                         <div className="flex items-center gap-4 mb-2">
                           <span className="flex items-center gap-1.5 text-[10px] text-gray-300">
