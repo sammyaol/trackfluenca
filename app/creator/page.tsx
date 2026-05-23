@@ -400,38 +400,83 @@ export default function CreatorPage() {
                 onClick={async () => {
                   setRefreshing(true)
                   const token = await getToken()
+                  // Hole alle Creator
                   const res = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
                   const data = await res.json()
                   if (Array.isArray(data)) {
-                    setCreators(data.map((c: any) => ({
-                      name: c.name || '', ig: c.ig || '', tt: c.tt || '',
-                      igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
-                      igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
-                      igEr: c.ig_er || 0, ttEr: c.tt_er || 0,
-                      ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
-                      overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
-                      status: c.status || 'Offen', prio: c.prio || 'Mittel',
-                      kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
-                      notizen: c.notizen || '', kampagne: c.kampagne || '',
-                      buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
-                      produkt: c.produkt || 0, gesamt: c.gesamt || 0,
-                      promoCode: c.promo_code || '', datum: c.datum || '',
-                      orgUmsatz: c.org_umsatz || 0, orgKlicks: c.org_klicks || 0,
-                      orgCPK: 0, orgROAS: c.org_roas || 0, orgBestellungen: c.org_bestellungen || 0, orgBW: 0,
-                      adSpend: c.ad_spend || 0, adUmsatz: c.ad_umsatz || 0,
-                      adKlicks: c.ad_klicks || 0, adCPK: 0, adROAS: c.ad_roas || 0,
-                      adBestellungen: c.ad_bestellungen || 0,
-                      gesUmsatz: c.ges_umsatz || 0, gesROAS: c.ges_roas || 0,
-                      gesKlicks: c.ges_klicks || 0, storyViews: 0,
-                      storyWert: c.story_wert || 0, ttWert: c.tt_wert || 0,
-                      reelWert: c.reel_wert || 0, affiliatePct: c.affiliate_pct || '15%',
-                      tkpTT: c.tkp_tt || 0, tkpStory: c.tkp_story || 0, tkpPost: c.tkp_reel || 0,
-                      igImage: c.ig_image, igVerified: c.ig_verified,
-                      igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
-                      igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
-                      ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
-                      tkpReel: c.tkp_reel, _id: c.id,
-                    })))
+                    // Für jeden Creator: frische API-Daten holen + Snapshot speichern
+                    for (const c of data) {
+                      if (!c.ig && !c.tt) continue
+                      try {
+                        const params = new URLSearchParams()
+                        if (c.ig) params.append('ig', c.ig.replace('@',''))
+                        if (c.tt) params.append('tt', c.tt.replace('@',''))
+                        const apiRes = await fetch('/api/creator?' + params)
+                        const d = await apiRes.json()
+                        if (d.error) continue
+                        // Update Creator in Supabase
+                        await fetch('/api/creators/' + c.id, {
+                          method: 'PATCH',
+                          headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
+                          body: JSON.stringify({
+                            ig_follower: d.igFollower || c.ig_follower,
+                            tt_follower: d.ttFollower || c.tt_follower,
+                            ig_er: d.igEr || c.ig_er,
+                            tt_er: d.ttEr || c.tt_er,
+                            tt_avg_video_views: d.ttAvgVideoViews || c.tt_avg_video_views,
+                            ig_avg_likes: d.igAvgLikes || c.ig_avg_likes,
+                          })
+                        })
+                        // Snapshot speichern
+                        await fetch('/api/snapshots', {
+                          method: 'POST',
+                          headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
+                          body: JSON.stringify({
+                            creator_id: c.id,
+                            ig_follower: d.igFollower || c.ig_follower || 0,
+                            tt_follower: d.ttFollower || c.tt_follower || 0,
+                            ig_avg_likes: d.igAvgLikes || c.ig_avg_likes || 0,
+                            ig_er: d.igEr || c.ig_er || 0,
+                            tt_avg_video_views: d.ttAvgVideoViews || c.tt_avg_video_views || 0,
+                            tt_er: d.ttEr || c.tt_er || 0,
+                          })
+                        })
+                      } catch(e) { console.error('Fehler bei', c.name, e) }
+                    }
+                    // Neu laden
+                    const res2 = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
+                    const data2 = await res2.json()
+                    if (Array.isArray(data2)) {
+                      setCreators(data2.map((c: any) => ({
+                        name: c.name || '', ig: c.ig || '', tt: c.tt || '',
+                        igFollower: c.ig_follower || 0, ttFollower: c.tt_follower || 0,
+                        igTier: c.ig_tier || '', ttTier: c.tt_tier || '',
+                        igEr: c.ig_er || 0, ttEr: c.tt_er || 0,
+                        ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
+                        overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
+                        status: c.status || 'Offen', prio: c.prio || 'Mittel',
+                        kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
+                        notizen: c.notizen || '', kampagne: c.kampagne || '',
+                        buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
+                        produkt: c.produkt || 0, gesamt: c.gesamt || 0,
+                        promoCode: c.promo_code || '', datum: c.datum || '',
+                        orgUmsatz: c.org_umsatz || 0, orgKlicks: c.org_klicks || 0,
+                        orgCPK: 0, orgROAS: c.org_roas || 0, orgBestellungen: c.org_bestellungen || 0, orgBW: 0,
+                        adSpend: c.ad_spend || 0, adUmsatz: c.ad_umsatz || 0,
+                        adKlicks: c.ad_klicks || 0, adCPK: 0, adROAS: c.ad_roas || 0,
+                        adBestellungen: c.ad_bestellungen || 0,
+                        gesUmsatz: c.ges_umsatz || 0, gesROAS: c.ges_roas || 0,
+                        gesKlicks: c.ges_klicks || 0, storyViews: 0,
+                        storyWert: c.story_wert || 0, ttWert: c.tt_wert || 0,
+                        reelWert: c.reel_wert || 0, affiliatePct: c.affiliate_pct || '15%',
+                        tkpTT: c.tkp_tt || 0, tkpStory: c.tkp_story || 0, tkpPost: c.tkp_reel || 0,
+                        igImage: c.ig_image, igVerified: c.ig_verified,
+                        igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
+                        igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
+                        ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+                        tkpReel: c.tkp_reel, _id: c.id,
+                      })))
+                    }
                   }
                   setRefreshing(false)
                 }}
