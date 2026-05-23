@@ -803,8 +803,8 @@ export default function CreatorPage() {
                             qualityScore = Math.min(Math.round(erScore + verifiedBonus + followerScore), 100)
                           }
                           return [
-                            { label: 'Echte Follower', value: echtePct > 0 ? echtePct + '%' : '—', color: echtePct >= 80 ? 'text-emerald-400' : echtePct >= 60 ? 'text-amber-400' : 'text-red-400' },
-                            { label: 'Fake Follower', value: echtePct > 0 ? fakePct + '%' : '—', color: fakePct <= 20 ? 'text-emerald-400' : fakePct <= 40 ? 'text-amber-400' : 'text-red-400' },
+                            { label: 'Aktive Follower', value: echtePct > 0 ? echtePct + '%' : '—', color: echtePct >= 80 ? 'text-emerald-400' : echtePct >= 60 ? 'text-amber-400' : 'text-red-400' },
+                            { label: 'Inaktive Follower', value: echtePct > 0 ? fakePct + '%' : '—', color: fakePct <= 20 ? 'text-emerald-400' : fakePct <= 40 ? 'text-amber-400' : 'text-red-400' },
                             { label: 'Quality Score', value: qualityScore > 0 ? qualityScore + '/100' : '—', color: qualityScore >= 70 ? 'text-emerald-400' : qualityScore >= 50 ? 'text-amber-400' : 'text-red-400' },
                           ]
                         })().map(m => (
