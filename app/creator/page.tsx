@@ -1219,27 +1219,41 @@ export default function CreatorPage() {
                       </div>
                     </div>
                     <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
-                      <p className="text-gray-500 text-xs font-medium mb-3">Ergebnisse eintragen</p>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Org. Umsatz €</label>
-                          <input type="number" value={selected.orgUmsatz || ''} onChange={e => setSelected(p => p ? {...p, orgUmsatz: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {orgUmsatz: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
-                        </div>
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Org. Klicks</label>
-                          <input type="number" value={selected.orgKlicks || ''} onChange={e => setSelected(p => p ? {...p, orgKlicks: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {orgKlicks: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
-                        </div>
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Ad Spend €</label>
-                          <input type="number" value={selected.adSpend || ''} onChange={e => setSelected(p => p ? {...p, adSpend: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {adSpend: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
-                        </div>
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Ad Umsatz €</label>
-                          <input type="number" value={selected.adUmsatz || ''} onChange={e => setSelected(p => p ? {...p, adUmsatz: Number(e.target.value)} : p)} onBlur={e => updateCreator(selected, {adUmsatz: Number(e.target.value)})} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs" placeholder="0" />
-                        </div>
-                      </div>
+                      <p className="text-gray-500 text-xs font-medium mb-3">Ergebnisse aus Postings</p>
+                      {(() => {
+                        const totalFee = postings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
+                        const totalOrgU = postings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
+                        const totalAdU = postings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
+                        const totalAdS = postings.reduce((s:number,p:any)=>s+(p.ad_spend||0),0)
+                        const totalOrgK = postings.reduce((s:number,p:any)=>s+(p.org_klicks||0),0)
+                        const gesU = totalOrgU + totalAdU
+                        const gesK = totalFee + totalAdS
+                        const orgROAS = totalFee > 0 ? Math.round(totalOrgU/totalFee*100)/100 : 0
+                        const adROAS = totalAdS > 0 ? Math.round(totalAdU/totalAdS*100)/100 : 0
+                        const gesROAS = gesK > 0 ? Math.round(gesU/gesK*100)/100 : 0
+                        if (postings.length === 0) return <p className="text-gray-600 text-xs text-center py-2">Noch keine Postings — unter Postings-Tab hinzufügen</p>
+                        return (
+                          <div className="grid grid-cols-2 gap-2">
+                            {([
+                              ['Gesamt Fee', totalFee.toLocaleString('de-DE')+' €', ''],
+                              ['Org. Umsatz', totalOrgU.toLocaleString('de-DE')+' €', 'text-emerald-400'],
+                              ['Org. ROAS', orgROAS>0?orgROAS+'x':'—', orgROAS>=3?'text-emerald-400':orgROAS>=1?'text-amber-400':'text-red-400'],
+                              ['Org. Klicks', totalOrgK.toLocaleString('de-DE'), ''],
+                              ['Ad Spend', totalAdS.toLocaleString('de-DE')+' €', ''],
+                              ['Ad Umsatz', totalAdU.toLocaleString('de-DE')+' €', 'text-emerald-400'],
+                              ['Ad ROAS', adROAS>0?adROAS+'x':'—', adROAS>=3?'text-emerald-400':adROAS>=1?'text-amber-400':'text-red-400'],
+                              ['Ges. Umsatz', gesU.toLocaleString('de-DE')+' €', 'text-emerald-400 font-semibold'],
+                              ['Ges. ROAS', gesROAS>0?gesROAS+'x':'—', 'font-bold '+(gesROAS>=3?'text-emerald-400':gesROAS>=1?'text-amber-400':'text-red-400')],
+                            ] as [string,string,string][]).map(([l,v,cls]) => (
+                              <div key={l} className="bg-[#111] rounded-lg p-2">
+                                <div className="text-gray-600 text-[10px] mb-0.5">{l}</div>
+                                <div className={`text-xs font-medium ${cls||'text-white'}`}>{v}</div>
+                              </div>
+                            ))}
+                          </div>
+                        )
+                      })()}
                     </div>
-                  </div>
                 )}
 
                 <div className="flex gap-2 pt-2">
