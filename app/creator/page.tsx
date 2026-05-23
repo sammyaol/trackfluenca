@@ -850,7 +850,8 @@ export default function CreatorPage() {
                       </div>
                     </div>
                     {(() => {
-                      const sl = snapshots.slice(-followerDays)
+                      const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - followerDays)
+                      const sl = snapshots.filter((s:any) => new Date(s.created_at) >= cutoff)
                       if (sl.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
                       const igLast = sl[sl.length-1]?.ig_follower||0
                       const ttLast = sl[sl.length-1]?.tt_follower||0
@@ -922,7 +923,8 @@ export default function CreatorPage() {
                       </div>
                     </div>
                     {(() => {
-                      const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).slice(-viewsDays)
+                      const cutoff2 = new Date(); cutoff2.setDate(cutoff2.getDate() - viewsDays)
+                      const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0 && new Date(s.created_at) >= cutoff2)
                       if (valid.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
                       const last = valid[valid.length-1].tt_avg_video_views||0
                       const first = valid[0].tt_avg_video_views||0
