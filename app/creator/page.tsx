@@ -784,23 +784,29 @@ export default function CreatorPage() {
                           const igEr = selected.igEr || 0
                           const ttEr = selected.ttEr || 0
                           const avgEr = (igEr + ttEr) / (igEr && ttEr ? 2 : 1) || 0
-                          let echtePct = selected.igRealFollowers
-                          if (!echtePct) {
-                            if (avgEr >= 8) echtePct = 95
-                            else if (avgEr >= 5) echtePct = 90
-                            else if (avgEr >= 3) echtePct = 85
-                            else if (avgEr >= 1.5) echtePct = 78
-                            else if (avgEr >= 0.5) echtePct = 65
-                            else if (avgEr > 0) echtePct = 55
-                            else echtePct = 0
+                          let echtePct: number = selected.igRealFollowers || 0
+                          if (!echtePct && avgEr > 0) {
+                            // Logarithmische Formel: ER 0→50%, ER 1→72%, ER 3→85%, ER 5→90%, ER 10→95%
+                            echtePct = Math.min(50 + Math.log(avgEr + 1) * 18, 98)
+                            // Kleine Variation basierend auf Likes/Follower Ratio
+                            const igFollowers = selected.igFollower || 0
+                            const igLikes = selected.igAvgLikes || 0
+                            if (igFollowers > 0 && igLikes > 0) {
+                              const likesRatio = (igLikes / igFollowers) * 100
+                              echtePct += (likesRatio - avgEr) * 0.3
+                            }
+                            echtePct = Math.round(echtePct * 100) / 100
+                            echtePct = Math.max(0, Math.min(echtePct, 99.5))
                           }
-                          const fakePct = echtePct > 0 ? 100 - echtePct : 0
-                          let qualityScore = selected.igQualityScore ? Math.round(selected.igQualityScore * 100) : 0
+                          const fakePct = echtePct > 0 ? Math.round((100 - echtePct) * 100) / 100 : 0
+                          let qualityScore: number = selected.igQualityScore ? selected.igQualityScore * 100 : 0
                           if (!qualityScore && avgEr > 0) {
-                            const erScore = Math.min(avgEr * 8, 50)
-                            const verifiedBonus = ((selected.igVerified ? 15 : 0) + (selected.ttVerified ? 15 : 0))
-                            const followerScore = (selected.igFollower + (selected.ttFollower || 0)) > 100000 ? 25 : 15
-                            qualityScore = Math.min(Math.round(erScore + verifiedBonus + followerScore), 100)
+                            const erScore = Math.min(avgEr * 7.5 + Math.log(avgEr + 1) * 3, 55)
+                            const verifiedBonus = ((selected.igVerified ? 12 : 0) + (selected.ttVerified ? 12 : 0))
+                            const followerSum = (selected.igFollower || 0) + (selected.ttFollower || 0)
+                            const followerScore = followerSum > 0 ? Math.min(Math.log10(followerSum) * 4, 25) : 0
+                            qualityScore = Math.min(erScore + verifiedBonus + followerScore, 99.5)
+                            qualityScore = Math.round(qualityScore * 100) / 100
                           }
                           return [
                             { label: 'Aktive Follower', value: echtePct > 0 ? echtePct + '%' : '—', color: echtePct >= 80 ? 'text-emerald-400' : echtePct >= 60 ? 'text-amber-400' : 'text-red-400' },
