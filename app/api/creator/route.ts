@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_KEY = '1c8f95c798msh3d63fd4092ead12p160391jsnc1b84ff843e7'
+const API_KEY = process.env.RAPIDAPI_KEY!
 const IG_HOST = 'instagram-best-experience.p.rapidapi.com'
 const TT_HOST = 'tiktok-scraper7.p.rapidapi.com'
 const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST }
@@ -14,7 +14,15 @@ async function apiFetch(url: string, headers: Record<string,string>) { try { con
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function sanitize(raw: string | null): string { const s = (raw ?? '').trim().replace(/^@/, ''); try { const u = new URL(s.includes('://') ? s : 'https://' + s); const parts = u.pathname.split('/').filter(Boolean); return parts[parts.length-1] || u.hostname.replace('www.','') } catch { return s } }
 
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
 export async function GET(req: NextRequest) {
+  const token = req.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: { user } } = await supabase.auth.getUser(token)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { searchParams } = new URL(req.url)
   const ig = sanitize(searchParams.get('ig'))
   const tt = sanitize(searchParams.get('tt'))
