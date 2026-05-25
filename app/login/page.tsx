@@ -32,7 +32,7 @@ export default function LoginPage() {
         password,
         options: {
           data: { name },
-          emailRedirectTo: window.location.origin + '/creator'
+          emailRedirectTo: window.location.origin + '/dashboard'
         }
       })
       if (error) {
@@ -40,7 +40,7 @@ export default function LoginPage() {
         setLoading(false)
       } else {
         if (data.session) {
-          window.location.href = '/creator'
+          window.location.href = '/dashboard'
         } else {
           setSuccess('Bestätigungs-E-Mail gesendet! Bitte E-Mail prüfen.')
           setLoading(false)
@@ -52,7 +52,7 @@ export default function LoginPage() {
         setError(error.message === 'Invalid login credentials' ? 'E-Mail oder Passwort falsch' : error.message)
         setLoading(false)
       } else {
-        window.location.href = '/creator'
+        window.location.href = '/dashboard'
       }
     }
   }

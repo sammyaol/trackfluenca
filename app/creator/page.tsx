@@ -91,7 +91,7 @@ const allColumns = [
 ]
 
 const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 'Gesamt', 'Bewertung']
-const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: 'Schmuck', kampagne: '', buchungstyp: 'Reel', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
+const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: '', kampagne: '', buchungstyp: '', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
 
 export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
@@ -196,7 +196,8 @@ export default function CreatorPage() {
       const params = new URLSearchParams()
       if (form.igHandle) params.append('ig', form.igHandle.replace('@', ''))
       if (form.ttHandle) params.append('tt', form.ttHandle.replace('@', ''))
-      const res = await fetch(`/api/creator?${params}`)
+      const token = (await sb.auth.getSession()).data.session?.access_token || ''
+      const res = await fetch(`/api/creator?${params}`, { headers: { authorization: 'Bearer ' + token } })
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       setFetchedData(data)
@@ -472,7 +473,7 @@ export default function CreatorPage() {
                         const params = new URLSearchParams()
                         if (c.ig) params.append('ig', c.ig.replace('@',''))
                         if (c.tt) params.append('tt', c.tt.replace('@',''))
-                        const apiRes = await fetch('/api/creator?' + params)
+                        const apiRes = await fetch('/api/creator?' + params, { headers: { authorization: 'Bearer ' + token } })
                         const d = await apiRes.json()
                         if (d.error) continue
                         // Update Creator in Supabase
@@ -1479,22 +1480,17 @@ export default function CreatorPage() {
                       </select></div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><label className={labelCls}>Kategorie</label>
-                      <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))} className={selectCls}>
-                        {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
-                      </select></div>
-                    <div><label className={labelCls}>Buchungstyp</label>
-                      <select value={form.buchungstyp} onChange={e => setForm(p => ({ ...p, buchungstyp: e.target.value }))} className={selectCls}>
-                        {['Reel', 'TikTok Post', 'Story', 'Reel + TikTok', 'Bundle', 'UGC'].map(s => <option key={s}>{s}</option>)}
-                      </select></div>
+                  <div>
+                    <label className={labelCls}>Kategorie</label>
+                    <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))} className={selectCls}>
+                      <option value="">— wählen —</option>
+                      {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
+                    </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div><label className={labelCls}>Fee €</label>
-                      <input value={form.fee} onChange={e => setForm(p => ({ ...p, fee: e.target.value }))} placeholder="850" className={inputCls} /></div>
-                    <div><label className={labelCls}>Promo Code</label>
-                      <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))} placeholder="SOPHIE15" className={inputCls} /></div>
+                  <div>
+                    <label className={labelCls}>Promo Code</label>
+                    <input value={form.promoCode} onChange={e => setForm(p => ({ ...p, promoCode: e.target.value }))} placeholder="SOPHIE15" className={inputCls} />
                   </div>
 
                   <div><label className={labelCls}>Notizen</label>
