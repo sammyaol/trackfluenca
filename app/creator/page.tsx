@@ -1278,10 +1278,23 @@ export default function CreatorPage() {
                   </>
                 )}
 
-                {detailTab === 'performance' && (
+                {detailTab === 'performance' && (() => {
+                  const totalFee = postings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
+                  const totalOrgU = postings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
+                  const totalOrgK = postings.reduce((s:number,p:any)=>s+(p.org_klicks||0),0)
+                  const totalAdU = postings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
+                  const totalAdS = postings.reduce((s:number,p:any)=>s+(p.ad_spend||0),0)
+                  const totalOrgBest = postings.reduce((s:number,p:any)=>s+(p.org_bestellungen||0),0)
+                  const gesU = totalOrgU + totalAdU
+                  const gesK = totalFee + totalAdS
+                  const pOrgROAS = totalFee > 0 ? Math.round(totalOrgU/totalFee*100)/100 : 0
+                  const pAdROAS = totalAdS > 0 ? Math.round(totalAdU/totalAdS*100)/100 : 0
+                  const pGesROAS = gesK > 0 ? Math.round(gesU/gesK*100)/100 : 0
+                  const pOrgCPK = totalOrgK > 0 ? totalFee/totalOrgK : 0
+                  return (
                   <>
                     <div className="grid grid-cols-3 gap-2">
-                      {[['Org. ROAS', selected.orgROAS], ['Ad ROAS', selected.adROAS], ['Ges. ROAS', selected.gesROAS]].map(([l, v]) => (
+                      {[['Org. ROAS', pOrgROAS], ['Ad ROAS', pAdROAS], ['Ges. ROAS', pGesROAS]].map(([l, v]) => (
                         <div key={l as string} className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06] text-center">
                           <div className="text-gray-600 text-xs mb-1">{l}</div>
                           <div className={`text-lg font-bold ${roasColor(v as number)}`}>{(v as number) > 0 ? `${v}x` : '—'}</div>
@@ -1291,13 +1304,13 @@ export default function CreatorPage() {
 
                     <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
                       {[
-                        ['Org. Umsatz', fmtEur(selected.orgUmsatz), 'text-emerald-400'],
-                        ['Org. Klicks', selected.orgKlicks > 0 ? fmt(selected.orgKlicks) : '—', ''],
-                        ['Org. CPK', selected.orgCPK > 0 ? `${selected.orgCPK.toFixed(2)} €` : '—', ''],
-                        ['Org. Bestellungen', selected.orgBestellungen > 0 ? String(selected.orgBestellungen) : '—', ''],
-                        ['Ad Spend', fmtEur(selected.adSpend), ''],
-                        ['Ad Umsatz', fmtEur(selected.adUmsatz), 'text-emerald-400'],
-                        ['Ges. Umsatz', fmtEur(selected.gesUmsatz), 'text-emerald-400 font-semibold'],
+                        ['Org. Umsatz', fmtEur(totalOrgU), 'text-emerald-400'],
+                        ['Org. Klicks', totalOrgK > 0 ? fmt(totalOrgK) : '—', ''],
+                        ['Org. CPK', pOrgCPK > 0 ? `${pOrgCPK.toFixed(2)} €` : '—', ''],
+                        ['Org. Bestellungen', totalOrgBest > 0 ? String(totalOrgBest) : '—', ''],
+                        ['Ad Spend', fmtEur(totalAdS), ''],
+                        ['Ad Umsatz', fmtEur(totalAdU), 'text-emerald-400'],
+                        ['Ges. Umsatz', fmtEur(gesU), 'text-emerald-400 font-semibold'],
                       ].map(([l, v, cls]) => (
                         <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
                           <span className="text-gray-600 text-xs">{l}</span>
