@@ -296,6 +296,7 @@ export default function Dashboard() {
 
           {/* Umsatz-Verlauf + Pipeline */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
             <ChartCard title="Umsatz-Verlauf" subtitle="Letzte 30 Tage" loading={chartsLoading}>
               <div className="relative h-40">
                 <svg viewBox="0 0 600 160" preserveAspectRatio="none" className="w-full h-full">
@@ -325,6 +326,7 @@ export default function Dashboard() {
                 <span>{umsatzVerlauf[umsatzVerlauf.length - 1]?.label}</span>
               </div>
             </ChartCard>
+            </div>
 
             <ChartCard title="Sales Pipeline" subtitle={`${creators.length} Creator`} loading={chartsLoading}>
               <div className="space-y-3">
