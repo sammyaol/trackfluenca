@@ -11,6 +11,34 @@ export default function Bestellungen() {
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ creator_id: '', produkt: '', tracking_nummer: '', versandt_am: '', angekommen_am: '', notizen: '', status: 'Nicht versendet' })
   const [filter, setFilter] = useState('Alle')
+  const [tracking, setTracking] = useState<Record<string, any>>({})
+  const [trackingLoading, setTrackingLoading] = useState<string|null>(null)
+  
+  async function trackShipment(b: any) {
+    if (!b.tracking_nummer) return
+    setTrackingLoading(b.id)
+    try {
+      const res = await fetch('/api/tracking?number=' + encodeURIComponent(b.tracking_nummer))
+      const data = await res.json()
+      setTracking(prev => ({ ...prev, [b.id]: data }))
+      // Status automatisch aktualisieren wenn API zugestellt sagt
+      if (data.status && data.status !== b.status && !data.error) {
+        await updateStatus(b.id, data.status)
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setTrackingLoading(null)
+    }
+  }
+  
+  async function trackAll() {
+    for (const b of bestellungen) {
+      if (b.tracking_nummer && b.status !== 'Angekommen') {
+        await trackShipment(b)
+      }
+    }
+  }
   
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token
@@ -127,7 +155,12 @@ export default function Bestellungen() {
             <h1 className="text-2xl font-bold text-white">Bestellungen</h1>
             <p className="text-gray-500 text-sm mt-1">{stats.total} Creator · {stats.nichtVersendet} offen · {stats.versendet} unterwegs · {stats.angekommen} zugestellt</p>
           </div>
-          <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">+ Neue Bestellung</button>
+          <div className="flex gap-2">
+            <button onClick={trackAll} className="px-3 py-1.5 rounded-lg border border-white/[0.08] text-white text-xs hover:bg-white/[0.04] transition-colors font-medium flex items-center gap-2">
+              <span>↻</span> Tracking aktualisieren
+            </button>
+            <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">+ Neue Bestellung</button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -173,12 +206,25 @@ export default function Bestellungen() {
                       <td className="px-5 py-3 text-gray-500 text-xs">{b.versandt_am || '—'}</td>
                       <td className="px-5 py-3 text-gray-500 text-xs">{b.angekommen_am || '—'}</td>
                       <td className="px-5 py-3">
-                        <select value={b.status} onChange={e => updateStatus(b.id, e.target.value)}
-                          className={`text-xs px-2 py-1 rounded-full border cursor-pointer focus:outline-none ${b.status === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : b.status === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-gray-500/15 text-gray-400 border-gray-500/30'}`}>
-                          <option value="Nicht versendet">Nicht versendet</option>
-                          <option value="Versendet">Versendet</option>
-                          <option value="Angekommen">Angekommen</option>
-                        </select>
+                        <div className="flex items-center gap-2">
+                          <select value={b.status} onChange={e => updateStatus(b.id, e.target.value)}
+                            className={`text-xs px-2 py-1 rounded-full border cursor-pointer focus:outline-none ${b.status === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : b.status === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-gray-500/15 text-gray-400 border-gray-500/30'}`}>
+                            <option value="Nicht versendet">Nicht versendet</option>
+                            <option value="Versendet">Versendet</option>
+                            <option value="Angekommen">Angekommen</option>
+                          </select>
+                          {b.tracking_nummer && (
+                            <button onClick={() => trackShipment(b)} disabled={trackingLoading === b.id} className="text-gray-500 hover:text-white text-xs transition-colors" title="DHL-Status abrufen">
+                              {trackingLoading === b.id ? <span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin inline-block"/> : '↻'}
+                            </button>
+                          )}
+                        </div>
+                        {tracking[b.id] && !tracking[b.id].error && (
+                          <div className="text-[10px] text-gray-500 mt-1">{tracking[b.id].description}</div>
+                        )}
+                        {tracking[b.id]?.error && (
+                          <div className="text-[10px] text-red-400/70 mt-1">DHL: {tracking[b.id].error}</div>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         {!b.virtual && <button onClick={() => deleteB(b.id)} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors">Löschen</button>}
