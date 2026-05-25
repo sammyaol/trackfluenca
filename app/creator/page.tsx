@@ -778,7 +778,7 @@ export default function CreatorPage() {
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
-                {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igTopCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['performance', 'Performance'], ['postings', 'Postings'], ['deal', 'Ergebnisse']] as [string,string][]).map(([id, label]) => (
+                {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igTopCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['postings', 'Postings'], ['performance', 'Performance']] as [string,string][]).map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
                     {label}
@@ -1342,47 +1342,6 @@ export default function CreatorPage() {
                   </>
                   )
                 })()}
-
-                {detailTab === 'deal' && (
-                  <div className="space-y-3">
-                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
-                      <p className="text-gray-500 text-xs font-medium mb-3">Ergebnisse aus Postings</p>
-                      {(() => {
-                        const totalFee = postings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
-                        const totalOrgU = postings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
-                        const totalAdU = postings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
-                        const totalAdS = postings.reduce((s:number,p:any)=>s+(p.ad_spend||0),0)
-                        const totalOrgK = postings.reduce((s:number,p:any)=>s+(p.org_klicks||0),0)
-                        const gesU = totalOrgU + totalAdU
-                        const gesK = totalFee + totalAdS
-                        const orgROAS = totalFee > 0 ? Math.round(totalOrgU/totalFee*100)/100 : 0
-                        const adROAS = totalAdS > 0 ? Math.round(totalAdU/totalAdS*100)/100 : 0
-                        const gesROAS = gesK > 0 ? Math.round(gesU/gesK*100)/100 : 0
-                        if (postings.length === 0) return <p className="text-gray-600 text-xs text-center py-2">Noch keine Postings — unter Postings-Tab hinzufügen</p>
-                        return (
-                          <div className="grid grid-cols-2 gap-2">
-                            {([
-                              ['Gesamt Fee', totalFee.toLocaleString('de-DE')+' €', ''],
-                              ['Org. Umsatz', totalOrgU.toLocaleString('de-DE')+' €', 'text-emerald-400'],
-                              ['Org. ROAS', orgROAS>0?orgROAS+'x':'—', orgROAS>=3?'text-emerald-400':orgROAS>=1?'text-amber-400':'text-red-400'],
-                              ['Org. Klicks', totalOrgK.toLocaleString('de-DE'), ''],
-                              ['Ad Spend', totalAdS.toLocaleString('de-DE')+' €', ''],
-                              ['Ad Umsatz', totalAdU.toLocaleString('de-DE')+' €', 'text-emerald-400'],
-                              ['Ad ROAS', adROAS>0?adROAS+'x':'—', adROAS>=3?'text-emerald-400':adROAS>=1?'text-amber-400':'text-red-400'],
-                              ['Ges. Umsatz', gesU.toLocaleString('de-DE')+' €', 'text-emerald-400 font-semibold'],
-                              ['Ges. ROAS', gesROAS>0?gesROAS+'x':'—', 'font-bold '+(gesROAS>=3?'text-emerald-400':gesROAS>=1?'text-amber-400':'text-red-400')],
-                            ] as [string,string,string][]).map(([l,v,cls]) => (
-                              <div key={l} className="bg-[#111] rounded-lg p-2">
-                                <div className="text-gray-600 text-[10px] mb-0.5">{l}</div>
-                                <div className={`text-xs font-medium ${cls||'text-white'}`}>{v}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  </div>
-                )}
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={async () => {
