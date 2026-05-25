@@ -131,7 +131,7 @@ export default function Dashboard() {
 
   // Follower-Wachstum (kombiniert IG + TT, 30 Tage)
   const followerVerlauf = useMemo(() => {
-    if (snapshots.length === 0) return []
+    if (snapshots.length === 0) return { days: [], igMin: 0, igMax: 1, ttMin: 0, ttMax: 1 }
     const days: { date: string; ig: number; tt: number }[] = []
     for (let i = 29; i >= 0; i--) {
       const d = new Date()
@@ -140,7 +140,6 @@ export default function Dashboard() {
       const next = new Date(d)
       next.setDate(next.getDate() + 1)
       
-      // Für jeden Creator: letzter Snapshot bis zu diesem Tag
       let totalIg = 0, totalTt = 0
       creators.forEach(c => {
         const snaps = snapshots.filter(s => s.creator_id === c.id && new Date(s.created_at) < next).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
@@ -149,13 +148,15 @@ export default function Dashboard() {
           totalTt += snaps[0].tt_follower || 0
         }
       })
-      days.push({
-        date: d.toISOString().split('T')[0],
-        ig: totalIg,
-        tt: totalTt
-      })
+      days.push({ date: d.toISOString().split('T')[0], ig: totalIg, tt: totalTt })
     }
-    return days
+    const igVals = days.map(d => d.ig).filter(v => v > 0)
+    const ttVals = days.map(d => d.tt).filter(v => v > 0)
+    const igMax = Math.max(...igVals, 1)
+    const igMin = Math.min(...igVals, igMax)
+    const ttMax = Math.max(...ttVals, 1)
+    const ttMin = Math.min(...ttVals, ttMax)
+    return { days, igMin, igMax, ttMin, ttMax }
   }, [snapshots, creators])
 
   // Pipeline-Funnel
@@ -248,7 +249,6 @@ export default function Dashboard() {
   )
 
   const maxUmsatz = Math.max(...umsatzVerlauf.map(d => d.value), 1)
-  const maxFollower = followerVerlauf.length > 0 ? Math.max(...followerVerlauf.map(d => Math.max(d.ig, d.tt)), 1) : 1
 
   return (
     <div className="flex min-h-screen bg-[#0A0A0A]">
@@ -351,31 +351,39 @@ export default function Dashboard() {
 
           {/* Follower-Wachstum + Plattform */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ChartCard title="Follower-Wachstum" subtitle="IG + TikTok kombiniert" loading={chartsLoading}>
-              {followerVerlauf.length > 0 ? (
+            <ChartCard title="Follower-Wachstum" subtitle="IG + TikTok (getrennte Skalen)" loading={chartsLoading}>
+              {followerVerlauf.days.length > 0 ? (
                 <>
-                  <div className="flex items-center gap-4 mb-3 text-xs">
-                    <span className="flex items-center gap-1.5 text-gray-500"><span className="w-2 h-2 rounded-full bg-pink-500"/>Instagram</span>
-                    <span className="flex items-center gap-1.5 text-gray-500"><span className="w-2 h-2 rounded-full bg-cyan-400"/>TikTok</span>
+                  <div className="flex items-center justify-between mb-3 text-xs">
+                    <span className="flex items-center gap-1.5 text-pink-400"><span className="w-2 h-2 rounded-full bg-pink-500"/>Instagram</span>
+                    <span className="flex items-center gap-1.5 text-cyan-400"><span className="w-2 h-2 rounded-full bg-cyan-400"/>TikTok</span>
                   </div>
                   <div className="relative h-32">
                     <svg viewBox="0 0 600 130" preserveAspectRatio="none" className="w-full h-full">
-                      {followerVerlauf.map((d, i) => {
-                        if (i === followerVerlauf.length - 1) return null
-                        const x1 = (i / (followerVerlauf.length - 1)) * 600
-                        const x2 = ((i + 1) / (followerVerlauf.length - 1)) * 600
-                        const igY1 = 130 - (d.ig / maxFollower) * 110
-                        const igY2 = 130 - (followerVerlauf[i + 1].ig / maxFollower) * 110
-                        const ttY1 = 130 - (d.tt / maxFollower) * 110
-                        const ttY2 = 130 - (followerVerlauf[i + 1].tt / maxFollower) * 110
-                        return (
-                          <g key={i}>
-                            <line x1={x1} y1={igY1} x2={x2} y2={igY2} stroke="#ec4899" strokeWidth="2"/>
-                            <line x1={x1} y1={ttY1} x2={x2} y2={ttY2} stroke="#22d3ee" strokeWidth="2" strokeDasharray="3,3"/>
-                          </g>
-                        )
-                      })}
+                      {(() => {
+                        const igRange = Math.max(followerVerlauf.igMax - followerVerlauf.igMin, followerVerlauf.igMax * 0.0002, 1)
+                        const ttRange = Math.max(followerVerlauf.ttMax - followerVerlauf.ttMin, followerVerlauf.ttMax * 0.0002, 1)
+                        return followerVerlauf.days.map((d, i) => {
+                          if (i === followerVerlauf.days.length - 1) return null
+                          const x1 = (i / (followerVerlauf.days.length - 1)) * 600
+                          const x2 = ((i + 1) / (followerVerlauf.days.length - 1)) * 600
+                          const igY1 = 130 - ((d.ig - followerVerlauf.igMin) / igRange) * 110
+                          const igY2 = 130 - ((followerVerlauf.days[i + 1].ig - followerVerlauf.igMin) / igRange) * 110
+                          const ttY1 = 130 - ((d.tt - followerVerlauf.ttMin) / ttRange) * 110
+                          const ttY2 = 130 - ((followerVerlauf.days[i + 1].tt - followerVerlauf.ttMin) / ttRange) * 110
+                          return (
+                            <g key={i}>
+                              <line x1={x1} y1={igY1} x2={x2} y2={igY2} stroke="#ec4899" strokeWidth="2"/>
+                              <line x1={x1} y1={ttY1} x2={x2} y2={ttY2} stroke="#22d3ee" strokeWidth="2" strokeDasharray="3,3"/>
+                            </g>
+                          )
+                        })
+                      })()}
                     </svg>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-600 mt-2">
+                    <span>IG: {followerVerlauf.igMin.toLocaleString('de-DE')} → {followerVerlauf.igMax.toLocaleString('de-DE')}</span>
+                    <span>TT: {followerVerlauf.ttMin.toLocaleString('de-DE')} → {followerVerlauf.ttMax.toLocaleString('de-DE')}</span>
                   </div>
                 </>
               ) : (
