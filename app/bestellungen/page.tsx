@@ -25,9 +25,41 @@ export default function Bestellungen() {
       fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()),
       fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json())
     ])
-    setBestellungen(Array.isArray(b) ? b : [])
-    setCreators(Array.isArray(c) ? c : [])
+    const bestellungenArr = Array.isArray(b) ? b : []
+    const creatorsArr = Array.isArray(c) ? c : []
+    setCreators(creatorsArr)
+    // Für jeden Creator ohne Bestellung: Platzhalter mit Status aus Creator (oder Nicht versendet)
+    const merged = creatorsArr.map((cr:any) => {
+      const existing = bestellungenArr.find((b:any) => b.creator_id === cr.id)
+      if (existing) return existing
+      return {
+        id: 'virtual-' + cr.id,
+        creator_id: cr.id,
+        produkt: '',
+        tracking_nummer: '',
+        versandt_am: null,
+        angekommen_am: null,
+        status: cr.versand || 'Nicht versendet',
+        virtual: true
+      }
+    })
+    // + echte Bestellungen die zu gelöschten Creatorn gehören
+    const orphans = bestellungenArr.filter((b:any) => !creatorsArr.find((c:any) => c.id === b.creator_id))
+    setBestellungen([...merged, ...orphans])
     setLoading(false)
+  }
+  
+  async function ensureBestellung(virtualId: string, creatorId: string) {
+    // Erstelle echte Bestellung aus virtuellem Eintrag
+    const token = await getToken()
+    const res = await fetch('/api/bestellungen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ creator_id: creatorId, status: 'Nicht versendet' })
+    })
+    const newB = await res.json()
+    setBestellungen(prev => prev.map(b => b.id === virtualId ? newB : b))
+    return newB
   }
 
   async function save() {
@@ -43,11 +75,33 @@ export default function Bestellungen() {
 
   async function updateStatus(id: string, status: string) {
     const token = await getToken()
+    const b = bestellungen.find(b => b.id === id)
+    if (!b) return
     const extra: any = { status }
-    if (status === 'Versendet' && !bestellungen.find(b => b.id === id)?.versandt_am) extra.versandt_am = new Date().toISOString().split('T')[0]
-    if (status === 'Angekommen' && !bestellungen.find(b => b.id === id)?.angekommen_am) extra.angekommen_am = new Date().toISOString().split('T')[0]
-    await fetch('/api/bestellungen/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify(extra) })
-    setBestellungen(prev => prev.map(b => b.id === id ? {...b, ...extra} : b))
+    if (status === 'Versendet' && !b.versandt_am) extra.versandt_am = new Date().toISOString().split('T')[0]
+    if (status === 'Angekommen' && !b.angekommen_am) extra.angekommen_am = new Date().toISOString().split('T')[0]
+    if (b.virtual) {
+      const newB = await ensureBestellung(id, b.creator_id)
+      await fetch('/api/bestellungen/' + newB.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify(extra) })
+      setBestellungen(prev => prev.map(x => x.id === newB.id ? {...x, ...extra} : x))
+    } else {
+      await fetch('/api/bestellungen/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify(extra) })
+      setBestellungen(prev => prev.map(x => x.id === id ? {...x, ...extra} : x))
+    }
+  }
+  
+  async function updateField(id: string, field: string, value: string) {
+    const b = bestellungen.find(b => b.id === id)
+    if (!b) return
+    const token = await getToken()
+    if (b.virtual) {
+      const newB = await ensureBestellung(id, b.creator_id)
+      await fetch('/api/bestellungen/' + newB.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ [field]: value }) })
+      setBestellungen(prev => prev.map(x => x.id === newB.id ? {...x, [field]: value} : x))
+    } else {
+      await fetch('/api/bestellungen/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ [field]: value }) })
+      setBestellungen(prev => prev.map(x => x.id === id ? {...x, [field]: value} : x))
+    }
   }
 
   async function deleteB(id: string) {
@@ -59,7 +113,7 @@ export default function Bestellungen() {
   const filtered = filter === 'Alle' ? bestellungen : bestellungen.filter(b => b.status === filter)
   const stats = {
     total: bestellungen.length,
-    nichtVersendet: bestellungen.filter(b => b.status === 'Nicht versendet').length,
+    nichtVersendet: bestellungen.filter(b => (b.status || 'Nicht versendet') === 'Nicht versendet').length,
     versendet: bestellungen.filter(b => b.status === 'Versendet').length,
     angekommen: bestellungen.filter(b => b.status === 'Angekommen').length,
   }
@@ -71,7 +125,7 @@ export default function Bestellungen() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">Bestellungen</h1>
-            <p className="text-gray-500 text-sm mt-1">{stats.total} Bestellungen · {stats.nichtVersendet} offen · {stats.versendet} unterwegs · {stats.angekommen} zugestellt</p>
+            <p className="text-gray-500 text-sm mt-1">{stats.total} Creator · {stats.nichtVersendet} offen · {stats.versendet} unterwegs · {stats.angekommen} zugestellt</p>
           </div>
           <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">+ Neue Bestellung</button>
         </div>
@@ -110,8 +164,12 @@ export default function Bestellungen() {
                         <div className="text-white text-sm font-medium">{creator?.name || '—'}</div>
                         <div className="text-gray-600 text-xs">{creator?.ig || ''}</div>
                       </td>
-                      <td className="px-5 py-3 text-white text-sm">{b.produkt || '—'}</td>
-                      <td className="px-5 py-3 text-gray-400 text-xs font-mono">{b.tracking_nummer || '—'}</td>
+                      <td className="px-5 py-3">
+                        <input defaultValue={b.produkt || ''} placeholder="—" onBlur={e => e.target.value !== (b.produkt||'') && updateField(b.id, 'produkt', e.target.value)} className="bg-transparent text-white text-sm w-full focus:outline-none focus:bg-white/[0.04] rounded px-1"/>
+                      </td>
+                      <td className="px-5 py-3">
+                        <input defaultValue={b.tracking_nummer || ''} placeholder="—" onBlur={e => e.target.value !== (b.tracking_nummer||'') && updateField(b.id, 'tracking_nummer', e.target.value)} className="bg-transparent text-gray-400 text-xs font-mono w-full focus:outline-none focus:bg-white/[0.04] rounded px-1"/>
+                      </td>
                       <td className="px-5 py-3 text-gray-500 text-xs">{b.versandt_am || '—'}</td>
                       <td className="px-5 py-3 text-gray-500 text-xs">{b.angekommen_am || '—'}</td>
                       <td className="px-5 py-3">
@@ -123,7 +181,7 @@ export default function Bestellungen() {
                         </select>
                       </td>
                       <td className="px-5 py-3">
-                        <button onClick={() => deleteB(b.id)} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors">Löschen</button>
+                        {!b.virtual && <button onClick={() => deleteB(b.id)} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors">Löschen</button>}
                       </td>
                     </tr>
                   )
