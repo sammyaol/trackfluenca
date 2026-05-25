@@ -63,6 +63,7 @@ const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-am
 
 const allColumns = [
   { key: 'status', label: 'Status', group: 'Basis' },
+  { key: 'versand', label: 'Versand', group: 'Basis' },
   { key: 'prio', label: 'Priorität', group: 'Basis' },
   { key: 'kategorie', label: 'Kategorie', group: 'Basis' },
   { key: 'ig', label: 'IG Handle', group: 'Instagram' },
@@ -365,6 +366,23 @@ export default function CreatorPage() {
     switch (key) {
       case 'ig': return <span className="text-gray-500 text-sm">{c.ig}</span>
       case 'tt': return <span className="text-gray-500 text-sm">{c.tt || dash}</span>
+      case 'versand': {
+        const v = (c as any).versand || 'Nicht versendet'
+        const color = v === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : v === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-gray-500/15 text-gray-400 border-gray-500/30'
+        return (
+          <select value={v} onClick={e => e.stopPropagation()} onChange={async e => {
+            e.stopPropagation()
+            const newV = e.target.value
+            const token = await getToken()
+            await fetch('/api/creators/' + (c as any)._id, { method: 'PATCH', headers: {'Content-Type':'application/json', authorization:'Bearer '+token}, body: JSON.stringify({ versand: newV }) })
+            setCreators(prev => prev.map(x => x === c ? {...x, versand: newV} : x))
+          }} className={`text-xs px-2 py-1 rounded-full border ${color} cursor-pointer focus:outline-none`}>
+            <option value="Nicht versendet">Nicht versendet</option>
+            <option value="Versendet">Versendet</option>
+            <option value="Angekommen">Angekommen</option>
+          </select>
+        )
+      }
       case 'status': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${statusStyle[c.status]}`}>{c.status}</span>
       case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-gray-400 bg-gray-800 border border-gray-700/50'}`}>{c.prio}</span>
       case 'kategorie': return <span className="text-gray-400 text-sm">{c.kategorie}</span>
