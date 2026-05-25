@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import Sidebar from '../components/Sidebar'
+import LoadingScreen from '../components/LoadingScreen'
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
@@ -229,24 +230,7 @@ export default function Dashboard() {
   const dealsCount = creators.filter(c => c.status === 'Deal').length
   const inVerhandlung = creators.filter(c => c.status === 'In Verhandlung').length
 
-  if (loading) return (
-    <div className="flex min-h-screen bg-[#0A0A0A]">
-      <Sidebar />
-      <main className="flex-1 md:ml-60 p-8">
-        <div className="mb-8">
-          <Skeleton className="h-6 w-32 mb-2" />
-          <Skeleton className="h-4 w-48" />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32" />)}
-        </div>
-        <div className="grid grid-cols-3 gap-6 mb-6">
-          <Skeleton className="col-span-2 h-72" />
-          <Skeleton className="h-72" />
-        </div>
-      </main>
-    </div>
-  )
+  if (loading) return <LoadingScreen message="Dashboard wird geladen..." />
 
   const maxUmsatz = Math.max(...umsatzVerlauf.map(d => d.value), 1)
 
