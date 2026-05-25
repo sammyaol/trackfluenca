@@ -777,7 +777,7 @@ export default function CreatorPage() {
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
-                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['postings', 'Postings'], ['deal', 'Ergebnisse']].map(([id, label]) => (
+                {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['performance', 'Performance'], ['postings', 'Postings'], ['deal', 'Ergebnisse']] as [string,string][]).map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
                     {label}
