@@ -777,7 +777,7 @@ export default function CreatorPage() {
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
-                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['deal', 'Ergebnisse'], ['postings', 'Postings']].map(([id, label]) => (
+                {[['overview', 'Übersicht'], ['audience', 'Zielgruppe'], ['performance', 'Performance'], ['postings', 'Postings'], ['deal', 'Ergebnisse']].map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
                     {label}
@@ -1330,33 +1330,6 @@ export default function CreatorPage() {
 
                 {detailTab === 'deal' && (
                   <div className="space-y-3">
-                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Status</label>
-                          <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
-                            {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s}>{s}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="text-gray-600 text-xs block mb-1">Priorität</label>
-                          <select value={selected.prio} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, prio: v} : p); updateCreator(selected, {prio: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
-                            {['Hoch','Mittel','Niedrig'].map(s => <option key={s}>{s}</option>)}
-                          </select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
-                        <select value={selected.kampagne || ''} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, kampagne: v} : p); updateCreator(selected, {kampagne: v}) }} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
-                          <option value="">— Keine —</option>
-                          {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-gray-600 text-xs block mb-1">Notizen</label>
-                        <textarea value={selected.notizen || ''} onChange={e => setSelected(p => p ? {...p, notizen: e.target.value} : p)} onBlur={e => updateCreator(selected, {notizen: e.target.value})} rows={3} className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none" placeholder="Agentur, Konditionen..." />
-                      </div>
-                    </div>
                     <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
                       <p className="text-gray-500 text-xs font-medium mb-3">Ergebnisse aus Postings</p>
                       {(() => {
@@ -1395,7 +1368,6 @@ export default function CreatorPage() {
                     </div>
                   </div>
                 )}
-
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={async () => {
