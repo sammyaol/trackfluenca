@@ -1339,7 +1339,8 @@ export default function CreatorPage() {
                       </div>
                     </div>
                   </>
-                )}
+                  )
+                })()}
 
                 {detailTab === 'deal' && (
                   <div className="space-y-3">
