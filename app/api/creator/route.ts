@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_KEY = process.env.RAPIDAPI_KEY!
-const IG_HOST = 'instagram-best-experience.p.rapidapi.com'
+const IG_HOST = 'flashapi1.p.rapidapi.com'
 const TT_HOST = 'tiktok-api23.p.rapidapi.com'
 const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST }
 const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
@@ -32,37 +32,46 @@ export async function GET(req: NextRequest) {
   const result: any = {}
 
   if (ig) {
-    const profile = await apiFetch(`https://${IG_HOST}/profile?username=${encodeURIComponent(ig)}`, IG_H)
+    // 1) Profil via FlashAPI (flashapi1) - alle Felder liegen im user-Objekt
+    const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?user=${encodeURIComponent(ig)}`, IG_H)
+    const u = profile?.user || profile?.data?.user || profile || {}
 
-    if (profile?.follower_count) {
-      result.igFollower = profile.follower_count || 0
+    if (u && u.follower_count != null) {
+      result.igFollower = num(u.follower_count)
       result.igTier = getTier(result.igFollower)
-      result.fullName = profile.full_name || ''
-      result.bio = profile.biography || ''
-      result.igImage = profile.hd_profile_pic_url_info?.url || profile.profile_pic_url || ''
-      result.igVerified = profile.is_verified || false
-      result.igPostCount = profile.media_count || 0
+      // full_name kann "Access delayed..." enthalten -> dann page_name nutzen
+      let igName = u.full_name || ''
+      if (!igName || String(igName).includes('Access delayed')) igName = u.page_name || ''
+      result.fullName = igName
+      result.bio = u.biography || ''
+      result.igImage = u.hd_profile_pic_url_info?.url || u.profile_pic_url || ''
+      result.igVerified = u.is_verified || false
+      result.igPostCount = num(u.media_count)
 
-      const userId = profile.pk
-      if (userId) {
-        const feed = await apiFetch(`https://${IG_HOST}/feed?user_id=${userId}&count=12`, IG_H)
-        const posts = feed?.items || []
-        if (posts.length) {
-          const lks = posts.map((p: any) => p.like_count || 0)
-          const cmts = posts.map((p: any) => p.comment_count || 0)
-          const views = posts.map((p: any) => p.play_count || p.view_count || 0).filter((v: number) => v > 0)
-          result.igAvgLikes = avg(lks)
-          result.igAvgComments = avg(cmts)
-          result.igAvgReelViews = views.length ? avg(views) : 0
-          result.igEr = result.igFollower > 0
-            ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
-            : 0
-        }
+      // 2) Reels via FlashAPI - jedes Reel steckt verschachtelt unter items[i].media
+      const reelsResp = await apiFetch(`https://${IG_HOST}/ig/user_reels_by_username/?user=${encodeURIComponent(ig)}`, IG_H)
+      const items = reelsResp?.items || reelsResp?.data?.items || []
+
+      if (items.length) {
+        function getViews(it: any) { const m = it.media || it; return num(m.play_count ?? m.ig_play_count ?? m.view_count ?? m.fb_play_count ?? 0) }
+        function getLikes(it: any) { const m = it.media || it; return num(m.like_count ?? 0) }
+        function getComments(it: any) { const m = it.media || it; return num(m.comment_count ?? 0) }
+
+        const lks = items.map(getLikes)
+        const cmts = items.map(getComments)
+        const views = items.map(getViews).filter((v: number) => v > 0)
+        result.igAvgLikes = avg(lks)
+        result.igAvgComments = avg(cmts)
+        result.igAvgReelViews = views.length ? avg(views) : 0
+        result.igEr = result.igFollower > 0
+          ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
+          : 0
       }
     }
   }
 
   if (tt) {
+    // 1) Profil-Infos (Follower, Likes, secUid) via tiktok-api23
     const info = await apiFetch(`https://${TT_HOST}/api/user/info?uniqueId=${encodeURIComponent(tt)}`, TT_H)
     const ui = info?.userInfo
     let secUid = ''
