@@ -7,5 +7,5 @@ export async function GET(req: Request) {
   const url = `https://flashapi1.p.rapidapi.com/${path}/?user=${encodeURIComponent(user)}&nocors=false`
   const r = await fetch(url, { headers: H })
   const raw = await r.text()
-  return NextResponse.json({ status: r.status, url, preview: raw.slice(0, 600) })
+  return NextResponse.json({ status: r.status, url, preview: raw.slice(0, 4000) })
 }
