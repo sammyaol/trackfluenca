@@ -7,5 +7,5 @@ export async function GET(req: Request) {
   const url = `https://flashapi1.p.rapidapi.com/${path}/?user=${encodeURIComponent(user)}&nocors=false`
   const r = await fetch(url, { headers: H })
   const raw = await r.text()
-  return NextResponse.json({ status: r.status, url, preview: raw.slice(0, 4000) })
+  const j = JSON.parse(raw); const m = j.items[0].media; return NextResponse.json({ status: r.status, mediaKeys: Object.keys(m), vals: { play_count: m.play_count, ig_play_count: m.ig_play_count, view_count: m.view_count, fb_play_count: m.fb_play_count, play_count_clips: m.clips_metadata?.play_count, like_count: m.like_count, comment_count: m.comment_count } })
 }
