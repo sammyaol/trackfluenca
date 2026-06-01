@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const API_KEY = process.env.RAPIDAPI_KEY!
 const IG_HOST = 'flashapi1.p.rapidapi.com'
 const TT_HOST = 'tiktok-api23.p.rapidapi.com'
-const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST }
+const IG_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': IG_HOST, 'Content-Type': 'application/json' }
 const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-host': TT_HOST }
 
 function getTier(f: number) { return f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano' }
@@ -11,6 +11,7 @@ function getAffPct(f: number) { return f >= 1000000 ? '8%' : f >= 500000 ? '10%'
 function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005) }
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
 async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
+async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { try { const r = await fetch(url, { headers }); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} await new Promise(res => setTimeout(res, 400)) } return null }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function num(v: any) { const n = parseInt(String(v ?? 0), 10); return Number.isFinite(n) ? n : 0 }
 function sanitize(raw: string | null): string { const s = (raw ?? '').trim().replace(/^@/, ''); try { const u = new URL(s.includes('://') ? s : 'https://' + s); const parts = u.pathname.split('/').filter(Boolean); return parts[parts.length-1] || u.hostname.replace('www.','') } catch { return s } }
@@ -32,14 +33,12 @@ export async function GET(req: NextRequest) {
   const result: any = {}
 
   if (ig) {
-    // 1) Profil via FlashAPI (flashapi1) - alle Felder liegen im user-Objekt
-    const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?user=${encodeURIComponent(ig)}`, IG_H)
+    const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
     const u = profile?.user || profile?.data?.user || profile || {}
 
     if (u && u.follower_count != null) {
       result.igFollower = num(u.follower_count)
       result.igTier = getTier(result.igFollower)
-      // full_name kann "Access delayed..." enthalten -> dann page_name nutzen
       let igName = u.full_name || ''
       if (!igName || String(igName).includes('Access delayed')) igName = u.page_name || ''
       result.fullName = igName
@@ -48,8 +47,7 @@ export async function GET(req: NextRequest) {
       result.igVerified = u.is_verified || false
       result.igPostCount = num(u.media_count)
 
-      // 2) Reels via FlashAPI - jedes Reel steckt verschachtelt unter items[i].media
-      const reelsResp = await apiFetch(`https://${IG_HOST}/ig/user_reels_by_username/?user=${encodeURIComponent(ig)}`, IG_H)
+      const reelsResp = await apiFetchRetry(`https://${IG_HOST}/ig/reels_posts_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
       const items = reelsResp?.items || reelsResp?.data?.items || []
 
       if (items.length) {
@@ -71,7 +69,6 @@ export async function GET(req: NextRequest) {
   }
 
   if (tt) {
-    // 1) Profil-Infos (Follower, Likes, secUid) via tiktok-api23
     const info = await apiFetch(`https://${TT_HOST}/api/user/info?uniqueId=${encodeURIComponent(tt)}`, TT_H)
     const ui = info?.userInfo
     let secUid = ''
