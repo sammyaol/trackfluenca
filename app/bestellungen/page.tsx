@@ -6,10 +6,12 @@ import Sidebar from '../components/Sidebar'
 export default function Bestellungen() {
   const [bestellungen, setBestellungen] = useState<any[]>([])
   const [creators, setCreators] = useState<any[]>([])
+  const [kampagnen, setKampagnen] = useState<any[]>([])
+  const [kampagneFilter, setKampagneFilter] = useState('Alle')
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [form, setForm] = useState({ creator_id: '', produkt: '', tracking_nummer: '', versandt_am: '', angekommen_am: '', notizen: '', status: 'Nicht versendet' })
+  const [form, setForm] = useState({ creator_id: '', produkt: '', tracking_nummer: '', versandt_am: '', angekommen_am: '', notizen: '', status: 'Nicht versendet', kampagne_id: '' })
   const [filter, setFilter] = useState('Alle')
   const [tracking, setTracking] = useState<Record<string, any>>({})
   const [trackingLoading, setTrackingLoading] = useState<string|null>(null)
@@ -49,10 +51,12 @@ export default function Bestellungen() {
     setLoading(true)
     const token = await getToken()
     if (!token) return
-    const [b, c] = await Promise.all([
+    const [b, c, k] = await Promise.all([
       fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()),
-      fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json())
+      fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()),
+      fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json())
     ])
+    setKampagnen(Array.isArray(k) ? k : [])
     const bestellungenArr = Array.isArray(b) ? b : []
     const creatorsArr = Array.isArray(c) ? c : []
     setCreators(creatorsArr)
@@ -68,6 +72,7 @@ export default function Bestellungen() {
         versandt_am: null,
         angekommen_am: null,
         status: cr.versand || 'Nicht versendet',
+        kampagne_id: null,
         virtual: true
       }
     })
@@ -96,7 +101,7 @@ export default function Bestellungen() {
     const token = await getToken()
     await fetch('/api/bestellungen', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify(form) })
     setShowAdd(false)
-    setForm({ creator_id: '', produkt: '', tracking_nummer: '', versandt_am: '', angekommen_am: '', notizen: '', status: 'Nicht versendet' })
+    setForm({ creator_id: '', produkt: '', tracking_nummer: '', versandt_am: '', angekommen_am: '', notizen: '', status: 'Nicht versendet', kampagne_id: '' })
     setSaving(false)
     load()
   }
@@ -138,7 +143,11 @@ export default function Bestellungen() {
     setBestellungen(prev => prev.filter(b => b.id !== id))
   }
 
-  const filtered = filter === 'Alle' ? bestellungen : bestellungen.filter(b => b.status === filter)
+  const filtered = bestellungen.filter(b => {
+    const statusOk = filter === 'Alle' || b.status === filter
+    const kampOk = kampagneFilter === 'Alle' || (kampagneFilter === 'Nicht zugeordnet' ? !b.kampagne_id : b.kampagne_id === kampagneFilter)
+    return statusOk && kampOk
+  })
   const stats = {
     total: bestellungen.length,
     nichtVersendet: bestellungen.filter(b => (b.status || 'Nicht versendet') === 'Nicht versendet').length,
@@ -172,6 +181,15 @@ export default function Bestellungen() {
           ))}
         </div>
 
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-gray-500 text-xs">Kampagne:</span>
+          <select value={kampagneFilter} onChange={e => setKampagneFilter(e.target.value)} className="bg-[#111] border border-white/[0.08] rounded-lg px-3 py-1.5 text-white text-xs focus:outline-none focus:border-[#7F77DD]">
+            <option value="Alle">Alle</option>
+            {kampagnen.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+            <option value="Nicht zugeordnet">Nicht zugeordnet</option>
+          </select>
+        </div>
+
         <div className="bg-[#111] rounded-2xl border border-white/[0.06] overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20 gap-3"><span className="w-4 h-4 border-2 border-white/20 border-t-white/60 rounded-full animate-spin"/><span className="text-gray-500 text-sm">Lädt...</span></div>
@@ -182,6 +200,7 @@ export default function Bestellungen() {
               <thead><tr className="text-left text-gray-500 text-xs border-b border-white/[0.04]">
                 <th className="px-5 py-3 font-medium">Creator</th>
                 <th className="px-5 py-3 font-medium">Produkt</th>
+                <th className="px-5 py-3 font-medium">Kampagne</th>
                 <th className="px-5 py-3 font-medium">Tracking</th>
                 <th className="px-5 py-3 font-medium">Versandt</th>
                 <th className="px-5 py-3 font-medium">Angekommen</th>
@@ -199,6 +218,12 @@ export default function Bestellungen() {
                       </td>
                       <td className="px-5 py-3">
                         <input defaultValue={b.produkt || ''} placeholder="—" onBlur={e => e.target.value !== (b.produkt||'') && updateField(b.id, 'produkt', e.target.value)} className="bg-transparent text-white text-sm w-full focus:outline-none focus:bg-white/[0.04] rounded px-1"/>
+                      </td>
+                      <td className="px-5 py-3">
+                        <select value={b.kampagne_id || ''} onChange={e => updateField(b.id, 'kampagne_id', e.target.value)} className={`text-xs px-2 py-1 rounded-lg border cursor-pointer focus:outline-none bg-[#0A0A0A] ${b.kampagne_id ? 'text-white border-white/[0.12]' : 'text-gray-600 border-white/[0.06]'}`}>
+                          <option value="">— keine —</option>
+                          {kampagnen.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+                        </select>
                       </td>
                       <td className="px-5 py-3">
                         <input defaultValue={b.tracking_nummer || ''} placeholder="—" onBlur={e => e.target.value !== (b.tracking_nummer||'') && updateField(b.id, 'tracking_nummer', e.target.value)} className="bg-transparent text-gray-400 text-xs font-mono w-full focus:outline-none focus:bg-white/[0.04] rounded px-1"/>
@@ -246,6 +271,13 @@ export default function Bestellungen() {
                 <select value={form.creator_id} onChange={e => setForm({...form, creator_id: e.target.value})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-2 py-2 text-white text-sm">
                   <option value="">— wählen —</option>
                   {creators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
+                <select value={form.kampagne_id} onChange={e => setForm({...form, kampagne_id: e.target.value})} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-2 py-2 text-white text-sm">
+                  <option value="">— keine —</option>
+                  {kampagnen.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
                 </select>
               </div>
               <div>
