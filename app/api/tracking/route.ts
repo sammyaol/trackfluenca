@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   
   try {
     const res = await fetch(
-      `https://api-eu.dhl.com/track/shipments?trackingNumber=${encodeURIComponent(trackingNumber)}&service=express,parcel-de,parcel-nl,parcel-pl,parcel-uk,dsc,dgf,ecommerce,ecommerce-europe,freight,post-de,sameday`,
+      `https://api-eu.dhl.com/track/shipments?trackingNumber=${encodeURIComponent(trackingNumber)}`,
       {
         headers: {
           'DHL-API-Key': apiKey,
