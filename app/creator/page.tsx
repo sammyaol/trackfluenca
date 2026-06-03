@@ -170,7 +170,9 @@ export default function CreatorPage() {
   const [postingSaving, setPostingSaving] = useState(false)
   const [deletingPosting, setDeletingPosting] = useState<string|null>(null)
   const [loadingPostings, setLoadingPostings] = useState<string|null>(null)
-  const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
+  const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''})
+  const [pullingStats, setPullingStats] = useState(false)
+  const [pullError, setPullError] = useState('')
   const [snapshots, setSnapshots] = useState<any[]>([])
   const [snapshotLoading, setSnapshotLoading] = useState(false)
   const [followerDays, setFollowerDays] = useState(30)
@@ -733,7 +735,7 @@ export default function CreatorPage() {
                                       e.stopPropagation()
                                       setSelected(c)
                                       setDetailTab('postings')
-                                      setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||''})
+                                      setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||'',post_link:p.post_link||'',views:p.views||0,likes:p.likes||0,comments:p.comments||0,shares:p.shares||0,caption:p.caption||''})
                                       setShowAddPosting(true)
                                     }} className="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
                                     <button onClick={async e => {
@@ -1092,6 +1094,44 @@ export default function CreatorPage() {
                     {showAddPosting && (
                       <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
                         <p className="text-white text-xs font-medium">Neues Posting</p>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Post-Link (TikTok)</label>
+                          <div className="flex gap-2">
+                            <input type="text" value={postingForm.post_link} placeholder="https://www.tiktok.com/@user/video/..."
+                              onChange={e => setPostingForm((p:any) => ({...p, post_link: e.target.value}))}
+                              className="flex-1 bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                            <button type="button" disabled={pullingStats || !postingForm.post_link}
+                              onClick={async () => {
+                                setPullError(''); setPullingStats(true)
+                                try {
+                                  const token = await getToken()
+                                  const r = await fetch('/api/post-stats?link=' + encodeURIComponent(postingForm.post_link), { headers: { authorization: 'Bearer ' + token } })
+                                  const d = await r.json()
+                                  if (!r.ok) { setPullError(d.error || 'Fehler beim Laden'); }
+                                  else {
+                                    setPostingForm((p:any) => ({...p,
+                                      views: d.views||0, likes: d.likes||0, comments: d.comments||0, shares: d.shares||0,
+                                      caption: d.caption||'',
+                                      datum: d.post_datum || p.datum,
+                                      buchungstyp: 'TikTok'
+                                    }))
+                                  }
+                                } catch(e:any) { setPullError(e.message || 'Netzwerkfehler') }
+                                setPullingStats(false)
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap flex items-center gap-1 ${pullingStats||!postingForm.post_link ? 'bg-[#7F77DD]/40 text-white/60' : 'bg-[#7F77DD] text-white hover:bg-[#534AB7]'}`}>
+                              {pullingStats ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"/> : '\ud83d\udcca'} Daten ziehen
+                            </button>
+                          </div>
+                          {pullError && <p className="text-red-400 text-xs mt-1">{pullError}</p>}
+                          {(postingForm.views > 0 || postingForm.likes > 0) && (
+                            <div className="flex gap-4 mt-2 text-xs">
+                              <span className="text-gray-400">Views: <span className="text-white font-medium">{postingForm.views.toLocaleString('de-DE')}</span></span>
+                              <span className="text-gray-400">Likes: <span className="text-white font-medium">{postingForm.likes.toLocaleString('de-DE')}</span></span>
+                              <span className="text-gray-400">Kommentare: <span className="text-white font-medium">{postingForm.comments.toLocaleString('de-DE')}</span></span>
+                            </div>
+                          )}
+                        </div>
                         <div className="grid grid-cols-2 gap-2">
                           {([
                             {label:'Kampagne',key:'kampagne',type:'kampagne'},
@@ -1170,7 +1210,7 @@ export default function CreatorPage() {
                                 setPostings(newPostings)
                                 setExpandedPostings((prev:any) => ({...prev, [(selected as any)._id]: newPostings}))
                                 setShowAddPosting(false)
-                                setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:''})
+                                setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''}); setPullError('')
                                 const totalOrgU = newPostings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
                                 const totalAdU = newPostings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
                                 const totalFee = newPostings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
