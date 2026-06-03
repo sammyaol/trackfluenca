@@ -14,7 +14,15 @@ export async function GET(req: NextRequest) {
     const text = await r.text()
     let json: any = null
     try { json = JSON.parse(text) } catch {}
-    return NextResponse.json({ url, status, keys: json ? Object.keys(json) : null, sample: json ? JSON.stringify(json).slice(0, 2000) : text.slice(0, 500) })
+    const item = json?.itemInfo?.itemStruct || {}
+    return NextResponse.json({ url, status,
+      stats: item.stats || null,
+      statsV2: item.statsV2 || null,
+      desc: item.desc ?? null,
+      createTime: item.createTime ?? null,
+      author: item.author?.uniqueId ?? null,
+      itemKeys: Object.keys(item)
+    })
   } catch (e: any) {
     return NextResponse.json({ url, error: e.message })
   }
