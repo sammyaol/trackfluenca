@@ -721,6 +721,9 @@ export default function CreatorPage() {
                                 <div className="min-w-[120px]">
                                   <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
                                   <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                                  {(p.views > 0 || p.likes > 0 || p.comments > 0) && (
+                                    <div className="text-gray-500 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-5 text-xs flex-wrap">
                                   <div><div className="text-gray-600 text-[10px]">Fee</div><div className="text-white">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
@@ -1240,6 +1243,9 @@ export default function CreatorPage() {
                           <div>
                             <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
                             <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                            {(p.views > 0 || p.likes > 0 || p.comments > 0) && (
+                              <div className="text-gray-500 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
