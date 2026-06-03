@@ -397,7 +397,12 @@ export default function CreatorPage() {
       case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-gray-700">{dash}</span>
       case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
       case 'gesamtReichweite': return <span className="text-gray-300 text-sm">{fmt(c.gesamtReichweite)}</span>
-      case 'kampagne': return <span className="text-gray-400 text-sm">{c.kampagne || dash}</span>
+      case 'kampagne': return (
+        <select value={c.kampagne || ''} onClick={e => e.stopPropagation()} onChange={e => updateCreator(c, {kampagne: e.target.value})} className="bg-[#0A0A0A] border border-white/[0.08] rounded px-2 py-1 text-xs text-gray-300 cursor-pointer focus:outline-none focus:border-[#7F77DD]">
+          <option value="">{dash}</option>
+          {kampagnenList.map((k:string) => <option key={k} value={k}>{k}</option>)}
+        </select>
+      )
       case 'buchungstyp': return <span className="text-gray-400 text-sm">{c.buchungstyp || dash}</span>
       case 'fee': return <span className="text-gray-300 text-sm">{fmtEur(c.fee)}</span>
       case 'promoCode': return <span className="font-mono text-[#7F77DD] text-xs">{c.promoCode || dash}</span>
