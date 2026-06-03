@@ -674,7 +674,12 @@ export default function CreatorPage() {
                               <span className="text-white text-sm font-medium whitespace-nowrap">{c.name}</span>
                               {c.igVerified && <span className="text-blue-400 text-xs">✓</span>}
                             </div>
-                            <span className="text-gray-600 text-xs">{c.ig}</span>
+                            {(() => {
+                              const h = (c.ig || '').replace('@','').trim()
+                              if (!h) return <span className="text-gray-700 text-xs">—</span>
+                              const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
+                              return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-500 hover:text-[#7F77DD] text-xs transition-colors">{c.ig}</a>
+                            })()}
                           </div>
                         </div>
                       </td>
