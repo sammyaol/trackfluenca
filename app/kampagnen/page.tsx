@@ -201,63 +201,24 @@ export default function Kampagnen() {
                 {/* Creator-Bereich */}
                 <div>
                   <label className="text-gray-600 text-xs block mb-2">Creator in dieser Kampagne</label>
-                  <div className="space-y-2 mb-2">
-                    {(selected.creators || []).map((c: string, i: number) => (
-                      <div key={i} className="flex items-center justify-between bg-[#0A0A0A] rounded-lg px-3 py-2 border border-white/[0.06]">
-                        <span className="text-white text-xs">{c}</span>
-                        <button onClick={() => {
-                          const updated = (selected.creators || []).filter((_: string, j: number) => j !== i)
-                          updateKampagne(selected.id, { creators: updated })
-                          setSelected((p: any) => ({ ...p, creators: updated }))
-                        }} className="text-red-500 text-xs hover:text-red-400 ml-2">✕</button>
+                  <div className="space-y-2">
+                    {allCreators.filter((c:any) => (c.kampagne || '') === selected.name).length === 0 ? (
+                      <div className="text-gray-600 text-xs">Noch keine Creator zugeordnet. Zuordnung erfolgt in der Creator-Tabelle (Spalte Kampagne).</div>
+                    ) : allCreators.filter((c:any) => (c.kampagne || '') === selected.name).map((c:any) => (
+                      <div key={c.id} className="flex items-center gap-3 bg-[#0A0A0A] rounded-lg px-3 py-2 border border-white/[0.06]">
+                        {c.ig_image ? (
+                          <img src={c.ig_image} className="w-6 h-6 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-xs text-[#7F77DD]">{c.name?.[0]?.toUpperCase()}</div>
+                        )}
+                        <span className="text-white text-xs">{c.name}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowCreatorDropdown(p => !p)}
-                      className="w-full flex items-center justify-between bg-[#0A0A0A] border border-white/[0.08] rounded-lg px-3 py-2 text-white text-xs hover:border-white/20 transition-colors"
-                    >
-                      <span className="text-gray-500">Creator auswählen...</span>
-                      <span className="text-gray-600">▾</span>
-                    </button>
-                    {showCreatorDropdown && (
-                      <div className="absolute bottom-full mb-1 left-0 right-0 bg-[#1a1a1a] border border-white/[0.08] rounded-xl overflow-hidden z-50 max-h-48 overflow-y-auto shadow-xl">
-                        {allCreators.filter(c => !(selected.creators || []).includes(c.name)).length === 0 ? (
-                          <div className="px-3 py-3 text-gray-600 text-xs text-center">Alle Creator bereits hinzugefügt</div>
-                        ) : allCreators.filter(c => !(selected.creators || []).includes(c.name)).map((c: any) => (
-                          <button
-                            key={c.id}
-                            onClick={() => {
-                              const updated = [...(selected.creators || []), c.name]
-                              updateKampagne(selected.id, { creators: updated })
-                              setSelected((p: any) => ({ ...p, creators: updated }))
-                              setShowCreatorDropdown(false)
-                            }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/[0.04] transition-colors text-left"
-                          >
-                            {c.ig_image ? (
-                              <img src={c.ig_image} className="w-6 h-6 rounded-full object-cover" />
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-xs text-[#7F77DD]">{c.name?.[0]?.toUpperCase()}</div>
-                            )}
-                            <div>
-                              <div className="text-white text-xs font-medium">{c.name}</div>
-                              <div className="text-gray-600 text-xs">{c.igHandle ? '@' + c.igHandle : ''}</div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={async () => {
-                    const t = await sb.auth.getSession()
-                    // already saves onBlur, this is a manual confirm
-                    setKampagnen(prev => prev.map(k => k.id === selected.id ? {...k, ...selected} : k))
-                  }} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors">
-                    Speichern
+                  <button onClick={() => setSelected(null)} className="flex-1 py-2.5 rounded-xl border border-white/20 text-white text-sm hover:bg-white/[0.06] transition-colors">
+                    Schließen
                   </button>
                   <button onClick={() => deleteKampagne(selected.id)} className="flex-1 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">Löschen</button>
                 </div>
