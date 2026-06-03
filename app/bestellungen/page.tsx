@@ -6,6 +6,7 @@ import Sidebar from '../components/Sidebar'
 export default function Bestellungen() {
   const [bestellungen, setBestellungen] = useState<any[]>([])
   const [creators, setCreators] = useState<any[]>([])
+  const [kampagnen, setKampagnen] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -49,10 +50,12 @@ export default function Bestellungen() {
     setLoading(true)
     const token = await getToken()
     if (!token) return
-    const [b, c] = await Promise.all([
+    const [b, c, k] = await Promise.all([
       fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()),
-      fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json())
+      fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()),
+      fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } }).then(r => r.json())
     ])
+    setKampagnen(Array.isArray(k) ? k : [])
     const bestellungenArr = Array.isArray(b) ? b : []
     const creatorsArr = Array.isArray(c) ? c : []
     setCreators(creatorsArr)
@@ -166,6 +169,12 @@ export default function Bestellungen() {
     return namen.map(name => ({ name, items: map[name] }))
   })()
 
+  const farben = ['from-violet-600 to-purple-800','from-blue-600 to-cyan-800','from-amber-600 to-orange-800','from-emerald-600 to-teal-800','from-rose-600 to-pink-800']
+  const farbeVon = (name: string) => {
+    const idx = kampagnen.findIndex((k: any) => (k.name || '').trim() === name.trim())
+    return idx >= 0 ? farben[idx % farben.length] : 'from-gray-600 to-gray-800'
+  }
+
   return (
     <div className="flex min-h-screen bg-[#0A0A0A]">
       <Sidebar />
@@ -213,7 +222,10 @@ export default function Bestellungen() {
                       {versendetN} / {gesamtN} versendet
                     </span>
                   </div>
-                  <table className="w-full">
+                  <table className="w-full table-fixed">
+                    <colgroup>
+                      <col className="w-[22%]" /><col className="w-[14%]" /><col className="w-[18%]" /><col className="w-[12%]" /><col className="w-[12%]" /><col className="w-[14%]" /><col className="w-[8%]" />
+                    </colgroup>
                     <thead><tr className="text-left text-gray-500 text-xs border-b border-white/[0.04]">
                       <th className="px-5 py-2.5 font-medium">Creator</th>
                       <th className="px-5 py-2.5 font-medium">Produkt</th>
