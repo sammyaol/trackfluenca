@@ -365,8 +365,18 @@ export default function CreatorPage() {
 
   const renderCell = (c: Creator, key: string) => {
     switch (key) {
-      case 'ig': return <span className="text-gray-500 text-sm">{c.ig}</span>
-      case 'tt': return <span className="text-gray-500 text-sm">{c.tt || dash}</span>
+      case 'ig': {
+        const h = (c.ig || '').replace('@','').trim()
+        if (!h) return <span className="text-gray-700 text-sm">{dash}</span>
+        const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
+        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-400 hover:text-[#7F77DD] text-sm underline decoration-dotted underline-offset-2">{c.ig}</a>
+      }
+      case 'tt': {
+        const h = (c.tt || '').replace('@','').trim()
+        if (!h) return <span className="text-gray-700 text-sm">{dash}</span>
+        const url = h.startsWith('http') ? h : 'https://tiktok.com/@' + h
+        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-400 hover:text-[#7F77DD] text-sm underline decoration-dotted underline-offset-2">{c.tt}</a>
+      }
       case 'versand': {
         const v = (c as any).versand || 'Nicht versendet'
         const color = v === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : v === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-gray-500/15 text-gray-400 border-gray-500/30'
