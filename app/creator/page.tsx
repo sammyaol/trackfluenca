@@ -785,8 +785,17 @@ export default function CreatorPage() {
                       {selected.igVerified && <span className="text-blue-400 text-sm">✓</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <span className="text-gray-500 text-xs">{selected.ig}</span>
-                      {selected.tt && <span className="text-gray-500 text-xs">{selected.tt}</span>}
+                      {(() => {
+                        const h = (selected.ig || '').replace('@','').trim()
+                        if (!h) return null
+                        const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
+                        return <a href={url} target="_blank" rel="noopener noreferrer" title="Instagram-Profil öffnen" className="text-gray-400 hover:text-[#7F77DD] text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.ig} ↗</a>
+                      })()}
+                      {selected.tt && (() => {
+                        const h = (selected.tt || '').replace('@','').trim()
+                        const url = h.startsWith('http') ? h : 'https://tiktok.com/@' + h
+                        return <a href={url} target="_blank" rel="noopener noreferrer" title="TikTok-Profil öffnen" className="text-gray-400 hover:text-[#7F77DD] text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.tt} ↗</a>
+                      })()}
                       <span className={`text-xs px-2 py-0.5 rounded-md ${tierStyle[selected.overallTier]}`}>{selected.overallTier}</span>
                       <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className={`text-xs px-2 py-0.5 rounded-md border-0 cursor-pointer ${statusStyle[selected.status]} bg-transparent`}>
                         {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-[#1a1a1a] text-white">{s}</option>)}
