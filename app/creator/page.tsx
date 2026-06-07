@@ -1098,9 +1098,9 @@ export default function CreatorPage() {
                       <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
                         <p className="text-white text-xs font-medium">Neues Posting</p>
                         <div>
-                          <label className="text-gray-600 text-xs block mb-1">Post-Link (TikTok)</label>
+                          <label className="text-gray-600 text-xs block mb-1">Post-Link (TikTok / Instagram)</label>
                           <div className="flex gap-2">
-                            <input type="text" value={postingForm.post_link} placeholder="https://www.tiktok.com/@user/video/..."
+                            <input type="text" value={postingForm.post_link} placeholder="TikTok- oder Instagram-Link einfügen..."
                               onChange={e => setPostingForm((p:any) => ({...p, post_link: e.target.value}))}
                               className="flex-1 bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
                             <button type="button" disabled={pullingStats || !postingForm.post_link}
@@ -1116,7 +1116,7 @@ export default function CreatorPage() {
                                       views: d.views||0, likes: d.likes||0, comments: d.comments||0, shares: d.shares||0,
                                       caption: d.caption||'',
                                       datum: d.post_datum || p.datum,
-                                      buchungstyp: 'TikTok'
+                                      buchungstyp: d.platform === 'instagram' ? 'Instagram' : 'TikTok'
                                     }))
                                   }
                                 } catch(e:any) { setPullError(e.message || 'Netzwerkfehler') }
