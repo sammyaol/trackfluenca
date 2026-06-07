@@ -172,7 +172,17 @@ export default function CreatorPage() {
   const [fetchDone, setFetchDone] = useState(false)
   const [fetchError, setFetchError] = useState('')
   const [fetchedData, setFetchedData] = useState<any>(null)
-  const [visibleCols, setVisibleCols] = useState(['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS'])
+  const DEFAULT_COLS = ['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS']
+  const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('trackfluenca_visibleCols')
+      if (saved) { const arr = JSON.parse(saved); if (Array.isArray(arr) && arr.length) setVisibleCols(arr) }
+    } catch {}
+  }, [])
+  useEffect(() => {
+    try { localStorage.setItem('trackfluenca_visibleCols', JSON.stringify(visibleCols)) } catch {}
+  }, [visibleCols])
   const [form, setForm] = useState(emptyForm)
   const [detailTab, setDetailTab] = useState('overview')
   const [saveState, setSaveState] = useState<'idle'|'loading'|'done'>('idle')
