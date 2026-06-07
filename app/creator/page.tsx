@@ -186,6 +186,7 @@ export default function CreatorPage() {
   const [postingSaving, setPostingSaving] = useState(false)
   const [deletingPosting, setDeletingPosting] = useState<string|null>(null)
   const [loadingPostings, setLoadingPostings] = useState<string|null>(null)
+  const [refreshingPosting, setRefreshingPosting] = useState<string|null>(null)
   const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''})
   const [pullingStats, setPullingStats] = useState(false)
   const [pullError, setPullError] = useState('')
@@ -368,6 +369,29 @@ export default function CreatorPage() {
       headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify(body)
     })
+  }
+  const refreshPosting = async (p:any) => {
+    if (!p.post_link) return
+    setRefreshingPosting(p.id)
+    try {
+      const token = await getToken()
+      const r = await fetch('/api/post-stats?link=' + encodeURIComponent(p.post_link), { headers: { authorization: 'Bearer ' + token } })
+      const d = await r.json()
+      if (r.ok) {
+        await fetch('/api/postings/' + p.id, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+          body: JSON.stringify({ views: d.views||0, likes: d.likes||0, comments: d.comments||0, shares: d.shares||0 })
+        })
+        const upd = postings.map((x:any) => x.id === p.id ? {...x, views:d.views||0, likes:d.likes||0, comments:d.comments||0, shares:d.shares||0} : x)
+        setPostings(upd)
+        const sv = upd.reduce((s:number,x:any)=>s+(x.views||0),0)
+        const sl = upd.reduce((s:number,x:any)=>s+(x.likes||0),0)
+        const sc = upd.reduce((s:number,x:any)=>s+(x.comments||0),0)
+        setCreators(prev => prev.map((cr:any) => (cr as any)._id === (selected as any)?._id ? {...cr, sumViews:sv, sumLikes:sl, sumComments:sc} : cr))
+      }
+    } catch(e) {}
+    setRefreshingPosting(null)
   }
 
   const filtered = creators.filter(c => {
@@ -763,6 +787,11 @@ export default function CreatorPage() {
                                       setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||'',post_link:p.post_link||'',views:p.views||0,likes:p.likes||0,comments:p.comments||0,shares:p.shares||0,caption:p.caption||''})
                                       setShowAddPosting(true)
                                     }} className="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
+                                    {p.post_link && (
+                                      <button onClick={(e:any) => { e.stopPropagation(); refreshPosting(p) }} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-gray-500 hover:text-[#7F77DD] text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
+                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-[#7F77DD]/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                                      </button>
+                                    )}
                                     <button onClick={async e => {
                                       e.stopPropagation()
                                       setDeletingPosting(p.id)
@@ -1271,6 +1300,11 @@ export default function CreatorPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
+                            {p.post_link && (
+                              <button onClick={() => refreshPosting(p)} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-gray-500 hover:text-[#7F77DD] text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
+                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-[#7F77DD]/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                              </button>
+                            )}
                             <button onClick={async () => {
                               setDeletingPosting(p.id)
                               const token = await getToken()
