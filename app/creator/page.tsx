@@ -86,6 +86,7 @@ const allColumns = [
   { key: 'orgROAS', label: 'Org. ROAS', group: 'Organisch' },
   { key: 'gesUmsatz', label: 'Ges. Umsatz', group: 'Gesamt' },
   { key: 'gesROAS', label: 'Ges. ROAS', group: 'Gesamt' },
+  { key: 'engagement', label: 'Engagement', group: 'Gesamt' },
   { key: 'reelWert', label: 'Reel €', group: 'Bewertung' },
   { key: 'affiliatePct', label: 'Affiliate %', group: 'Bewertung' },
 ]
@@ -134,6 +135,21 @@ export default function CreatorPage() {
         ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
         tkpReel: c.tkp_reel, _id: c.id,
       })))
+      // Engagement-Summen aus Postings nachladen und mergen
+      const { data: posts } = await sb.from('postings').select('creator_id, views, likes, comments').eq('user_id', userId)
+      if (mounted && posts) {
+        const sums: Record<string, {v:number,l:number,c:number,n:number}> = {}
+        for (const p of posts as any[]) {
+          const k = p.creator_id
+          if (!k) continue
+          if (!sums[k]) sums[k] = {v:0,l:0,c:0,n:0}
+          sums[k].v += Number(p.views||0); sums[k].l += Number(p.likes||0); sums[k].c += Number(p.comments||0); sums[k].n += 1
+        }
+        setCreators(prev => prev.map((cr:any) => {
+          const su = sums[cr._id]
+          return su ? {...cr, sumViews:su.v, sumLikes:su.l, sumComments:su.c, postCount:su.n} : {...cr, sumViews:0, sumLikes:0, sumComments:0, postCount:0}
+        }))
+      }
     })
     return () => { mounted = false }
   }, [])
@@ -422,6 +438,12 @@ export default function CreatorPage() {
       case 'orgROAS': return <span className={`text-sm font-semibold ${roasColor(c.orgROAS)}`}>{c.orgROAS > 0 ? `${c.orgROAS}x` : dash}</span>
       case 'gesUmsatz': return <span className="text-emerald-400 text-sm font-semibold">{fmtEur(c.gesUmsatz)}</span>
       case 'gesROAS': return <span className={`text-sm font-bold ${roasColor(c.gesROAS)}`}>{c.gesROAS > 0 ? `${c.gesROAS}x` : dash}</span>
+      case 'engagement': {
+        const kurz = (n:number) => n >= 1000000 ? (n/1000000).toFixed(1).replace('.0','')+'M' : n >= 1000 ? (n/1000).toFixed(1).replace('.0','')+'K' : String(n)
+        const v = (c as any).sumViews||0, l = (c as any).sumLikes||0, co = (c as any).sumComments||0
+        if (v===0 && l===0 && co===0) return <span className="text-gray-700 text-sm">{dash}</span>
+        return <span className="text-gray-300 text-xs whitespace-nowrap">👁 {kurz(v)} · ❤️ {kurz(l)} · 💬 {kurz(co)}</span>
+      }
       case 'reelWert': return <span className="text-purple-400 text-sm">{fmtEur(c.reelWert)}</span>
       case 'affiliatePct': return <span className="text-blue-400 text-sm font-medium">{c.affiliatePct}</span>
       default: return <span className="text-gray-700">{dash}</span>
