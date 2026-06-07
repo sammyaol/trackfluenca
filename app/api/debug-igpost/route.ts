@@ -14,7 +14,21 @@ export async function GET(req: NextRequest) {
     const text = await r.text()
     let json: any = null
     try { json = JSON.parse(text) } catch {}
-    return NextResponse.json({ url, status, keys: json ? Object.keys(json) : null, sample: json ? JSON.stringify(json).slice(0, 2500) : text.slice(0, 500) })
+    const it = json?.items?.[0] || {}
+    return NextResponse.json({ url, status,
+      like_count: it.like_count ?? null,
+      comment_count: it.comment_count ?? null,
+      play_count: it.play_count ?? null,
+      view_count: it.view_count ?? null,
+      ig_play_count: it.ig_play_count ?? null,
+      fb_play_count: it.fb_play_count ?? null,
+      video_view_count: it.video_view_count ?? null,
+      reshare_count: it.reshare_count ?? null,
+      media_type: it.media_type ?? null,
+      taken_at: it.taken_at ?? null,
+      caption: it.caption?.text ?? null,
+      itemKeys: Object.keys(it).filter(k => /count|view|play|like|comment|caption|taken/i.test(k))
+    })
   } catch (e: any) {
     return NextResponse.json({ url, error: e.message })
   }
