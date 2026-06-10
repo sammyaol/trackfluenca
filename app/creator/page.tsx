@@ -197,6 +197,24 @@ export default function CreatorPage() {
   const [deletingPosting, setDeletingPosting] = useState<string|null>(null)
   const [loadingPostings, setLoadingPostings] = useState<string|null>(null)
   const [refreshingPosting, setRefreshingPosting] = useState<string|null>(null)
+  const [aktivitaeten, setAktivitaeten] = useState<any[]>([])
+  const [loadingAktiv, setLoadingAktiv] = useState(false)
+  const [showAddAktiv, setShowAddAktiv] = useState(false)
+  const [aktivSaving, setAktivSaving] = useState(false)
+  const [deletingAktiv, setDeletingAktiv] = useState<string|null>(null)
+  const [aktivForm, setAktivForm] = useState({datum:'',kanal:'Mail',richtung:'raus',notiz:''})
+  useEffect(() => {
+    if (detailTab === 'communication' && selected && (selected as any)._id) {
+      setLoadingAktiv(true)
+      sb.auth.getSession().then(async ({data}) => {
+        const token = data.session?.access_token || ''
+        const res = await fetch('/api/aktivitaeten?creator_id=' + (selected as any)._id, { headers: { authorization: 'Bearer ' + token } })
+        const d = await res.json()
+        setAktivitaeten(Array.isArray(d) ? d : [])
+        setLoadingAktiv(false)
+      })
+    }
+  }, [detailTab, selected])
   const [postingForm, setPostingForm] = useState({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''})
   const [pullingStats, setPullingStats] = useState(false)
   const [pullError, setPullError] = useState('')
@@ -873,7 +891,7 @@ export default function CreatorPage() {
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
-                {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igTopCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['postings', 'Postings'], ['performance', 'Performance']] as [string,string][]).map(([id, label]) => (
+                {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igTopCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['postings', 'Postings'], ['communication', 'Communication'], ['performance', 'Performance']] as [string,string][]).map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
                     className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
                     {label}
@@ -1340,6 +1358,101 @@ export default function CreatorPage() {
                         {p.promo_code && <div className="mt-2 text-gray-500 text-[10px]">Code: <span className="text-[#7F77DD]">{p.promo_code}</span></div>}
                       </div>
                     ))}
+                  </div>
+                )}
+                {detailTab === 'communication' && (
+                  <div className="space-y-3">
+                    <button onClick={() => setShowAddAktiv(true)}
+                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-gray-500 text-xs hover:border-[#7F77DD] hover:text-[#7F77DD] transition-colors">
+                      + Eintrag hinzufügen
+                    </button>
+                    {showAddAktiv && (
+                      <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
+                        <p className="text-white text-xs font-medium">Neuer Eintrag</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-gray-600 text-xs block mb-1">Datum</label>
+                            <input type="date" value={aktivForm.datum} onChange={e => setAktivForm(p => ({...p, datum: e.target.value}))}
+                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                          </div>
+                          <div>
+                            <label className="text-gray-600 text-xs block mb-1">Kanal</label>
+                            <select value={aktivForm.kanal} onChange={e => setAktivForm(p => ({...p, kanal: e.target.value}))}
+                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                              <option>Mail</option><option>Instagram</option><option>Telefon</option><option>Sonstiges</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="text-gray-600 text-xs block mb-1">Richtung</label>
+                            <select value={aktivForm.richtung} onChange={e => setAktivForm(p => ({...p, richtung: e.target.value}))}
+                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                              <option value="raus">Gesendet</option><option value="rein">Erhalten</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-gray-600 text-xs block mb-1">Notiz / Nachricht</label>
+                          <textarea value={aktivForm.notiz} onChange={e => setAktivForm(p => ({...p, notiz: e.target.value}))} rows={3}
+                            className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none"/>
+                        </div>
+                        <div className="flex gap-2">
+                          <button disabled={aktivSaving} onClick={async () => {
+                            setAktivSaving(true)
+                            try {
+                              const token = await getToken()
+                              const res = await fetch('/api/aktivitaeten', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+                                body: JSON.stringify({ creator_id: (selected as any)._id, datum: aktivForm.datum || null, kanal: aktivForm.kanal, richtung: aktivForm.richtung, notiz: aktivForm.notiz, quelle: 'manuell' })
+                              })
+                              const d = await res.json()
+                              if (res.ok) {
+                                setAktivitaeten(prev => [d, ...prev])
+                                setAktivForm({datum:'',kanal:'Mail',richtung:'raus',notiz:''})
+                                setShowAddAktiv(false)
+                              }
+                            } finally { setAktivSaving(false) }
+                          }} className={`flex-1 py-2 rounded-xl text-white text-xs flex items-center justify-center gap-2 ${aktivSaving?'bg-[#7F77DD]/50':'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                            {aktivSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
+                            {aktivSaving ? 'Speichern...' : 'Speichern'}
+                          </button>
+                          <button onClick={() => setShowAddAktiv(false)} className="px-4 py-2 rounded-xl border border-white/10 text-gray-500 text-xs">Abbrechen</button>
+                        </div>
+                      </div>
+                    )}
+                    {loadingAktiv && <div className="text-center py-8 text-gray-600 text-xs">Lädt...</div>}
+                    {!loadingAktiv && aktivitaeten.length === 0 && !showAddAktiv && (
+                      <div className="text-center py-8 text-gray-600 text-xs">Noch keine Einträge</div>
+                    )}
+                    {aktivitaeten.map((a:any) => {
+                      const icon = a.kanal === 'Instagram' ? '📷' : a.kanal === 'Telefon' ? '📞' : a.kanal === 'Sonstiges' ? '💬' : '✉️'
+                      const raus = a.richtung === 'raus'
+                      return (
+                        <div key={a.id} className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-start gap-2 flex-1">
+                              <span className="text-sm">{icon}</span>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${raus ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'bg-emerald-500/15 text-emerald-400'}`}>{raus ? 'Gesendet' : 'Erhalten'}</span>
+                                  <span className="text-gray-600 text-[10px]">{a.kanal} · {a.datum || '—'}</span>
+                                </div>
+                                {a.notiz && <div className="text-gray-300 text-xs mt-1 whitespace-pre-wrap">{a.notiz}</div>}
+                              </div>
+                            </div>
+                            <button disabled={deletingAktiv===a.id} onClick={async () => {
+                              setDeletingAktiv(a.id)
+                              const token = await getToken()
+                              await fetch('/api/aktivitaeten/'+a.id, { method:'DELETE', headers:{authorization:'Bearer '+token} })
+                              setAktivitaeten(prev => prev.filter((x:any) => x.id !== a.id))
+                              setDeletingAktiv(null)
+                            }} className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded hover:bg-red-950/30 transition-colors flex-shrink-0">
+                              {deletingAktiv===a.id ? '...' : '✕'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
                 {detailTab === 'audience' && (
