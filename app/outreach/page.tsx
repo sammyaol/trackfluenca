@@ -66,6 +66,28 @@ export default function Outreach() {
       if (Array.isArray(d)) setKampagnenList(d.map((k: any) => k.name))
     })
   }, [])
+  const [bestellungen, setBestellungen] = useState<any[]>([])
+  useEffect(() => {
+    if (!selected?.id) { setBestellungen([]); return }
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      const arr = Array.isArray(d) ? d.filter((b:any) => b.creator_id === selected.id) : []
+      setBestellungen(arr)
+    })
+  }, [selected])
+  const [bestellungen, setBestellungen] = useState<any[]>([])
+  useEffect(() => {
+    if (!selected?.id) { setBestellungen([]); return }
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      const arr = Array.isArray(d) ? d.filter((b:any) => b.creator_id === selected.id) : []
+      setBestellungen(arr)
+    })
+  }, [selected])
   const updateCollab = async (field: string, value: any) => {
     if (!selected?.id) return
     setSelected((p: any) => ({ ...p, [field]: value }))
@@ -171,6 +193,24 @@ export default function Outreach() {
           <div className="flex-shrink-0 border-l border-white/[0.06] p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
             <div className="text-white font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
+              <div className="bg-[#141414] rounded-xl p-3 space-y-2">
+                <div className="text-gray-500 text-[10px] uppercase tracking-wider">Bestellung</div>
+                {bestellungen.length === 0 && <div className="text-gray-600 text-xs">Keine Bestellung</div>}
+                {bestellungen.map((b:any) => {
+                  const st = b.status || 'Nicht versendet'
+                  const farbe = st === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400' : (st === 'Nicht versendet' ? 'bg-gray-700/40 text-gray-400' : 'bg-blue-500/15 text-blue-400')
+                  return (
+                    <div key={b.id} className="space-y-1">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-gray-300 text-xs truncate">{b.produkt || 'Produkt'}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${farbe}`}>{st}</span>
+                      </div>
+                      {b.tracking_nummer && <div className="text-gray-600 text-[10px] font-mono truncate">{b.tracking_nummer}</div>}
+                    </div>
+                  )
+                })}
+                <div className="text-gray-700 text-[10px] pt-1">&rarr; im Bestellbereich bearbeiten</div>
+              </div>
               <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
                 <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
                 <div className="flex justify-between text-xs"><span className="text-gray-600">IG Follower</span><span className="text-gray-300">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
