@@ -77,17 +77,6 @@ export default function Outreach() {
       setBestellungen(arr)
     })
   }, [selected])
-  const [bestellungen, setBestellungen] = useState<any[]>([])
-  useEffect(() => {
-    if (!selected?.id) { setBestellungen([]); return }
-    sb.auth.getSession().then(async ({ data }) => {
-      const token = data.session?.access_token || ''
-      const res = await fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } })
-      const d = await res.json()
-      const arr = Array.isArray(d) ? d.filter((b:any) => b.creator_id === selected.id) : []
-      setBestellungen(arr)
-    })
-  }, [selected])
   const updateCollab = async (field: string, value: any) => {
     if (!selected?.id) return
     setSelected((p: any) => ({ ...p, [field]: value }))
