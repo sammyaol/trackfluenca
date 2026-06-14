@@ -57,6 +57,27 @@ export default function Outreach() {
   }, [])
 
   const initials = (name: string) => (name || '?').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+  const [kampagnenList, setKampagnenList] = useState<string[]>([])
+  useEffect(() => {
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      if (Array.isArray(d)) setKampagnenList(d.map((k: any) => k.name))
+    })
+  }, [])
+  const updateCollab = async (field: string, value: any) => {
+    if (!selected?.id) return
+    setSelected((p: any) => ({ ...p, [field]: value }))
+    setCreators(prev => prev.map(c => c.id === selected.id ? { ...c, [field]: value } : c))
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/creators/' + selected.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ [field]: value })
+    })
+  }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
     return !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
@@ -148,8 +169,49 @@ export default function Outreach() {
         {/* RECHTS: Info-Sidebar */}
         {selected && (
           <div className="w-72 flex-shrink-0 border-l border-white/[0.06] p-4">
-            <div className="text-white font-medium text-sm mb-3">Collab-Infos</div>
-            <div className="text-gray-700 text-xs">Felder folgen (Etappe 3)</div>
+            <div className="text-white font-medium text-sm mb-4">Collab-Infos</div>
+            <div className="space-y-3 overflow-y-auto" style={{maxHeight:'calc(100vh - 80px)'}}>
+              <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
+                <div className="flex justify-between text-xs"><span className="text-gray-600">IG Follower</span><span className="text-gray-300">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-gray-600">TT Follower</span><span className="text-gray-300">{(selected.tt_follower||0).toLocaleString('de-DE')}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-gray-600">Tier</span><span className="text-gray-300">{selected.overall_tier||'—'}</span></div>
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Status</label>
+                <select value={selected.status||'Offen'} onChange={e => updateCollab('status', e.target.value)}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none">
+                  <option>Offen</option><option>In Verhandlung</option><option>Deal</option><option>Abgesagt</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
+                <select value={selected.kampagne||''} onChange={e => updateCollab('kampagne', e.target.value)}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none">
+                  <option value="">—</option>
+                  {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Fee €</label>
+                <input type="number" defaultValue={selected.fee||0} onBlur={e => updateCollab('fee', Number(e.target.value)||0)}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Promo-Code</label>
+                <input type="text" defaultValue={selected.promo_code||''} onBlur={e => updateCollab('promo_code', e.target.value)}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Provision</label>
+                <input type="text" defaultValue={selected.affiliate_pct||'15%'} onBlur={e => updateCollab('affiliate_pct', e.target.value)}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+              </div>
+              <div>
+                <label className="text-gray-600 text-xs block mb-1">Notizen</label>
+                <textarea defaultValue={selected.notizen||''} onBlur={e => updateCollab('notizen', e.target.value)} rows={4}
+                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none resize-none" />
+              </div>
+            </div>
           </div>
         )}
 
