@@ -9,6 +9,39 @@ export default function Outreach() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<any | null>(null)
   const [search, setSearch] = useState('')
+  const [nachrichten, setNachrichten] = useState<any[]>([])
+  const [loadingChat, setLoadingChat] = useState(false)
+  const [neueNachricht, setNeueNachricht] = useState('')
+  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'>('rein')
+  const [chatKanal, setChatKanal] = useState('Instagram')
+  const [sendingChat, setSendingChat] = useState(false)
+  useEffect(() => {
+    if (!selected?.id) { setNachrichten([]); return }
+    setLoadingChat(true)
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/aktivitaeten?creator_id=' + selected.id, { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      setNachrichten(Array.isArray(d) ? d.slice().reverse() : [])
+      setLoadingChat(false)
+    })
+  }, [selected])
+  const sendeNachricht = async () => {
+    if (!neueNachricht.trim() || !selected?.id) return
+    setSendingChat(true)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const heute = new Date().toISOString().slice(0,10)
+      const res = await fetch('/api/aktivitaeten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+        body: JSON.stringify({ creator_id: selected.id, datum: heute, kanal: chatKanal, richtung: chatRichtung, notiz: neueNachricht.trim(), quelle: 'manuell' })
+      })
+      const d = await res.json()
+      if (res.ok) { setNachrichten(prev => [...prev, d]); setNeueNachricht('') }
+    } finally { setSendingChat(false) }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -76,8 +109,37 @@ export default function Outreach() {
                   <div className="text-gray-600 text-xs">{selected.ig || ''}</div>
                 </div>
               </div>
-              <div className="flex-1 flex items-center justify-center text-gray-700 text-xs">
-                Chat-Verlauf folgt (Etappe 2)
+              <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                {loadingChat && <div className="text-center text-gray-600 text-xs">Lädt...</div>}
+                {!loadingChat && nachrichten.length === 0 && <div className="text-center text-gray-700 text-xs mt-8">Noch keine Nachrichten. Kopiere unten den Verlauf rein.</div>}
+                {nachrichten.map((m:any) => {
+                  const raus = m.richtung === 'raus'
+                  return (
+                    <div key={m.id} className={`flex ${raus ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${raus ? 'bg-[#7F77DD] text-white' : 'bg-[#1a1a1a] text-gray-200 border border-white/[0.06]'}`}>
+                        <div className="text-sm whitespace-pre-wrap break-words">{m.notiz}</div>
+                        <div className={`text-[10px] mt-1 ${raus ? 'text-white/60' : 'text-gray-600'}`}>{m.kanal} · {m.datum || ''}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="p-3 border-t border-white/[0.06]">
+                <div className="flex items-center gap-2 mb-2">
+                  <button onClick={() => setChatRichtung('rein')} className={`text-xs px-3 py-1 rounded-lg ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-gray-300'}`}>Von Creator</button>
+                  <button onClick={() => setChatRichtung('raus')} className={`text-xs px-3 py-1 rounded-lg ${chatRichtung==='raus' ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>Von mir</button>
+                  <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none ml-auto">
+                    <option>Instagram</option><option>Mail</option><option>Telefon</option><option>Sonstiges</option>
+                  </select>
+                </div>
+                <div className="flex items-end gap-2">
+                  <textarea value={neueNachricht} onChange={e => setNeueNachricht(e.target.value)} rows={2} placeholder="Nachricht reinkopieren oder tippen..."
+                    className="flex-1 bg-[#141414] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7F77DD] resize-none" />
+                  <button onClick={sendeNachricht} disabled={sendingChat || !neueNachricht.trim()}
+                    className={`px-4 py-2 rounded-xl text-sm text-white ${sendingChat||!neueNachricht.trim() ? 'bg-[#7F77DD]/40' : 'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                    {sendingChat ? '...' : 'Hinzufügen'}
+                  </button>
+                </div>
               </div>
             </>
           )}
