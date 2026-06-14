@@ -172,10 +172,45 @@ export default function Outreach() {
             <div className="text-white font-medium text-sm mb-4">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto" style={{maxHeight:'calc(100vh - 80px)'}}>
               <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
+                <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
                 <div className="flex justify-between text-xs"><span className="text-gray-600">IG Follower</span><span className="text-gray-300">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
                 <div className="flex justify-between text-xs"><span className="text-gray-600">TT Follower</span><span className="text-gray-300">{(selected.tt_follower||0).toLocaleString('de-DE')}</span></div>
                 <div className="flex justify-between text-xs"><span className="text-gray-600">Tier</span><span className="text-gray-300">{selected.overall_tier||'—'}</span></div>
               </div>
+              {(selected.ig_gender_female || selected.ig_gender_male || selected.ig_top_age || (selected.ig_top_countries?.length)) ? (
+                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
+                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Audience</div>
+                  {(selected.ig_gender_female || selected.ig_gender_male) ? (
+                    <div className="flex justify-between text-xs"><span className="text-gray-600">Geschlecht</span><span className="text-gray-300">&#9792; {selected.ig_gender_female||0}% &middot; &#9794; {selected.ig_gender_male||0}%</span></div>
+                  ) : null}
+                  {selected.ig_top_age ? <div className="flex justify-between text-xs"><span className="text-gray-600">Top-Alter</span><span className="text-gray-300">{String(selected.ig_top_age).replace('_','-')}</span></div> : null}
+                  {(selected.ig_top_countries?.length) ? (
+                    <div className="flex justify-between text-xs"><span className="text-gray-600">Top-Land</span><span className="text-gray-300">{selected.ig_top_countries[0]?.name} {selected.ig_top_countries[0]?.pct}%</span></div>
+                  ) : null}
+                  {selected.ig_real_followers ? <div className="flex justify-between text-xs"><span className="text-gray-600">Echte Follower</span><span className="text-gray-300">{selected.ig_real_followers}%</span></div> : null}
+                </div>
+              ) : null}
+              {(selected.ig_er || selected.tt_er || selected.ig_avg_reel_views || selected.story_views) ? (
+                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
+                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Engagement</div>
+                  {selected.ig_er ? <div className="flex justify-between text-xs"><span className="text-gray-600">IG ER</span><span className="text-gray-300">{selected.ig_er}%</span></div> : null}
+                  {selected.tt_er ? <div className="flex justify-between text-xs"><span className="text-gray-600">TT ER</span><span className="text-gray-300">{selected.tt_er}%</span></div> : null}
+                  {selected.ig_avg_reel_views ? <div className="flex justify-between text-xs"><span className="text-gray-600">&Oslash; Reel Views</span><span className="text-gray-300">{(selected.ig_avg_reel_views||0).toLocaleString('de-DE')}</span></div> : null}
+                  {selected.ig_avg_likes ? <div className="flex justify-between text-xs"><span className="text-gray-600">&Oslash; Likes</span><span className="text-gray-300">{(selected.ig_avg_likes||0).toLocaleString('de-DE')}</span></div> : null}
+                  {selected.story_views ? <div className="flex justify-between text-xs"><span className="text-gray-600">Story Views</span><span className="text-gray-300">{(selected.story_views||0).toLocaleString('de-DE')}</span></div> : null}
+                </div>
+              ) : null}
+              {(selected.tkp_reel || selected.tkp_story || selected.tkp_tt || selected.reel_wert || selected.story_wert || selected.tt_wert) ? (
+                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
+                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">TKP &amp; Werte</div>
+                  {selected.tkp_reel ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP Reel</span><span className="text-gray-300">{selected.tkp_reel} &euro;</span></div> : null}
+                  {selected.tkp_story ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP Story</span><span className="text-gray-300">{selected.tkp_story} &euro;</span></div> : null}
+                  {selected.tkp_tt ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP TikTok</span><span className="text-gray-300">{selected.tkp_tt} &euro;</span></div> : null}
+                  {selected.reel_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">Reel-Wert</span><span className="text-gray-300">{(selected.reel_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                  {selected.story_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">Story-Wert</span><span className="text-gray-300">{(selected.story_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                  {selected.tt_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">TikTok-Wert</span><span className="text-gray-300">{(selected.tt_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                </div>
+              ) : null}
               <div>
                 <label className="text-gray-600 text-xs block mb-1">Status</label>
                 <select value={selected.status||'Offen'} onChange={e => updateCollab('status', e.target.value)}
