@@ -168,9 +168,9 @@ export default function Outreach() {
 
         {/* RECHTS: Info-Sidebar */}
         {selected && (
-          <div className="w-72 flex-shrink-0 border-l border-white/[0.06] p-4">
-            <div className="text-white font-medium text-sm mb-4">Collab-Infos</div>
-            <div className="space-y-3 overflow-y-auto" style={{maxHeight:'calc(100vh - 80px)'}}>
+          <div className="w-72 flex-shrink-0 border-l border-white/[0.06] p-4 overflow-hidden flex flex-col">
+            <div className="text-white font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
+            <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
               <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
                 <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
                 <div className="flex justify-between text-xs"><span className="text-gray-600">IG Follower</span><span className="text-gray-300">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
