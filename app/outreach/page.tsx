@@ -209,6 +209,34 @@ export default function Outreach() {
             <div className="text-white font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
               <div className="bg-[#141414] rounded-xl p-3 space-y-2">
+                <div className="text-gray-500 text-[10px] uppercase tracking-wider">Kontakt &amp; Links</div>
+                <div className="flex gap-1.5">
+                  {selected.ig ? (
+                    <a href={"https://instagram.com/" + (selected.ig||'').replace('@','')} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center text-[11px] bg-[#1a1a1a] hover:bg-[#222] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300">Instagram &#8599;</a>
+                  ) : null}
+                  {selected.tt ? (
+                    <a href={"https://tiktok.com/@" + (selected.tt||'').replace('@','')} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center text-[11px] bg-[#1a1a1a] hover:bg-[#222] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300">TikTok &#8599;</a>
+                  ) : null}
+                </div>
+                <div>
+                  <label className="text-gray-600 text-[10px] block mb-1">Adresse</label>
+                  <textarea defaultValue={selected.adresse||''} onBlur={e => updateCollab('adresse', e.target.value)} rows={2}
+                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none resize-none" />
+                </div>
+                <div>
+                  <label className="text-gray-600 text-[10px] block mb-1">Telefon</label>
+                  <input type="text" defaultValue={selected.telefon||''} onBlur={e => updateCollab('telefon', e.target.value)}
+                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                </div>
+                <div>
+                  <label className="text-gray-600 text-[10px] block mb-1">E-Mail</label>
+                  <input type="text" defaultValue={selected.email||''} onBlur={e => updateCollab('email', e.target.value)}
+                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                </div>
+              </div>
+              <div className="bg-[#141414] rounded-xl p-3 space-y-2">
                 <div className="text-gray-500 text-[10px] uppercase tracking-wider">Bestellung</div>
                 {bestellungen.length === 0 && <div className="text-gray-600 text-xs">Keine Bestellung</div>}
                 {bestellungen.map((b:any) => {
