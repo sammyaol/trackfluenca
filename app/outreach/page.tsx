@@ -212,6 +212,23 @@ export default function Outreach() {
                 </div>
               ) : null}
               <div>
+                <label className="text-gray-600 text-xs block mb-2">Leistungen</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Reel','Story','Post','Carousel','Video','TikTok'].map(l => {
+                    const aktiv = (selected.leistungen||'').split(',').filter(Boolean).includes(l)
+                    return (
+                      <button key={l} onClick={() => {
+                        const arr = (selected.leistungen||'').split(',').filter(Boolean)
+                        const next = aktiv ? arr.filter((x:string) => x !== l) : [...arr, l]
+                        updateCollab('leistungen', next.join(','))
+                      }} className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${aktiv ? 'bg-[#7F77DD] border-[#7F77DD] text-white' : 'border-white/[0.1] text-gray-500 hover:text-gray-300'}`}>
+                        {l}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div>
                 <label className="text-gray-600 text-xs block mb-1">Status</label>
                 <select value={selected.status||'Offen'} onChange={e => updateCollab('status', e.target.value)}
                   className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none">
