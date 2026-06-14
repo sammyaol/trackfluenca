@@ -39,7 +39,7 @@ export default function Outreach() {
         body: JSON.stringify({ creator_id: selected.id, datum: heute, kanal: chatKanal, richtung: chatRichtung, notiz: neueNachricht.trim(), quelle: 'manuell' })
       })
       const d = await res.json()
-      if (res.ok) { setNachrichten(prev => [...prev, d]); setNeueNachricht('') }
+      if (res.ok) { setNachrichten(prev => [...prev, d]); setNeueNachricht(''); setMsgSet(prev => new Set(prev).add(selected.id)) }
     } finally { setSendingChat(false) }
   }
 
