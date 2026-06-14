@@ -89,10 +89,31 @@ export default function Outreach() {
       body: JSON.stringify({ [field]: value })
     })
   }
+  const [arrivedSet, setArrivedSet] = useState<Set<string>>(new Set())
+  const [msgSet, setMsgSet] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } })
+      const best = await res.json()
+      const ang = new Set<string>()
+      if (Array.isArray(best)) best.forEach((b:any) => { if (b.status === 'Angekommen' && b.creator_id) ang.add(b.creator_id) })
+      setArrivedSet(ang)
+      const { data: akt } = await sb.from('aktivitaeten').select('creator_id')
+      const ms = new Set<string>()
+      if (Array.isArray(akt)) akt.forEach((a:any) => { if (a.creator_id) ms.add(a.creator_id) })
+      setMsgSet(ms)
+    })
+  }, [])
+  const prio = (c:any) => {
+    if (arrivedSet.has(c.id)) return 0
+    if (!msgSet.has(c.id)) return 1
+    return 2
+  }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
     return !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
-  })
+  }).slice().sort((a:any,b:any) => prio(a) - prio(b))
 
   return (
     <div className="h-screen bg-[#0A0A0A] text-white overflow-hidden">
@@ -118,6 +139,11 @@ export default function Outreach() {
                 <div className="min-w-0 flex-1">
                   <div className="text-white text-sm font-medium truncate">{c.name || '—'}</div>
                   <div className="text-gray-600 text-xs truncate">{c.ig || ''}</div>
+                  {arrivedSet.has(c.id) ? (
+                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</div>
+                  ) : (!msgSet.has(c.id) ? (
+                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-rose-400 bg-rose-500/10 rounded-full px-2 py-0.5">&#9999;&#65039; Bitte anschreiben</div>
+                  ) : null)}
                 </div>
               </button>
             ))}
