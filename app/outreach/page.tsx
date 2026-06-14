@@ -168,7 +168,7 @@ export default function Outreach() {
 
         {/* RECHTS: Info-Sidebar */}
         {selected && (
-          <div className="w-72 flex-shrink-0 border-l border-white/[0.06] p-4 overflow-hidden flex flex-col">
+          <div className="flex-shrink-0 border-l border-white/[0.06] p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
             <div className="text-white font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
               <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
