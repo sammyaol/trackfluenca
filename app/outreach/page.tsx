@@ -30,9 +30,9 @@ export default function Outreach() {
   })
 
   return (
-    <div className="flex h-screen bg-[#0A0A0A] text-white overflow-hidden">
+    <div className="h-screen bg-[#0A0A0A] text-white overflow-hidden">
       <Sidebar />
-      <div className="flex-1 flex overflow-hidden">
+      <div className="md:ml-60 h-screen flex overflow-hidden">
 
         {/* LINKS: Chat-Liste */}
         <div className="w-80 flex-shrink-0 border-r border-white/[0.06] flex flex-col">
