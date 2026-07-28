@@ -166,7 +166,7 @@ export default function Discovery() {
             <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-6">
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#7F77DD] to-purple-700 flex items-center justify-center text-ink-1 text-xl font-bold">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0A84FF] to-purple-700 flex items-center justify-center text-ink-1 text-xl font-bold">
                     {(result.name || igHandle || ttHandle || '?').slice(0, 1).toUpperCase()}
                   </div>
                   <div>
@@ -253,7 +253,7 @@ export default function Discovery() {
           {!result && history.length === 0 && !loading && (
             <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-12 text-center">
               <div className="w-16 h-16 rounded-apple-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
               </div>
               <h3 className="text-ink-1 text-sm font-medium mb-1">Influencer entdecken</h3>
               <p className="text-ink-4 text-xs max-w-sm mx-auto">Gib einen Handle ein und lade echte Daten direkt zu deiner Liste — Follower, Engagement, Tier, Werte und mehr.</p>

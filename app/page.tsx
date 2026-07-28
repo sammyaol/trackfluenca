@@ -18,15 +18,15 @@ export default function Login() {
         <div className="flex items-center gap-3 mb-8 justify-center">
           <div className="w-10 h-10 rounded-xl bg-[#2C1F6B] flex items-center justify-center">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M4 12 L12 4" stroke="#7F77DD" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M4 12 L12 4" stroke="#0A84FF" strokeWidth="2" strokeLinecap="round"/>
               <path d="M12 4 L20 12" stroke="#AFA9EC" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="4" cy="12" r="2" fill="#7F77DD"/>
+              <circle cx="4" cy="12" r="2" fill="#0A84FF"/>
               <circle cx="12" cy="4" r="2" fill="white"/>
               <circle cx="20" cy="12" r="2" fill="#AFA9EC"/>
-              <line x1="4" y1="19" x2="20" y2="19" stroke="#534AB7" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="4" y1="19" x2="20" y2="19" stroke="#0060DF" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <span className="text-white text-xl font-bold">Track<span className="text-[#7F77DD] font-normal">fluenca</span></span>
+          <span className="text-white text-xl font-bold">Track<span className="text-[#0A84FF] font-normal">fluenca</span></span>
         </div>
 
         <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-white/10">
@@ -41,7 +41,7 @@ export default function Login() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="hello@trackfluenca.com"
-                className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7F77DD]"
+                className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#0A84FF]"
               />
             </div>
             <div>
@@ -51,12 +51,12 @@ export default function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#7F77DD]"
+                className="w-full bg-[#0E0E0E] border border-white/10 rounded-xl px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#0A84FF]"
               />
             </div>
             <button
               type="submit"
-              className="w-full bg-[#7F77DD] hover:bg-[#534AB7] text-white rounded-xl py-3 text-sm font-medium transition-colors mt-2"
+              className="w-full bg-[#0A84FF] hover:bg-[#0060DF] text-white rounded-xl py-3 text-sm font-medium transition-colors mt-2"
             >
               Anmelden
             </button>

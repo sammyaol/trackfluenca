@@ -648,7 +648,7 @@ export default function CreatorPage() {
         <div className="p-6">
           {tableLoading && (
             <div className="flex items-center justify-center py-20 gap-3">
-              <div className="w-5 h-5 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
+              <div className="w-5 h-5 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
               <span className="text-ink-3 text-sm">Creator werden geladen...</span>
             </div>
           )}
@@ -817,7 +817,7 @@ export default function CreatorPage() {
                                     }} className="text-ink-3 hover:text-ink-1 text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
                                     {p.post_link && (
                                       <button onClick={(e:any) => { e.stopPropagation(); refreshPosting(p) }} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
                                       </button>
                                     )}
                                     <button onClick={async e => {
@@ -1036,7 +1036,7 @@ export default function CreatorPage() {
 
                 {detailTab === 'overview' && snapshotLoading && (
                   <div className="flex items-center gap-2 py-4 justify-center">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
                     <span className="text-ink-3 text-xs">Verlauf wird geladen...</span>
                   </div>
                 )}
@@ -1330,7 +1330,7 @@ export default function CreatorPage() {
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
                             {p.post_link && (
                               <button onClick={() => refreshPosting(p)} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
                               </button>
                             )}
                             <button onClick={async () => {

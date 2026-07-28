@@ -5,11 +5,11 @@ import Sidebar from '../components/Sidebar'
 export default function Einstellungen() {
   const [saved, setSaved] = useState(false)
   const [plan, setPlan] = useState('free')
-  const [primaryColor, setPrimaryColor] = useState('#7F77DD')
+  const [primaryColor, setPrimaryColor] = useState('#0A84FF')
 
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
 
-  const colors = ['#7F77DD', '#E24B4A', '#1D9E75', '#D85A30', '#185FA5', '#D4537E']
+  const colors = ['#0A84FF', '#E24B4A', '#1D9E75', '#D85A30', '#185FA5', '#D4537E']
 
   return (
     <div className="flex min-h-screen bg-surface-0">
@@ -42,7 +42,7 @@ export default function Einstellungen() {
                 { id: 'business', name: 'Business', price: '149 €/Mo', sub: 'Für Agenturen', features: ['Unbegrenzt', 'Multi-Brand', 'White-Label', 'Shopify Sync', 'API-Zugang', 'Priority Support'], locked: [] },
               ].map(p => (
                 <div key={p.id} onClick={() => setPlan(p.id)}
-                  className={`relative rounded-apple-lg p-5 cursor-pointer transition-all border ${plan === p.id ? 'border-accent bg-accent/5' : 'border-hairline-soft bg-surface-2 hover:border-white/[0.12]'} ${p.featured ? 'ring-1 ring-[#7F77DD]/30' : ''}`}>
+                  className={`relative rounded-apple-lg p-5 cursor-pointer transition-all border ${plan === p.id ? 'border-accent bg-accent/5' : 'border-hairline-soft bg-surface-2 hover:border-white/[0.12]'} ${p.featured ? 'ring-1 ring-[#0A84FF]/30' : ''}`}>
                   {p.featured && <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] px-3 py-0.5 rounded-full bg-accent text-ink-1 font-medium">Beliebteste</div>}
                   <div className="flex items-start justify-between mb-3">
                     <div>
@@ -76,7 +76,7 @@ export default function Einstellungen() {
           <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-6 mb-5">
             <div className="flex items-center gap-2 mb-5">
               <div className="w-6 h-6 rounded-apple-sm bg-accent/20 flex items-center justify-center">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               </div>
               <h2 className="text-ink-1 font-semibold text-sm">Marke</h2>
             </div>
@@ -126,7 +126,7 @@ export default function Einstellungen() {
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-apple-sm bg-accent/20 flex items-center justify-center">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7F77DD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
                 </div>
                 <h2 className="text-ink-1 font-semibold text-sm">Portal Branding</h2>
               </div>
