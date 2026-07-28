@@ -227,7 +227,7 @@ export default function Discovery() {
                 {history.map((h, i) => (
                   <div key={i} className="flex items-center justify-between p-3 rounded-apple-sm bg-surface-0 border border-hairline-soft">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-xs font-semibold">
+                      <div className="w-8 h-8 rounded-full bg-[#64D2FF]/20 flex items-center justify-center text-[#64D2FF] text-xs font-semibold">
                         {(h.name || '?').slice(0, 1).toUpperCase()}
                       </div>
                       <div>

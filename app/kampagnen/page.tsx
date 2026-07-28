@@ -209,7 +209,7 @@ export default function Kampagnen() {
                         {c.ig_image ? (
                           <img src={c.ig_image} className="w-6 h-6 rounded-full object-cover" />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs text-accent">{c.name?.[0]?.toUpperCase()}</div>
+                          <div className="w-6 h-6 rounded-full bg-[#FF9F0A]/20 flex items-center justify-center text-xs text-[#FF9F0A]">{c.name?.[0]?.toUpperCase()}</div>
                         )}
                         <span className="text-ink-1 text-xs">{c.name}</span>
                       </div>
