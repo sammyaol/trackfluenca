@@ -246,7 +246,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/creator" className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-accent text-white text-xs hover:bg-accent-hover active:scale-[0.98] transition-all duration-200 ease-apple font-medium shadow-apple-sm">
+            <Link href="/creator" className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-accent text-white text-xs hover:bg-accent-hover active:scale-[0.98] transition-all duration-200 ease-apple font-medium shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Creator hinzufügen
             </Link>
@@ -257,14 +257,14 @@ export default function Dashboard() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Gesamt Umsatz', value: `${stats.gesU.toLocaleString('de-DE')} €`, sub: `${stats.totalOrgBest} Bestellungen`, color: 'text-emerald-400', change: monthCompare.umsatzChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-              { label: 'Gesamt ROAS', value: stats.gesROAS > 0 ? `${stats.gesROAS}x` : '—', sub: `Org. ${stats.orgROAS > 0 ? stats.orgROAS + 'x' : '—'}`, color: roasColor(stats.gesROAS), icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-              { label: 'Creator', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-ink-1', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
-              { label: 'Aktive Deals', value: `${dealsCount}`, sub: `${inVerhandlung} in Verhandlung`, color: 'text-amber-400', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> },
+              { label: 'Gesamt Umsatz', bg: '#30D158', value: `${stats.gesU.toLocaleString('de-DE')} €`, sub: `${stats.totalOrgBest} Bestellungen`, color: 'text-emerald-400', change: monthCompare.umsatzChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+              { label: 'Gesamt ROAS', bg: '#0A84FF', value: stats.gesROAS > 0 ? `${stats.gesROAS}x` : '—', sub: `Org. ${stats.orgROAS > 0 ? stats.orgROAS + 'x' : '—'}`, color: roasColor(stats.gesROAS), icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+              { label: 'Creator', bg: '#FF375F', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-ink-1', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
+              { label: 'Aktive Deals', bg: '#FF9F0A', value: `${dealsCount}`, sub: `${inVerhandlung} in Verhandlung`, color: 'text-amber-400', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> },
             ].map(m => (
               <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-9 h-9 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2">{m.icon}</div>
+                  <div className="w-9 h-9 rounded-apple-sm flex items-center justify-center shadow-apple-sm" style={{ background: m.bg }}>{m.icon}</div>
                   {m.change !== undefined && (
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m.change >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
                       {m.change >= 0 ? '+' : ''}{m.change}%

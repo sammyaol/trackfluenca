@@ -194,7 +194,7 @@ export default function Outreach() {
                   <textarea value={neueNachricht} onChange={e => setNeueNachricht(e.target.value)} rows={2} placeholder="Nachricht reinkopieren oder tippen..."
                     className="flex-1 bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent resize-none" />
                   <button onClick={sendeNachricht} disabled={sendingChat || !neueNachricht.trim()}
-                    className={`px-4 py-2 rounded-apple-sm text-sm text-ink-1 ${sendingChat||!neueNachricht.trim() ? 'bg-accent/40' : 'bg-accent hover:bg-accent-hover'}`}>
+                    className={`px-4 py-2 rounded-apple-sm text-sm text-ink-1 ${sendingChat||!neueNachricht.trim() ? 'bg-accent/40' : 'bg-accent hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                     {sendingChat ? '...' : 'Hinzufügen'}
                   </button>
                 </div>

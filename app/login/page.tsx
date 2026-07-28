@@ -116,7 +116,7 @@ return (
           )}
 
           <button onClick={handle} disabled={loading || !email || !password || (isSignup && !name)}
-            className="w-full py-3 rounded-apple-sm bg-accent text-white text-sm font-medium hover:bg-accent-hover active:scale-[0.98] transition-all duration-200 ease-apple disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 shadow-apple-sm">
+            className="w-full py-3 rounded-apple-sm bg-accent text-white text-sm font-medium hover:bg-accent-hover active:scale-[0.98] transition-all duration-200 ease-apple disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]">
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>

@@ -188,7 +188,7 @@ export default function Bestellungen() {
             <button onClick={trackAll} className="px-3 py-1.5 rounded-apple-sm border border-hairline text-ink-1 text-xs hover:bg-white/[0.04] transition-colors font-medium flex items-center gap-2">
               <span>↻</span> Tracking aktualisieren
             </button>
-            <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover transition-colors font-medium">+ Neue Bestellung</button>
+            <button onClick={() => setShowAdd(true)} className="px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">+ Neue Bestellung</button>
           </div>
         </div>
 
@@ -325,7 +325,7 @@ export default function Bestellungen() {
                 <textarea value={form.notizen} onChange={e => setForm({...form, notizen: e.target.value})} rows={2} className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-2 text-ink-1 text-sm resize-none"/>
               </div>
               <div className="flex gap-2 pt-2">
-                <button onClick={save} disabled={!form.creator_id || saving} className={`flex-1 py-2.5 rounded-apple-sm text-sm font-medium flex items-center justify-center gap-2 ${form.creator_id && !saving ? 'bg-accent text-ink-1 hover:bg-accent-hover' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
+                <button onClick={save} disabled={!form.creator_id || saving} className={`flex-1 py-2.5 rounded-apple-sm text-sm font-medium flex items-center justify-center gap-2 ${form.creator_id && !saving ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
                   {saving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                   {saving ? 'Speichert...' : 'Speichern'}
                 </button>

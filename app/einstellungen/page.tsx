@@ -21,7 +21,7 @@ export default function Einstellungen() {
             <p className="text-ink-4 text-xs mt-0.5">Marke, API-Keys, Plan & Portal-Branding</p>
           </div>
           <button onClick={save}
-            className={`flex items-center gap-2 px-4 py-2 rounded-apple-sm text-sm font-medium transition-all ${saved ? 'bg-emerald-600 text-ink-1' : 'bg-accent text-ink-1 hover:bg-accent-hover'}`}>
+            className={`flex items-center gap-2 px-4 py-2 rounded-apple-sm text-sm font-medium transition-all ${saved ? 'bg-emerald-600 text-ink-1' : 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
             {saved ? (
               <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Gespeichert!</>
             ) : (

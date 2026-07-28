@@ -638,7 +638,7 @@ export default function CreatorPage() {
                 <span className={refreshing ? 'animate-spin inline-block' : ''}>↻</span>
                 {refreshing ? 'Lädt...' : 'Aktualisieren'}
               </button>
-              <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover transition-colors font-medium">
+              <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
                 + Creator hinzufügen
               </button>
             </div>
@@ -1201,7 +1201,7 @@ export default function CreatorPage() {
                                 } catch(e:any) { setPullError(e.message || 'Netzwerkfehler') }
                                 setPullingStats(false)
                               }}
-                              className={`px-3 py-1.5 rounded-apple-sm text-xs whitespace-nowrap flex items-center gap-1 ${pullingStats||!postingForm.post_link ? 'bg-accent/40 text-ink-1/60' : 'bg-accent text-ink-1 hover:bg-accent-hover'}`}>
+                              className={`px-3 py-1.5 rounded-apple-sm text-xs whitespace-nowrap flex items-center gap-1 ${pullingStats||!postingForm.post_link ? 'bg-accent/40 text-ink-1/60' : 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                               {pullingStats ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"/> : '\ud83d\udcca'} Daten ziehen
                             </button>
                           </div>
@@ -1305,7 +1305,7 @@ export default function CreatorPage() {
                               setPostingSaving(false)
                               ;(window as any).__postingSaving = false
                             }
-                          }} disabled={postingSaving} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${postingSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover'}`}>
+                          }} disabled={postingSaving} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${postingSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                             {postingSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                             {postingSaving ? 'Speichern...' : 'Speichern'}
                           </button>
@@ -1412,7 +1412,7 @@ export default function CreatorPage() {
                                 setShowAddAktiv(false)
                               }
                             } finally { setAktivSaving(false) }
-                          }} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${aktivSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover'}`}>
+                          }} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${aktivSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                             {aktivSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                             {aktivSaving ? 'Speichern...' : 'Speichern'}
                           </button>
@@ -1623,7 +1623,7 @@ export default function CreatorPage() {
                     {saveState === 'done' && <span>✓</span>}
                     {saveState === 'loading' ? 'Speichern...' : saveState === 'done' ? 'Gespeichert' : 'Speichern'}
                   </button>
-                  <button className="flex-1 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover transition-colors font-medium">Outreach senden</button>
+                  <button className="flex-1 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">Outreach senden</button>
                   <button onClick={async (e) => {
                     const btn = e.currentTarget as HTMLButtonElement
                     btn.disabled = true
@@ -1662,7 +1662,7 @@ export default function CreatorPage() {
                       placeholder="TikTok Handle — optional" className={inputCls} />
                   </div>
                   <button onClick={doFetch} disabled={fetching || (!form.igHandle && !form.ttHandle)}
-                    className={`w-full py-2.5 rounded-apple-sm text-sm font-medium transition-all ${fetching ? 'bg-accent/40 text-ink-1/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-ink-1' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
+                    className={`w-full py-2.5 rounded-apple-sm text-sm font-medium transition-all ${fetching ? 'bg-accent/40 text-ink-1/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-ink-1' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
                     {fetching ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Lade Daten...</span> : fetchDone ? '✓ Daten geladen' : fetchError ? fetchError : 'Echte Daten laden (IG + TT)'}
                   </button>
                   {fetchDone && fetchedData && (
@@ -1712,7 +1712,7 @@ export default function CreatorPage() {
                 </div>
 
                 <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle) || saving}
-                  className={`w-full py-3 rounded-apple-sm text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
+                  className={`w-full py-3 rounded-apple-sm text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
                   Creator hinzufügen
                 </button>
               </div>

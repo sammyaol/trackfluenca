@@ -86,7 +86,7 @@ export default function Kampagnen() {
             <h1 className="text-ink-1 font-semibold text-lg">Kampagnen</h1>
             <p className="text-ink-4 text-xs mt-0.5">{kampagnen.length} Kampagnen · {kampagnen.filter(k => k.status === 'Aktiv').length} aktiv</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover transition-colors font-medium">
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
             + Kampagne erstellen
           </button>
         </div>
@@ -242,7 +242,7 @@ export default function Kampagnen() {
                 </div>
                 <div><label className="text-ink-3 text-xs mb-1.5 block">Budget €</label><input type="number" value={form.budget} onChange={e => setForm(p => ({...p, budget: e.target.value}))} placeholder="25000" className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" /></div>
                 <div><label className="text-ink-3 text-xs mb-1.5 block">Beschreibung</label><textarea value={form.beschreibung} onChange={e => setForm(p => ({...p, beschreibung: e.target.value}))} rows={2} className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
-                <button onClick={createKampagne} disabled={!form.name} className="w-full py-3 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover transition-colors font-medium disabled:opacity-50 mt-1">Kampagne erstellen</button>
+                <button onClick={createKampagne} disabled={!form.name} className="w-full py-3 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium disabled:opacity-50 mt-1">Kampagne erstellen</button>
               </div>
             </div>
           </div>

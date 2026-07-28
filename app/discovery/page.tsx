@@ -137,7 +137,7 @@ export default function Discovery() {
             </div>
 
             <button onClick={search} disabled={loading || (!igHandle && !ttHandle)}
-              className="w-full md:w-auto px-6 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              className="w-full md:w-auto px-6 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
               {loading ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>
@@ -183,7 +183,7 @@ export default function Discovery() {
                   </div>
                 </div>
                 <button onClick={addToCreators} disabled={adding || added}
-                  className={`px-4 py-2 rounded-apple-sm text-sm font-medium transition-all flex items-center gap-2 ${added ? 'bg-emerald-600 text-ink-1' : 'bg-accent text-ink-1 hover:bg-accent-hover'} ${adding ? 'opacity-50' : ''}`}>
+                  className={`px-4 py-2 rounded-apple-sm text-sm font-medium transition-all flex items-center gap-2 ${added ? 'bg-emerald-600 text-ink-1' : 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'} ${adding ? 'opacity-50' : ''}`}>
                   {adding ? (
                     <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Hinzufügen...</>
                   ) : added ? (

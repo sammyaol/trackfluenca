@@ -64,7 +64,7 @@ export default function Affiliate() {
             <h1 className="text-ink-1 font-semibold text-lg">Affiliate</h1>
             <p className="text-ink-4 text-xs mt-0.5">{affiliates.length} Creator · {affiliates.filter(a => !a.ausgezahlt && (a.verdient || 0) > 0).length} ausstehend</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover transition-colors font-medium">
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
             + Creator hinzufügen
           </button>
         </div>
@@ -136,7 +136,7 @@ export default function Affiliate() {
                 <div><label className="text-ink-3 text-xs mb-1.5 block">Creator Name *</label><input value={form.creator_name} onChange={e => setForm(p => ({...p, creator_name: e.target.value}))} placeholder="Sophie Müller" className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" /></div>
                 <div><label className="text-ink-3 text-xs mb-1.5 block">Promo Code</label><input value={form.promo_code} onChange={e => setForm(p => ({...p, promo_code: e.target.value}))} placeholder="SOPHIE15" className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" /></div>
                 <div><label className="text-ink-3 text-xs mb-1.5 block">Provision %</label><select value={form.provision_pct} onChange={e => setForm(p => ({...p, provision_pct: e.target.value}))} className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm focus:outline-none">{['8','10','12','15','20'].map(v => <option key={v}>{v}</option>)}</select></div>
-                <button onClick={createAffiliate} disabled={!form.creator_name} className="w-full py-3 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover transition-colors font-medium disabled:opacity-50 mt-1">Hinzufügen</button>
+                <button onClick={createAffiliate} disabled={!form.creator_name} className="w-full py-3 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium disabled:opacity-50 mt-1">Hinzufügen</button>
               </div>
             </div>
           </div>
