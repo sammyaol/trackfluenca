@@ -116,29 +116,29 @@ export default function Outreach() {
   }).slice().sort((a:any,b:any) => prio(a) - prio(b))
 
   return (
-    <div className="h-screen bg-[#0A0A0A] text-white overflow-hidden">
+    <div className="h-screen bg-surface-0 text-ink-1 overflow-hidden">
       <Sidebar />
       <div className="md:ml-60 h-screen flex overflow-hidden">
 
         {/* LINKS: Chat-Liste */}
-        <div className="w-80 flex-shrink-0 border-r border-white/[0.06] flex flex-col">
-          <div className="p-4 border-b border-white/[0.06]">
-            <h1 className="text-white font-semibold text-lg mb-3">Outreach</h1>
+        <div className="w-80 flex-shrink-0 border-r border-hairline-soft flex flex-col">
+          <div className="p-4 border-b border-hairline-soft">
+            <h1 className="text-ink-1 font-semibold text-lg mb-3">Outreach</h1>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen..."
-              className="w-full bg-[#141414] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7F77DD]" />
+              className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent" />
           </div>
           <div className="flex-1 overflow-y-auto">
-            {loading && <div className="p-4 text-gray-600 text-sm">Lädt...</div>}
-            {!loading && filtered.length === 0 && <div className="p-4 text-gray-600 text-sm">Keine Creator</div>}
+            {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
+            {!loading && filtered.length === 0 && <div className="p-4 text-ink-4 text-sm">Keine Creator</div>}
             {filtered.map(c => (
               <button key={c.id} onClick={() => setSelected(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-white/[0.03] text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''}`}>
-                <div className="w-10 h-10 rounded-full bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden flex-shrink-0">
+                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''}`}>
+                <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
                   {c.ig_image ? <img src={c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-white text-sm font-medium truncate">{c.name || '—'}</div>
-                  <div className="text-gray-600 text-xs truncate">{c.ig || ''}</div>
+                  <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
+                  <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
                   {arrivedSet.has(c.id) ? (
                     <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</div>
                   ) : (!msgSet.has(c.id) ? (
@@ -153,48 +153,48 @@ export default function Outreach() {
         {/* MITTE: Chatfeld */}
         <div className="flex-1 flex flex-col min-w-0">
           {!selected ? (
-            <div className="flex-1 flex items-center justify-center text-gray-600 text-sm">
+            <div className="flex-1 flex items-center justify-center text-ink-4 text-sm">
               Wähle einen Chat aus der Liste
             </div>
           ) : (
             <>
-              <div className="p-4 border-b border-white/[0.06] flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden">
+              <div className="p-4 border-b border-hairline-soft flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden">
                   {selected.ig_image ? <img src={selected.ig_image} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
                 </div>
                 <div>
-                  <div className="text-white text-sm font-medium">{selected.name}</div>
-                  <div className="text-gray-600 text-xs">{selected.ig || ''}</div>
+                  <div className="text-ink-1 text-sm font-medium">{selected.name}</div>
+                  <div className="text-ink-4 text-xs">{selected.ig || ''}</div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
-                {loadingChat && <div className="text-center text-gray-600 text-xs">Lädt...</div>}
-                {!loadingChat && nachrichten.length === 0 && <div className="text-center text-gray-700 text-xs mt-8">Noch keine Nachrichten. Kopiere unten den Verlauf rein.</div>}
+                {loadingChat && <div className="text-center text-ink-4 text-xs">Lädt...</div>}
+                {!loadingChat && nachrichten.length === 0 && <div className="text-center text-ink-4 text-xs mt-8">Noch keine Nachrichten. Kopiere unten den Verlauf rein.</div>}
                 {nachrichten.map((m:any) => {
                   const raus = m.richtung === 'raus'
                   return (
                     <div key={m.id} className={`flex ${raus ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${raus ? 'bg-[#7F77DD] text-white' : 'bg-[#1a1a1a] text-gray-200 border border-white/[0.06]'}`}>
+                      <div className={`max-w-[70%] rounded-apple-lg px-4 py-2 ${raus ? 'bg-accent text-ink-1' : 'bg-surface-3 text-ink-1 border border-hairline-soft'}`}>
                         <div className="text-sm whitespace-pre-wrap break-words">{m.notiz}</div>
-                        <div className={`text-[10px] mt-1 ${raus ? 'text-white/60' : 'text-gray-600'}`}>{m.kanal} · {m.datum || ''}</div>
+                        <div className={`text-[10px] mt-1 ${raus ? 'text-ink-1/60' : 'text-ink-4'}`}>{m.kanal} · {m.datum || ''}</div>
                       </div>
                     </div>
                   )
                 })}
               </div>
-              <div className="p-3 border-t border-white/[0.06]">
+              <div className="p-3 border-t border-hairline-soft">
                 <div className="flex items-center gap-2 mb-2">
-                  <button onClick={() => setChatRichtung('rein')} className={`text-xs px-3 py-1 rounded-lg ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-gray-500 hover:text-gray-300'}`}>Von Creator</button>
-                  <button onClick={() => setChatRichtung('raus')} className={`text-xs px-3 py-1 rounded-lg ${chatRichtung==='raus' ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>Von mir</button>
-                  <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1 text-xs text-gray-300 focus:outline-none ml-auto">
+                  <button onClick={() => setChatRichtung('rein')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-ink-3 hover:text-ink-2'}`}>Von Creator</button>
+                  <button onClick={() => setChatRichtung('raus')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='raus' ? 'bg-accent/20 text-accent' : 'text-ink-3 hover:text-ink-2'}`}>Von mir</button>
+                  <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-2 focus:outline-none ml-auto">
                     <option>Instagram</option><option>Mail</option><option>Telefon</option><option>Sonstiges</option>
                   </select>
                 </div>
                 <div className="flex items-end gap-2">
                   <textarea value={neueNachricht} onChange={e => setNeueNachricht(e.target.value)} rows={2} placeholder="Nachricht reinkopieren oder tippen..."
-                    className="flex-1 bg-[#141414] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-[#7F77DD] resize-none" />
+                    className="flex-1 bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent resize-none" />
                   <button onClick={sendeNachricht} disabled={sendingChat || !neueNachricht.trim()}
-                    className={`px-4 py-2 rounded-xl text-sm text-white ${sendingChat||!neueNachricht.trim() ? 'bg-[#7F77DD]/40' : 'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                    className={`px-4 py-2 rounded-apple-sm text-sm text-ink-1 ${sendingChat||!neueNachricht.trim() ? 'bg-accent/40' : 'bg-accent hover:bg-accent-hover'}`}>
                     {sendingChat ? '...' : 'Hinzufügen'}
                   </button>
                 </div>
@@ -205,97 +205,97 @@ export default function Outreach() {
 
         {/* RECHTS: Info-Sidebar */}
         {selected && (
-          <div className="flex-shrink-0 border-l border-white/[0.06] p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
-            <div className="text-white font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
+          <div className="flex-shrink-0 border-l border-hairline-soft p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
+            <div className="text-ink-1 font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
-              <div className="bg-[#141414] rounded-xl p-3 space-y-2">
-                <div className="text-gray-500 text-[10px] uppercase tracking-wider">Kontakt &amp; Links</div>
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Kontakt &amp; Links</div>
                 <div className="flex gap-1.5">
                   {selected.ig ? (
                     <a href={"https://instagram.com/" + (selected.ig||'').replace('@','')} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 text-center text-[11px] bg-[#1a1a1a] hover:bg-[#222] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300">Instagram &#8599;</a>
+                      className="flex-1 text-center text-[11px] bg-surface-3 hover:bg-white/[0.05] border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-2">Instagram &#8599;</a>
                   ) : null}
                   {selected.tt ? (
                     <a href={"https://tiktok.com/@" + (selected.tt||'').replace('@','')} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 text-center text-[11px] bg-[#1a1a1a] hover:bg-[#222] border border-white/[0.08] rounded-lg px-2 py-1.5 text-gray-300">TikTok &#8599;</a>
+                      className="flex-1 text-center text-[11px] bg-surface-3 hover:bg-white/[0.05] border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-2">TikTok &#8599;</a>
                   ) : null}
                 </div>
                 <div>
-                  <label className="text-gray-600 text-[10px] block mb-1">Adresse</label>
+                  <label className="text-ink-4 text-[10px] block mb-1">Adresse</label>
                   <textarea defaultValue={selected.adresse||''} onBlur={e => updateCollab('adresse', e.target.value)} rows={2}
-                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none resize-none" />
+                    className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none resize-none" />
                 </div>
                 <div>
-                  <label className="text-gray-600 text-[10px] block mb-1">Telefon</label>
+                  <label className="text-ink-4 text-[10px] block mb-1">Telefon</label>
                   <input type="text" defaultValue={selected.telefon||''} onBlur={e => updateCollab('telefon', e.target.value)}
-                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                    className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
                 </div>
                 <div>
-                  <label className="text-gray-600 text-[10px] block mb-1">E-Mail</label>
+                  <label className="text-ink-4 text-[10px] block mb-1">E-Mail</label>
                   <input type="text" defaultValue={selected.email||''} onBlur={e => updateCollab('email', e.target.value)}
-                    className="w-full bg-[#1a1a1a] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                    className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
                 </div>
               </div>
-              <div className="bg-[#141414] rounded-xl p-3 space-y-2">
-                <div className="text-gray-500 text-[10px] uppercase tracking-wider">Bestellung</div>
-                {bestellungen.length === 0 && <div className="text-gray-600 text-xs">Keine Bestellung</div>}
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Bestellung</div>
+                {bestellungen.length === 0 && <div className="text-ink-4 text-xs">Keine Bestellung</div>}
                 {bestellungen.map((b:any) => {
                   const st = b.status || 'Nicht versendet'
-                  const farbe = st === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400' : (st === 'Nicht versendet' ? 'bg-gray-700/40 text-gray-400' : 'bg-blue-500/15 text-blue-400')
+                  const farbe = st === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400' : (st === 'Nicht versendet' ? 'bg-surface-3/40 text-ink-2' : 'bg-blue-500/15 text-blue-400')
                   return (
                     <div key={b.id} className="space-y-1">
                       <div className="flex justify-between items-center gap-2">
-                        <span className="text-gray-300 text-xs truncate">{b.produkt || 'Produkt'}</span>
+                        <span className="text-ink-2 text-xs truncate">{b.produkt || 'Produkt'}</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${farbe}`}>{st}</span>
                       </div>
-                      {b.tracking_nummer && <div className="text-gray-600 text-[10px] font-mono truncate">{b.tracking_nummer}</div>}
+                      {b.tracking_nummer && <div className="text-ink-4 text-[10px] font-mono truncate">{b.tracking_nummer}</div>}
                     </div>
                   )
                 })}
-                <div className="text-gray-700 text-[10px] pt-1">&rarr; im Bestellbereich bearbeiten</div>
+                <div className="text-ink-4 text-[10px] pt-1">&rarr; im Bestellbereich bearbeiten</div>
               </div>
-              <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
-                <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
-                <div className="flex justify-between text-xs"><span className="text-gray-600">IG Follower</span><span className="text-gray-300">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
-                <div className="flex justify-between text-xs"><span className="text-gray-600">TT Follower</span><span className="text-gray-300">{(selected.tt_follower||0).toLocaleString('de-DE')}</span></div>
-                <div className="flex justify-between text-xs"><span className="text-gray-600">Tier</span><span className="text-gray-300">{selected.overall_tier||'—'}</span></div>
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-1.5">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
+                <div className="flex justify-between text-xs"><span className="text-ink-4">IG Follower</span><span className="text-ink-2">{(selected.ig_follower||0).toLocaleString('de-DE')}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-ink-4">TT Follower</span><span className="text-ink-2">{(selected.tt_follower||0).toLocaleString('de-DE')}</span></div>
+                <div className="flex justify-between text-xs"><span className="text-ink-4">Tier</span><span className="text-ink-2">{selected.overall_tier||'—'}</span></div>
               </div>
               {(selected.ig_gender_female || selected.ig_gender_male || selected.ig_top_age || (selected.ig_top_countries?.length)) ? (
-                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
-                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Audience</div>
+                <div className="bg-surface-2 rounded-apple-sm p-3 space-y-1.5">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider mb-1">Audience</div>
                   {(selected.ig_gender_female || selected.ig_gender_male) ? (
-                    <div className="flex justify-between text-xs"><span className="text-gray-600">Geschlecht</span><span className="text-gray-300">&#9792; {selected.ig_gender_female||0}% &middot; &#9794; {selected.ig_gender_male||0}%</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-ink-4">Geschlecht</span><span className="text-ink-2">&#9792; {selected.ig_gender_female||0}% &middot; &#9794; {selected.ig_gender_male||0}%</span></div>
                   ) : null}
-                  {selected.ig_top_age ? <div className="flex justify-between text-xs"><span className="text-gray-600">Top-Alter</span><span className="text-gray-300">{String(selected.ig_top_age).replace('_','-')}</span></div> : null}
+                  {selected.ig_top_age ? <div className="flex justify-between text-xs"><span className="text-ink-4">Top-Alter</span><span className="text-ink-2">{String(selected.ig_top_age).replace('_','-')}</span></div> : null}
                   {(selected.ig_top_countries?.length) ? (
-                    <div className="flex justify-between text-xs"><span className="text-gray-600">Top-Land</span><span className="text-gray-300">{selected.ig_top_countries[0]?.name} {selected.ig_top_countries[0]?.pct}%</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-ink-4">Top-Land</span><span className="text-ink-2">{selected.ig_top_countries[0]?.name} {selected.ig_top_countries[0]?.pct}%</span></div>
                   ) : null}
-                  {selected.ig_real_followers ? <div className="flex justify-between text-xs"><span className="text-gray-600">Echte Follower</span><span className="text-gray-300">{selected.ig_real_followers}%</span></div> : null}
+                  {selected.ig_real_followers ? <div className="flex justify-between text-xs"><span className="text-ink-4">Echte Follower</span><span className="text-ink-2">{selected.ig_real_followers}%</span></div> : null}
                 </div>
               ) : null}
               {(selected.ig_er || selected.tt_er || selected.ig_avg_reel_views || selected.story_views) ? (
-                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
-                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">Engagement</div>
-                  {selected.ig_er ? <div className="flex justify-between text-xs"><span className="text-gray-600">IG ER</span><span className="text-gray-300">{selected.ig_er}%</span></div> : null}
-                  {selected.tt_er ? <div className="flex justify-between text-xs"><span className="text-gray-600">TT ER</span><span className="text-gray-300">{selected.tt_er}%</span></div> : null}
-                  {selected.ig_avg_reel_views ? <div className="flex justify-between text-xs"><span className="text-gray-600">&Oslash; Reel Views</span><span className="text-gray-300">{(selected.ig_avg_reel_views||0).toLocaleString('de-DE')}</span></div> : null}
-                  {selected.ig_avg_likes ? <div className="flex justify-between text-xs"><span className="text-gray-600">&Oslash; Likes</span><span className="text-gray-300">{(selected.ig_avg_likes||0).toLocaleString('de-DE')}</span></div> : null}
-                  {selected.story_views ? <div className="flex justify-between text-xs"><span className="text-gray-600">Story Views</span><span className="text-gray-300">{(selected.story_views||0).toLocaleString('de-DE')}</span></div> : null}
+                <div className="bg-surface-2 rounded-apple-sm p-3 space-y-1.5">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider mb-1">Engagement</div>
+                  {selected.ig_er ? <div className="flex justify-between text-xs"><span className="text-ink-4">IG ER</span><span className="text-ink-2">{selected.ig_er}%</span></div> : null}
+                  {selected.tt_er ? <div className="flex justify-between text-xs"><span className="text-ink-4">TT ER</span><span className="text-ink-2">{selected.tt_er}%</span></div> : null}
+                  {selected.ig_avg_reel_views ? <div className="flex justify-between text-xs"><span className="text-ink-4">&Oslash; Reel Views</span><span className="text-ink-2">{(selected.ig_avg_reel_views||0).toLocaleString('de-DE')}</span></div> : null}
+                  {selected.ig_avg_likes ? <div className="flex justify-between text-xs"><span className="text-ink-4">&Oslash; Likes</span><span className="text-ink-2">{(selected.ig_avg_likes||0).toLocaleString('de-DE')}</span></div> : null}
+                  {selected.story_views ? <div className="flex justify-between text-xs"><span className="text-ink-4">Story Views</span><span className="text-ink-2">{(selected.story_views||0).toLocaleString('de-DE')}</span></div> : null}
                 </div>
               ) : null}
               {(selected.tkp_reel || selected.tkp_story || selected.tkp_tt || selected.reel_wert || selected.story_wert || selected.tt_wert) ? (
-                <div className="bg-[#141414] rounded-xl p-3 space-y-1.5">
-                  <div className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">TKP &amp; Werte</div>
-                  {selected.tkp_reel ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP Reel</span><span className="text-gray-300">{selected.tkp_reel} &euro;</span></div> : null}
-                  {selected.tkp_story ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP Story</span><span className="text-gray-300">{selected.tkp_story} &euro;</span></div> : null}
-                  {selected.tkp_tt ? <div className="flex justify-between text-xs"><span className="text-gray-600">TKP TikTok</span><span className="text-gray-300">{selected.tkp_tt} &euro;</span></div> : null}
-                  {selected.reel_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">Reel-Wert</span><span className="text-gray-300">{(selected.reel_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
-                  {selected.story_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">Story-Wert</span><span className="text-gray-300">{(selected.story_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
-                  {selected.tt_wert ? <div className="flex justify-between text-xs"><span className="text-gray-600">TikTok-Wert</span><span className="text-gray-300">{(selected.tt_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                <div className="bg-surface-2 rounded-apple-sm p-3 space-y-1.5">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider mb-1">TKP &amp; Werte</div>
+                  {selected.tkp_reel ? <div className="flex justify-between text-xs"><span className="text-ink-4">TKP Reel</span><span className="text-ink-2">{selected.tkp_reel} &euro;</span></div> : null}
+                  {selected.tkp_story ? <div className="flex justify-between text-xs"><span className="text-ink-4">TKP Story</span><span className="text-ink-2">{selected.tkp_story} &euro;</span></div> : null}
+                  {selected.tkp_tt ? <div className="flex justify-between text-xs"><span className="text-ink-4">TKP TikTok</span><span className="text-ink-2">{selected.tkp_tt} &euro;</span></div> : null}
+                  {selected.reel_wert ? <div className="flex justify-between text-xs"><span className="text-ink-4">Reel-Wert</span><span className="text-ink-2">{(selected.reel_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                  {selected.story_wert ? <div className="flex justify-between text-xs"><span className="text-ink-4">Story-Wert</span><span className="text-ink-2">{(selected.story_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
+                  {selected.tt_wert ? <div className="flex justify-between text-xs"><span className="text-ink-4">TikTok-Wert</span><span className="text-ink-2">{(selected.tt_wert||0).toLocaleString('de-DE')} &euro;</span></div> : null}
                 </div>
               ) : null}
               <div>
-                <label className="text-gray-600 text-xs block mb-2">Leistungen</label>
+                <label className="text-ink-4 text-xs block mb-2">Leistungen</label>
                 <div className="flex flex-wrap gap-1.5">
                   {['Reel','Story','Post','Carousel','Video','TikTok'].map(l => {
                     const aktiv = (selected.leistungen||'').split(',').filter(Boolean).includes(l)
@@ -304,7 +304,7 @@ export default function Outreach() {
                         const arr = (selected.leistungen||'').split(',').filter(Boolean)
                         const next = aktiv ? arr.filter((x:string) => x !== l) : [...arr, l]
                         updateCollab('leistungen', next.join(','))
-                      }} className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${aktiv ? 'bg-[#7F77DD] border-[#7F77DD] text-white' : 'border-white/[0.1] text-gray-500 hover:text-gray-300'}`}>
+                      }} className={`text-xs px-2.5 py-1 rounded-apple-sm border transition-colors ${aktiv ? 'bg-accent border-accent text-ink-1' : 'border-white/[0.1] text-ink-3 hover:text-ink-2'}`}>
                         {l}
                       </button>
                     )
@@ -312,39 +312,39 @@ export default function Outreach() {
                 </div>
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Status</label>
+                <label className="text-ink-4 text-xs block mb-1">Status</label>
                 <select value={selected.status||'Offen'} onChange={e => updateCollab('status', e.target.value)}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none">
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none">
                   <option>Offen</option><option>In Verhandlung</option><option>Deal</option><option>Abgesagt</option>
                 </select>
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Kampagne</label>
+                <label className="text-ink-4 text-xs block mb-1">Kampagne</label>
                 <select value={selected.kampagne||''} onChange={e => updateCollab('kampagne', e.target.value)}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none">
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none">
                   <option value="">—</option>
                   {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Fee €</label>
+                <label className="text-ink-4 text-xs block mb-1">Fee €</label>
                 <input type="number" defaultValue={selected.fee||0} onBlur={e => updateCollab('fee', Number(e.target.value)||0)}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Promo-Code</label>
+                <label className="text-ink-4 text-xs block mb-1">Promo-Code</label>
                 <input type="text" defaultValue={selected.promo_code||''} onBlur={e => updateCollab('promo_code', e.target.value)}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Provision</label>
+                <label className="text-ink-4 text-xs block mb-1">Provision</label>
                 <input type="text" defaultValue={selected.affiliate_pct||'15%'} onBlur={e => updateCollab('affiliate_pct', e.target.value)}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none" />
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
               </div>
               <div>
-                <label className="text-gray-600 text-xs block mb-1">Notizen</label>
+                <label className="text-ink-4 text-xs block mb-1">Notizen</label>
                 <textarea defaultValue={selected.notizen||''} onBlur={e => updateCollab('notizen', e.target.value)} rows={4}
-                  className="w-full bg-[#141414] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs focus:outline-none resize-none" />
+                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none resize-none" />
               </div>
             </div>
           </div>

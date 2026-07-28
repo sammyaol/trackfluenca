@@ -6,29 +6,29 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
 const tierColor: Record<string, string> = {
-  'Nano': 'bg-gray-800/80 text-gray-400 border border-gray-700/50',
-  'Micro': 'bg-blue-950/80 text-blue-400 border border-blue-800/30',
-  'Mid-Tier': 'bg-purple-950/80 text-purple-400 border border-purple-800/30',
-  'Macro': 'bg-amber-950/80 text-amber-400 border border-amber-800/30',
-  'Top-Tier': 'bg-red-950/80 text-red-400 border border-red-800/30',
+  'Nano': 'bg-white/[0.04] text-ink-3 border border-hairline',
+  'Micro': 'bg-blue-500/10 text-blue-400 border border-blue-500/20',
+  'Mid-Tier': 'bg-accent-soft text-accent border border-accent/20',
+  'Macro': 'bg-amber-500/10 text-amber-400 border border-amber-500/20',
+  'Top-Tier': 'bg-red-500/10 text-red-400 border border-red-500/20',
 }
 
-const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : r > 0 ? 'text-red-400' : 'text-gray-700'
+const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : r > 0 ? 'text-red-400' : 'text-ink-4'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 // Skeleton-Komponente für Loading
 function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`bg-white/[0.04] rounded-lg animate-pulse ${className}`} />
+  return <div className={`bg-white/[0.04] rounded-apple-sm animate-pulse ${className}`} />
 }
 
 function ChartCard({ title, subtitle, children, loading, right }: any) {
   return (
-    <div className="bg-[#141414] rounded-2xl border border-white/[0.06] p-6">
+    <div className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg border border-hairline p-6 shadow-apple-sm">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-white font-medium text-sm">{title}</h2>
-          {subtitle && <p className="text-gray-600 text-xs mt-0.5">{subtitle}</p>}
+          <h2 className="text-ink-1 font-medium text-sm tracking-tight">{title}</h2>
+          {subtitle && <p className="text-ink-4 text-xs mt-0.5">{subtitle}</p>}
         </div>
         {right}
       </div>
@@ -235,18 +235,18 @@ export default function Dashboard() {
   const maxUmsatz = Math.max(...umsatzVerlauf.map(d => d.value), 1)
 
   return (
-    <div className="flex min-h-screen bg-[#0A0A0A]">
+    <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
       <main className="flex-1 md:ml-60 min-h-screen">
-        <div className="border-b border-white/[0.06] px-8 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
+        <div className="border-b border-hairline-soft px-8 py-5 flex items-center justify-between bg-surface-0/80 backdrop-blur-xl sticky top-0 z-20">
           <div>
-            <h1 className="text-white font-semibold text-lg">Dashboard</h1>
-            <p className="text-gray-500 text-xs mt-0.5">
+            <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Dashboard</h1>
+            <p className="text-ink-3 text-xs mt-0.5">
               {new Date().toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/creator" className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
+            <Link href="/creator" className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-accent text-white text-xs hover:bg-accent-hover active:scale-[0.98] transition-all duration-200 ease-apple font-medium shadow-apple-sm">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Creator hinzufügen
             </Link>
@@ -259,21 +259,21 @@ export default function Dashboard() {
             {[
               { label: 'Gesamt Umsatz', value: `${stats.gesU.toLocaleString('de-DE')} €`, sub: `${stats.totalOrgBest} Bestellungen`, color: 'text-emerald-400', change: monthCompare.umsatzChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
               { label: 'Gesamt ROAS', value: stats.gesROAS > 0 ? `${stats.gesROAS}x` : '—', sub: `Org. ${stats.orgROAS > 0 ? stats.orgROAS + 'x' : '—'}`, color: roasColor(stats.gesROAS), icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-              { label: 'Creator', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-white', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
+              { label: 'Creator', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-ink-1', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
               { label: 'Aktive Deals', value: `${dealsCount}`, sub: `${inVerhandlung} in Verhandlung`, color: 'text-amber-400', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> },
             ].map(m => (
-              <div key={m.label} className="bg-[#141414] rounded-2xl p-5 border border-white/[0.06] hover:border-white/[0.1] transition-colors">
+              <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-9 h-9 rounded-xl bg-white/[0.05] flex items-center justify-center text-gray-400">{m.icon}</div>
+                  <div className="w-9 h-9 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2">{m.icon}</div>
                   {m.change !== undefined && (
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m.change >= 0 ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${m.change >= 0 ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10'}`}>
                       {m.change >= 0 ? '+' : ''}{m.change}%
                     </span>
                   )}
                 </div>
-                <div className={`text-2xl font-semibold ${m.color} mb-1`}>{m.value}</div>
-                <div className="text-gray-500 text-xs font-medium">{m.label}</div>
-                <div className="text-gray-700 text-xs mt-0.5">{m.sub}</div>
+                <div className={`text-2xl font-semibold tracking-tight ${m.color} mb-1`}>{m.value}</div>
+                <div className="text-ink-3 text-xs font-medium">{m.label}</div>
+                <div className="text-ink-4 text-xs mt-0.5">{m.sub}</div>
               </div>
             ))}
           </div>
@@ -304,7 +304,7 @@ export default function Dashboard() {
                   }).join(' ')} L 600 160 Z`} fill="url(#gradient1)"/>
                 </svg>
               </div>
-              <div className="flex justify-between text-xs text-gray-600 mt-2">
+              <div className="flex justify-between text-xs text-ink-4 mt-2">
                 <span>{umsatzVerlauf[0]?.label}</span>
                 <span>{umsatzVerlauf[Math.floor(umsatzVerlauf.length / 2)]?.label}</span>
                 <span>{umsatzVerlauf[umsatzVerlauf.length - 1]?.label}</span>
@@ -316,15 +316,15 @@ export default function Dashboard() {
               <div className="space-y-3">
                 {pipeline.map((p, i) => {
                   const max = Math.max(...pipeline.map(x => x.count), 1)
-                  const colors = ['bg-gray-600', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500']
+                  const colors = ['bg-ink-4', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500']
                   return (
                     <div key={p.label}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-gray-400 text-xs">{p.label}</span>
-                        <span className="text-white text-xs font-semibold">{p.count}</span>
+                        <span className="text-ink-2 text-xs">{p.label}</span>
+                        <span className="text-ink-1 text-xs font-semibold">{p.count}</span>
                       </div>
                       <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                        <div className={`h-full ${colors[i]} rounded-full transition-all`} style={{ width: `${(p.count / max) * 100}%` }}/>
+                        <div className={`h-full ${colors[i]} rounded-full transition-all duration-300 ease-apple`} style={{ width: `${(p.count / max) * 100}%` }}/>
                       </div>
                     </div>
                   )
@@ -365,13 +365,13 @@ export default function Dashboard() {
                       })()}
                     </svg>
                   </div>
-                  <div className="flex justify-between text-[10px] text-gray-600 mt-2">
+                  <div className="flex justify-between text-[10px] text-ink-4 mt-2">
                     <span>IG: {followerVerlauf.igMin.toLocaleString('de-DE')} → {followerVerlauf.igMax.toLocaleString('de-DE')}</span>
                     <span>TT: {followerVerlauf.ttMin.toLocaleString('de-DE')} → {followerVerlauf.ttMax.toLocaleString('de-DE')}</span>
                   </div>
                 </>
               ) : (
-                <div className="h-32 flex items-center justify-center text-gray-600 text-xs">Keine Snapshot-Daten</div>
+                <div className="h-32 flex items-center justify-center text-ink-4 text-xs">Keine Snapshot-Daten</div>
               )}
             </ChartCard>
 
@@ -380,22 +380,22 @@ export default function Dashboard() {
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-pink-400 text-xs flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-pink-500"/>Instagram</span>
-                    <span className="text-white text-xs font-semibold">{platformDist.ig.toLocaleString('de-DE')}</span>
+                    <span className="text-ink-1 text-xs font-semibold">{platformDist.ig.toLocaleString('de-DE')}</span>
                   </div>
                   <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-pink-500 rounded-full" style={{ width: `${platformDist.igPct}%` }}/>
                   </div>
-                  <div className="text-gray-600 text-[10px] mt-1">{platformDist.igPct}%</div>
+                  <div className="text-ink-4 text-[10px] mt-1">{platformDist.igPct}%</div>
                 </div>
                 <div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-cyan-400 text-xs flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-cyan-400"/>TikTok</span>
-                    <span className="text-white text-xs font-semibold">{platformDist.tt.toLocaleString('de-DE')}</span>
+                    <span className="text-ink-1 text-xs font-semibold">{platformDist.tt.toLocaleString('de-DE')}</span>
                   </div>
                   <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
                     <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${platformDist.ttPct}%` }}/>
                   </div>
-                  <div className="text-gray-600 text-[10px] mt-1">{platformDist.ttPct}%</div>
+                  <div className="text-ink-4 text-[10px] mt-1">{platformDist.ttPct}%</div>
                 </div>
               </div>
             </ChartCard>
@@ -408,10 +408,10 @@ export default function Dashboard() {
                     return (
                       <div key={s.label}>
                         <div className="flex justify-between mb-1">
-                          <span className="text-gray-400 text-xs flex items-center gap-2">
+                          <span className="text-ink-2 text-xs flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full" style={{ background: s.color }}/>{s.label}
                           </span>
-                          <span className="text-white text-xs font-semibold">{s.count}</span>
+                          <span className="text-ink-1 text-xs font-semibold">{s.count}</span>
                         </div>
                         <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ background: s.color, width: `${pct}%` }}/>
@@ -421,7 +421,7 @@ export default function Dashboard() {
                   })}
                 </div>
               ) : (
-                <div className="h-32 flex items-center justify-center text-gray-600 text-xs">Keine Bestellungen</div>
+                <div className="h-32 flex items-center justify-center text-ink-4 text-xs">Keine Bestellungen</div>
               )}
             </ChartCard>
           </div>
@@ -430,16 +430,16 @@ export default function Dashboard() {
           <ChartCard title="Monats-Vergleich" subtitle="Diesen Monat vs. letzten Monat" loading={chartsLoading}>
             <div className="grid grid-cols-2 gap-6">
               <div>
-                <div className="text-gray-500 text-xs mb-2">Umsatz</div>
+                <div className="text-ink-3 text-xs mb-2">Umsatz</div>
                 <div className="flex items-end gap-6">
                   <div>
-                    <div className="text-gray-600 text-[10px]">Vorheriger Monat</div>
-                    <div className="text-gray-400 text-lg font-semibold">{monthCompare.lastU.toLocaleString('de-DE')} €</div>
+                    <div className="text-ink-4 text-[10px]">Vorheriger Monat</div>
+                    <div className="text-ink-2 text-lg font-semibold tracking-tight">{monthCompare.lastU.toLocaleString('de-DE')} €</div>
                   </div>
-                  <div className="text-2xl text-gray-700">→</div>
+                  <div className="text-2xl text-ink-4">→</div>
                   <div>
-                    <div className="text-gray-600 text-[10px]">Dieser Monat</div>
-                    <div className="text-emerald-400 text-lg font-semibold">{monthCompare.thisU.toLocaleString('de-DE')} €</div>
+                    <div className="text-ink-4 text-[10px]">Dieser Monat</div>
+                    <div className="text-emerald-400 text-lg font-semibold tracking-tight">{monthCompare.thisU.toLocaleString('de-DE')} €</div>
                   </div>
                   <div className={`text-sm font-bold ${monthCompare.umsatzChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {monthCompare.umsatzChange >= 0 ? '+' : ''}{monthCompare.umsatzChange}%
@@ -447,16 +447,16 @@ export default function Dashboard() {
                 </div>
               </div>
               <div>
-                <div className="text-gray-500 text-xs mb-2">Neue Creator</div>
+                <div className="text-ink-3 text-xs mb-2">Neue Creator</div>
                 <div className="flex items-end gap-6">
                   <div>
-                    <div className="text-gray-600 text-[10px]">Vorheriger Monat</div>
-                    <div className="text-gray-400 text-lg font-semibold">{monthCompare.lastCreators}</div>
+                    <div className="text-ink-4 text-[10px]">Vorheriger Monat</div>
+                    <div className="text-ink-2 text-lg font-semibold tracking-tight">{monthCompare.lastCreators}</div>
                   </div>
-                  <div className="text-2xl text-gray-700">→</div>
+                  <div className="text-2xl text-ink-4">→</div>
                   <div>
-                    <div className="text-gray-600 text-[10px]">Dieser Monat</div>
-                    <div className="text-white text-lg font-semibold">{monthCompare.thisCreators}</div>
+                    <div className="text-ink-4 text-[10px]">Dieser Monat</div>
+                    <div className="text-ink-1 text-lg font-semibold tracking-tight">{monthCompare.thisCreators}</div>
                   </div>
                   <div className={`text-sm font-bold ${monthCompare.creatorChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                     {monthCompare.creatorChange >= 0 ? '+' : ''}{monthCompare.creatorChange}%
@@ -472,51 +472,51 @@ export default function Dashboard() {
               {topPostings.length > 0 ? (
                 <div className="space-y-3">
                   {topPostings.map(p => (
-                    <div key={p.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0A0A0A] border border-white/[0.04]">
+                    <div key={p.id} className="flex items-center justify-between p-3 rounded-apple-sm bg-surface-0/60 border border-hairline-soft">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center text-accent text-xs font-semibold flex-shrink-0">
                           {(p._creator?.name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-white text-xs font-medium truncate">{p._creator?.name || 'Unbekannt'}</div>
-                          <div className="text-gray-600 text-[10px] truncate">{p.kampagne || 'Ohne Kampagne'} · {p.buchungstyp || ''}</div>
+                          <div className="text-ink-1 text-xs font-medium truncate">{p._creator?.name || 'Unbekannt'}</div>
+                          <div className="text-ink-4 text-[10px] truncate">{p.kampagne || 'Ohne Kampagne'} · {p.buchungstyp || ''}</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
                         <div className={`text-sm font-bold ${roasColor(p._roas)}`}>{p._roas}x</div>
-                        <div className="text-gray-600 text-[10px]">{p._u.toLocaleString('de-DE')} €</div>
+                        <div className="text-ink-4 text-[10px]">{p._u.toLocaleString('de-DE')} €</div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-32 flex items-center justify-center text-gray-600 text-xs">Noch keine Postings mit ROAS</div>
+                <div className="h-32 flex items-center justify-center text-ink-4 text-xs">Noch keine Postings mit ROAS</div>
               )}
             </ChartCard>
 
-            <ChartCard title="Top Creator" subtitle="Nach Umsatz" loading={chartsLoading} right={<Link href="/creator" className="text-[#7F77DD] text-xs hover:underline">Alle →</Link>}>
+            <ChartCard title="Top Creator" subtitle="Nach Umsatz" loading={chartsLoading} right={<Link href="/creator" className="text-accent text-xs hover:underline">Alle →</Link>}>
               {topCreators.length > 0 ? (
                 <div className="space-y-2">
                   {topCreators.map(c => (
-                    <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-[#0A0A0A] border border-white/[0.04]">
+                    <div key={c.id} className="flex items-center justify-between p-3 rounded-apple-sm bg-surface-0/60 border border-hairline-soft">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="w-8 h-8 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] text-xs font-semibold flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-accent-soft flex items-center justify-center text-accent text-xs font-semibold flex-shrink-0">
                           {(c.name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div className="min-w-0">
-                          <div className="text-white text-xs font-medium truncate">{c.name}</div>
-                          <div className="text-gray-600 text-[10px] truncate">{c.ig} · {(c.ig_follower || 0).toLocaleString('de-DE')} Follower</div>
+                          <div className="text-ink-1 text-xs font-medium truncate">{c.name}</div>
+                          <div className="text-ink-4 text-[10px] truncate">{c.ig} · {(c.ig_follower || 0).toLocaleString('de-DE')} Follower</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className="text-white text-xs font-semibold">{c._umsatz > 0 ? `${c._umsatz.toLocaleString('de-DE')} €` : '—'}</div>
-                        <div className={`text-[10px] ${c._roas > 0 ? roasColor(c._roas) : 'text-gray-700'}`}>{c._roas > 0 ? `${c._roas}x ROAS` : '—'}</div>
+                        <div className="text-ink-1 text-xs font-semibold">{c._umsatz > 0 ? `${c._umsatz.toLocaleString('de-DE')} €` : '—'}</div>
+                        <div className={`text-[10px] ${c._roas > 0 ? roasColor(c._roas) : 'text-ink-4'}`}>{c._roas > 0 ? `${c._roas}x ROAS` : '—'}</div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-32 flex items-center justify-center text-gray-600 text-xs">Noch keine Creator</div>
+                <div className="h-32 flex items-center justify-center text-ink-4 text-xs">Noch keine Creator</div>
               )}
             </ChartCard>
           </div>
@@ -526,8 +526,8 @@ export default function Dashboard() {
             {activities.length > 0 ? (
               <div className="space-y-2">
                 {activities.map((a, i) => (
-                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-white/[0.02] transition-colors">
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${a.type === 'creator' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                  <div key={i} className="flex items-start gap-3 p-2.5 rounded-apple-sm hover:bg-white/[0.02] transition-colors duration-200">
+                    <div className={`w-7 h-7 rounded-apple-sm flex items-center justify-center flex-shrink-0 ${a.type === 'creator' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
                       {a.type === 'creator' ? (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
                       ) : (
@@ -535,15 +535,15 @@ export default function Dashboard() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-gray-300 text-xs font-medium truncate">{a.label}: {a.creator.name}</div>
-                      {a.sub && <div className="text-gray-600 text-[10px] truncate">{a.sub}</div>}
+                      <div className="text-ink-2 text-xs font-medium truncate">{a.label}: {a.creator.name}</div>
+                      {a.sub && <div className="text-ink-4 text-[10px] truncate">{a.sub}</div>}
                     </div>
-                    <div className="text-gray-700 text-[10px] flex-shrink-0">{new Date(a.date).toLocaleDateString('de-DE')}</div>
+                    <div className="text-ink-4 text-[10px] flex-shrink-0">{new Date(a.date).toLocaleDateString('de-DE')}</div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-gray-600 text-xs">Noch keine Aktivität</div>
+              <div className="text-ink-4 text-xs">Noch keine Aktivität</div>
             )}
           </ChartCard>
         </div>

@@ -41,9 +41,9 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-[#111] border-r border-white/[0.06] fixed h-full z-30">
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/[0.06]">
-          <div className="w-8 h-8 rounded-xl bg-[#7F77DD] flex items-center justify-center flex-shrink-0">
+      <aside className="hidden md:flex w-60 flex-col bg-surface-0/95 backdrop-blur-2xl border-r border-hairline-soft fixed h-full z-30">
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div className="w-8 h-8 rounded-apple-sm bg-accent flex items-center justify-center flex-shrink-0 shadow-apple-sm">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 10 L8 4" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
               <path d="M8 4 L13 10" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round"/>
@@ -54,23 +54,23 @@ export default function Sidebar() {
             </svg>
           </div>
           <div>
-            <div className="text-white font-semibold text-sm tracking-tight">Track<span className="text-[#7F77DD] font-normal">fluenca</span></div>
-            <div className="text-gray-600 text-xs">Influencer OS</div>
+            <div className="text-ink-1 font-semibold text-sm tracking-tight">Track<span className="text-accent font-normal">fluenca</span></div>
+            <div className="text-ink-4 text-[11px]">Influencer OS</div>
           </div>
         </div>
 
-        <div className="px-3 py-4 flex-1 overflow-y-auto">
+        <div className="px-3 py-2 flex-1 overflow-y-auto">
           {nav.map(group => (
-            <div key={group.section} className="mb-5">
-              <div className="text-gray-600 text-[10px] font-medium uppercase tracking-widest px-3 mb-1.5">{group.section}</div>
+            <div key={group.section} className="mb-6">
+              <div className="text-ink-4 text-[10px] font-medium uppercase tracking-widest px-3 mb-2">{group.section}</div>
               {group.items.map(item => {
                 const active = path === item.href
                 return (
                   <Link key={item.href} href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all mb-0.5 group ${active ? 'bg-white/[0.08] text-white' : 'text-gray-500 hover:text-gray-200 hover:bg-white/[0.04]'}`}>
-                    <span className={`transition-colors ${active ? 'text-[#7F77DD]' : 'group-hover:text-gray-300'}`}>{item.icon}</span>
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-apple-sm text-sm transition-all duration-200 ease-apple mb-0.5 group ${active ? 'bg-white/[0.07] text-ink-1' : 'text-ink-3 hover:text-ink-1 hover:bg-white/[0.035]'}`}>
+                    <span className={`transition-colors duration-200 ${active ? 'text-accent' : 'group-hover:text-ink-2'}`}>{item.icon}</span>
                     <span className="font-medium">{item.label}</span>
-                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[#7F77DD]"></span>}
+                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"></span>}
                   </Link>
                 )
               })}
@@ -78,25 +78,25 @@ export default function Sidebar() {
           ))}
         </div>
 
-        <div className="p-3 border-t border-white/[0.06]">
+        <div className="p-3 border-t border-hairline-soft">
           <div className="relative">
-            <button onClick={() => setShowMenu(p => !p)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] cursor-pointer transition-all group">
-              <div className="w-7 h-7 rounded-full bg-[#7F77DD] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
+            <button onClick={() => setShowMenu(p => !p)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-apple-sm hover:bg-white/[0.035] cursor-pointer transition-colors duration-200 ease-apple group">
+              <div className="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                 {email ? email[0].toUpperCase() : 'U'}
               </div>
               <div className="flex-1 min-w-0 text-left">
-                <div className="text-white text-xs font-medium truncate">{email || 'Mein Account'}</div>
-                <div className="text-gray-500 text-xs">Profil</div>
+                <div className="text-ink-1 text-xs font-medium truncate">{email || 'Mein Account'}</div>
+                <div className="text-ink-3 text-xs">Profil</div>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-gray-600 group-hover:text-gray-400 transition-colors"><polyline points="6 9 12 15 18 9"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink-4 group-hover:text-ink-2 transition-colors"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             {showMenu && (
-              <div className="absolute bottom-12 left-0 right-0 bg-[#1a1a1a] border border-white/[0.08] rounded-xl p-2 space-y-1">
-                <Link href="/einstellungen" onClick={() => setShowMenu(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.04] text-gray-300 text-xs transition-colors">
+              <div className="absolute bottom-12 left-0 right-0 bg-surface-3/95 backdrop-blur-xl border border-hairline rounded-apple p-2 space-y-1 shadow-apple-lg">
+                <Link href="/einstellungen" onClick={() => setShowMenu(false)} className="flex items-center gap-2 px-3 py-2 rounded-apple-sm hover:bg-white/[0.05] text-ink-2 text-xs transition-colors">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
                   Profil bearbeiten
                 </Link>
-                <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-950/30 text-red-400 text-xs transition-colors">
+                <button onClick={logout} className="w-full flex items-center gap-2 px-3 py-2 rounded-apple-sm hover:bg-red-500/10 text-red-400 text-xs transition-colors">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   Abmelden
                 </button>
@@ -107,12 +107,12 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#111]/95 backdrop-blur border-t border-white/[0.06] flex justify-around py-2 z-50">
-        {nav.flatMap(g => g.items).slice(0, 5).map(item => {
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-0/90 backdrop-blur-2xl border-t border-hairline-soft flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
+        {nav.flatMap(g => g.items).slice(0, 7).map(item => {
           const active = path === item.href
           return (
             <Link key={item.href} href={item.href}
-              className={`flex flex-col items-center gap-1 px-3 py-1 transition-colors ${active ? 'text-[#7F77DD]' : 'text-gray-600 hover:text-gray-300'}`}>
+              className={`flex flex-col items-center gap-1 px-3 py-1 transition-colors duration-200 ease-apple ${active ? 'text-accent' : 'text-ink-4 hover:text-ink-2'}`}>
               {item.icon}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
