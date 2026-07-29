@@ -56,15 +56,15 @@ export default function Affiliate() {
   const totalAusstehend = affiliates.reduce((s, a) => s + (!a.ausgezahlt ? (a.verdient || 0) : 0), 0)
 
   return (
-    <div className="flex min-h-screen bg-[#0A0A0A]">
+    <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
       <main className="flex-1 md:ml-60 min-h-screen">
-        <div className="border-b border-white/[0.06] px-8 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
+        <div className="border-b border-hairline-soft px-8 py-4 flex items-center justify-between bg-surface-0/80 backdrop-blur sticky top-0 z-20">
           <div>
-            <h1 className="text-white font-semibold text-lg">Affiliate</h1>
-            <p className="text-gray-600 text-xs mt-0.5">{affiliates.length} Creator · {affiliates.filter(a => !a.ausgezahlt && (a.verdient || 0) > 0).length} ausstehend</p>
+            <h1 className="text-ink-1 font-semibold text-lg">Affiliate</h1>
+            <p className="text-ink-4 text-xs mt-0.5">{affiliates.length} Creator · {affiliates.filter(a => !a.ausgezahlt && (a.verdient || 0) > 0).length} ausstehend</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">
+          <button onClick={() => setShowModal(true)} className="flex items-center gap-2 px-4 py-2 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
             + Creator hinzufügen
           </button>
         </div>
@@ -75,46 +75,46 @@ export default function Affiliate() {
               { label: 'Gesamt Provision', value: `${totalVerdient.toLocaleString('de-DE')} €`, color: 'text-purple-400' },
               { label: 'Ausstehend', value: `${totalAusstehend.toLocaleString('de-DE')} €`, color: 'text-amber-400' },
             ].map(m => (
-              <div key={m.label} className="bg-[#141414] rounded-2xl p-5 border border-white/[0.06]">
+              <div key={m.label} className="bg-surface-2 rounded-apple-lg p-5 border border-hairline-soft">
                 <div className={`text-2xl font-semibold mb-1 ${m.color}`}>{m.value}</div>
-                <div className="text-gray-600 text-xs">{m.label}</div>
+                <div className="text-ink-4 text-xs">{m.label}</div>
               </div>
             ))}
           </div>
           {affiliates.length === 0 ? (
-            <div className="text-center py-20 text-gray-600">Noch keine Affiliate-Creator. Füge deinen ersten hinzu!</div>
+            <div className="text-center py-20 text-ink-4">Noch keine Affiliate-Creator. Füge deinen ersten hinzu!</div>
           ) : (
-            <div className="bg-[#141414] rounded-2xl border border-white/[0.06] overflow-hidden">
+            <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
+                  <tr className="border-b border-hairline-soft">
                     {['Creator','Code','Provision','Umsatz','Verdient','Status','Aktion'].map(h => (
-                      <th key={h} className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium">{h}</th>
+                      <th key={h} className="text-left text-xs text-ink-4 px-5 py-3.5 font-medium">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {affiliates.map((a, i) => (
-                    <tr key={a.id} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
+                    <tr key={a.id} className={`border-b border-hairline-soft last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'}`}>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${a.grad} flex items-center justify-center text-white text-xs font-bold`}>
+                          <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${a.grad} flex items-center justify-center text-ink-1 text-xs font-bold`}>
                             {a.creator_name.split(' ').map((n: string) => n[0]).join('').slice(0,2).toUpperCase()}
                           </div>
-                          <span className="text-white text-sm font-medium">{a.creator_name}</span>
+                          <span className="text-ink-1 text-sm font-medium">{a.creator_name}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-4"><span className="font-mono text-[#7F77DD] text-xs">{a.promo_code || '—'}</span></td>
-                      <td className="px-5 py-4"><span className="text-gray-300 text-sm">{a.provision_pct}%</span></td>
+                      <td className="px-5 py-4"><span className="font-mono text-accent text-xs">{a.promo_code || '—'}</span></td>
+                      <td className="px-5 py-4"><span className="text-ink-2 text-sm">{a.provision_pct}%</span></td>
                       <td className="px-5 py-4"><span className="text-emerald-400 text-sm font-medium">{(a.umsatz || 0) > 0 ? `${(a.umsatz || 0).toLocaleString('de-DE')} €` : '—'}</span></td>
                       <td className="px-5 py-4"><span className="text-purple-400 text-sm font-medium">{(a.verdient || 0) > 0 ? `${(a.verdient || 0).toLocaleString('de-DE')} €` : '—'}</span></td>
                       <td className="px-5 py-4">
-                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${a.ausgezahlt ? 'text-gray-400 bg-gray-800 border border-gray-700/50' : statusStyle['Ausstehend']}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${a.ausgezahlt ? 'text-ink-2 bg-surface-3 border border-hairline/50' : statusStyle['Ausstehend']}`}>
                           {a.ausgezahlt ? 'Ausgezahlt' : 'Ausstehend'}
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        <button onClick={() => toggleAuszahlen(a)} className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${a.ausgezahlt ? 'bg-white/[0.05] text-gray-500 hover:bg-white/[0.08]' : 'bg-emerald-950 text-emerald-400 hover:bg-emerald-900'}`}>
+                        <button onClick={() => toggleAuszahlen(a)} className={`text-xs px-3 py-1.5 rounded-apple-sm transition-colors ${a.ausgezahlt ? 'bg-white/[0.05] text-ink-3 hover:bg-white/[0.08]' : 'bg-emerald-950 text-emerald-400 hover:bg-emerald-900'}`}>
                           {a.ausgezahlt ? 'Zurücksetzen' : 'Auszahlen'}
                         </button>
                       </td>
@@ -127,16 +127,16 @@ export default function Affiliate() {
         </div>
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
-            <div className="bg-[#141414] rounded-2xl w-full max-w-md border border-white/[0.08]" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
-                <h2 className="text-white font-semibold">Affiliate Creator hinzufügen</h2>
-                <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
+            <div className="bg-surface-2 rounded-apple-lg w-full max-w-md border border-hairline" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft">
+                <h2 className="text-ink-1 font-semibold">Affiliate Creator hinzufügen</h2>
+                <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2 hover:text-ink-1 text-lg">×</button>
               </div>
               <div className="p-6 flex flex-col gap-3">
-                <div><label className="text-gray-500 text-xs mb-1.5 block">Creator Name *</label><input value={form.creator_name} onChange={e => setForm(p => ({...p, creator_name: e.target.value}))} placeholder="Sophie Müller" className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" /></div>
-                <div><label className="text-gray-500 text-xs mb-1.5 block">Promo Code</label><input value={form.promo_code} onChange={e => setForm(p => ({...p, promo_code: e.target.value}))} placeholder="SOPHIE15" className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" /></div>
-                <div><label className="text-gray-500 text-xs mb-1.5 block">Provision %</label><select value={form.provision_pct} onChange={e => setForm(p => ({...p, provision_pct: e.target.value}))} className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none">{['8','10','12','15','20'].map(v => <option key={v}>{v}</option>)}</select></div>
-                <button onClick={createAffiliate} disabled={!form.creator_name} className="w-full py-3 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium disabled:opacity-50 mt-1">Hinzufügen</button>
+                <div><label className="text-ink-3 text-xs mb-1.5 block">Creator Name *</label><input value={form.creator_name} onChange={e => setForm(p => ({...p, creator_name: e.target.value}))} placeholder="Sophie Müller" className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" /></div>
+                <div><label className="text-ink-3 text-xs mb-1.5 block">Promo Code</label><input value={form.promo_code} onChange={e => setForm(p => ({...p, promo_code: e.target.value}))} placeholder="SOPHIE15" className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" /></div>
+                <div><label className="text-ink-3 text-xs mb-1.5 block">Provision %</label><select value={form.provision_pct} onChange={e => setForm(p => ({...p, provision_pct: e.target.value}))} className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm focus:outline-none">{['8','10','12','15','20'].map(v => <option key={v}>{v}</option>)}</select></div>
+                <button onClick={createAffiliate} disabled={!form.creator_name} className="w-full py-3 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium disabled:opacity-50 mt-1">Hinzufügen</button>
               </div>
             </div>
           </div>

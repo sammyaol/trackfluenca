@@ -44,7 +44,7 @@ const getAffPct = (f: number) => f >= 1000000 ? '8%' : f >= 500000 ? '10%' : f >
 const calcWert = (f: number) => f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005)
 
 const tierStyle: Record<string, string> = {
-  'Nano': 'text-gray-400 bg-gray-800 border border-gray-700/50',
+  'Nano': 'text-ink-2 bg-surface-3 border border-hairline/50',
   'Micro': 'text-blue-400 bg-blue-950 border border-blue-800/30',
   'Mid-Tier': 'text-purple-400 bg-purple-950 border border-purple-800/30',
   'Macro': 'text-amber-400 bg-amber-950 border border-amber-800/30',
@@ -55,11 +55,11 @@ const statusStyle: Record<string, string> = {
   'Deal': 'text-emerald-400 bg-emerald-950 border border-emerald-800/30',
   'In Verhandlung': 'text-amber-400 bg-amber-950 border border-amber-800/30',
   'Kontaktiert': 'text-blue-400 bg-blue-950 border border-blue-800/30',
-  'Offen': 'text-gray-400 bg-gray-800 border border-gray-700/50',
+  'Offen': 'text-ink-2 bg-surface-3 border border-hairline/50',
   'Abgelehnt': 'text-red-400 bg-red-950 border border-red-800/30',
 }
 
-const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : r > 0 ? 'text-red-400' : 'text-gray-700'
+const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : r > 0 ? 'text-red-400' : 'text-ink-4'
 
 const allColumns = [
   { key: 'status', label: 'Status', group: 'Basis' },
@@ -437,19 +437,19 @@ export default function CreatorPage() {
     switch (key) {
       case 'ig': {
         const h = (c.ig || '').replace('@','').trim()
-        if (!h) return <span className="text-gray-700 text-sm">{dash}</span>
+        if (!h) return <span className="text-ink-4 text-sm">{dash}</span>
         const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
-        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-400 hover:text-[#7F77DD] text-sm underline decoration-dotted underline-offset-2">{c.ig}</a>
+        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-ink-2 hover:text-accent text-sm underline decoration-dotted underline-offset-2">{c.ig}</a>
       }
       case 'tt': {
         const h = (c.tt || '').replace('@','').trim()
-        if (!h) return <span className="text-gray-700 text-sm">{dash}</span>
+        if (!h) return <span className="text-ink-4 text-sm">{dash}</span>
         const url = h.startsWith('http') ? h : 'https://tiktok.com/@' + h
-        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-400 hover:text-[#7F77DD] text-sm underline decoration-dotted underline-offset-2">{c.tt}</a>
+        return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-ink-2 hover:text-accent text-sm underline decoration-dotted underline-offset-2">{c.tt}</a>
       }
       case 'versand': {
         const v = (c as any).versand || 'Nicht versendet'
-        const color = v === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : v === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-gray-500/15 text-gray-400 border-gray-500/30'
+        const color = v === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : v === 'Versendet' ? 'bg-amber-500/15 text-amber-400 border-amber-500/30' : 'bg-ink-3/15 text-ink-2 border-hairline/30'
         return (
           <select value={v} onClick={e => e.stopPropagation()} onChange={async e => {
             e.stopPropagation()
@@ -465,27 +465,27 @@ export default function CreatorPage() {
         )
       }
       case 'status': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${statusStyle[c.status]}`}>{c.status}</span>
-      case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-gray-400 bg-gray-800 border border-gray-700/50'}`}>{c.prio}</span>
-      case 'kategorie': return <span className="text-gray-400 text-sm">{c.kategorie}</span>
-      case 'igFollower': return <span className="text-gray-300 text-sm">{fmt(c.igFollower)}</span>
-      case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.igTier]}`}>{c.igTier}</span> : <span className="text-gray-700">{dash}</span>
+      case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-ink-2 bg-surface-3 border border-hairline/50'}`}>{c.prio}</span>
+      case 'kategorie': return <span className="text-ink-2 text-sm">{c.kategorie}</span>
+      case 'igFollower': return <span className="text-ink-2 text-sm">{fmt(c.igFollower)}</span>
+      case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.igTier]}`}>{c.igTier}</span> : <span className="text-ink-4">{dash}</span>
       case 'igEr': return <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
-      case 'igAvgReelViews': return <span className="text-gray-300 text-sm">{fmt(c.igAvgReelViews)}</span>
-      case 'igRealFollowers': return c.igRealFollowers ? <span className={`text-sm font-medium ${c.igRealFollowers >= 80 ? 'text-emerald-400' : c.igRealFollowers >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{c.igRealFollowers}%</span> : <span className="text-gray-700">{dash}</span>
-      case 'ttFollower': return <span className="text-gray-300 text-sm">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
-      case 'ttAvgVideoViews': return <span className="text-gray-300 text-sm">{fmt(c.ttAvgVideoViews || c.ttAvgViews)}</span>
-      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-gray-700">{dash}</span>
+      case 'igAvgReelViews': return <span className="text-ink-2 text-sm">{fmt(c.igAvgReelViews)}</span>
+      case 'igRealFollowers': return c.igRealFollowers ? <span className={`text-sm font-medium ${c.igRealFollowers >= 80 ? 'text-emerald-400' : c.igRealFollowers >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{c.igRealFollowers}%</span> : <span className="text-ink-4">{dash}</span>
+      case 'ttFollower': return <span className="text-ink-2 text-sm">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
+      case 'ttAvgVideoViews': return <span className="text-ink-2 text-sm">{fmt(c.ttAvgVideoViews || c.ttAvgViews)}</span>
+      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-ink-4">{dash}</span>
       case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
-      case 'gesamtReichweite': return <span className="text-gray-300 text-sm">{fmt(c.gesamtReichweite)}</span>
+      case 'gesamtReichweite': return <span className="text-ink-2 text-sm">{fmt(c.gesamtReichweite)}</span>
       case 'kampagne': return (
-        <select value={c.kampagne || ''} onClick={e => e.stopPropagation()} onChange={e => updateCreator(c, {kampagne: e.target.value})} className="bg-[#0A0A0A] border border-white/[0.08] rounded px-2 py-1 text-xs text-gray-300 cursor-pointer focus:outline-none focus:border-[#7F77DD]">
+        <select value={c.kampagne || ''} onClick={e => e.stopPropagation()} onChange={e => updateCreator(c, {kampagne: e.target.value})} className="bg-surface-0 border border-hairline rounded px-2 py-1 text-xs text-ink-2 cursor-pointer focus:outline-none focus:border-accent">
           <option value="">{dash}</option>
           {kampagnenList.map((k:string) => <option key={k} value={k}>{k}</option>)}
         </select>
       )
-      case 'buchungstyp': return <span className="text-gray-400 text-sm">{c.buchungstyp || dash}</span>
-      case 'fee': return <span className="text-gray-300 text-sm">{fmtEur(c.fee)}</span>
-      case 'promoCode': return <span className="font-mono text-[#7F77DD] text-xs">{c.promoCode || dash}</span>
+      case 'buchungstyp': return <span className="text-ink-2 text-sm">{c.buchungstyp || dash}</span>
+      case 'fee': return <span className="text-ink-2 text-sm">{fmtEur(c.fee)}</span>
+      case 'promoCode': return <span className="font-mono text-accent text-xs">{c.promoCode || dash}</span>
       case 'orgUmsatz': return <span className="text-emerald-400 text-sm font-medium">{fmtEur(c.orgUmsatz)}</span>
       case 'orgROAS': return <span className={`text-sm font-semibold ${roasColor(c.orgROAS)}`}>{c.orgROAS > 0 ? `${c.orgROAS}x` : dash}</span>
       case 'gesUmsatz': return <span className="text-emerald-400 text-sm font-semibold">{fmtEur(c.gesUmsatz)}</span>
@@ -493,54 +493,54 @@ export default function CreatorPage() {
       case 'engagement': {
         const kurz = (n:number) => n >= 1000000 ? (n/1000000).toFixed(1).replace('.0','')+'M' : n >= 1000 ? (n/1000).toFixed(1).replace('.0','')+'K' : String(n)
         const v = (c as any).sumViews||0, l = (c as any).sumLikes||0, co = (c as any).sumComments||0
-        if (v===0 && l===0 && co===0) return <span className="text-gray-700 text-sm">{dash}</span>
-        return <span className="text-gray-300 text-xs whitespace-nowrap">👁 {kurz(v)} · ❤️ {kurz(l)} · 💬 {kurz(co)}</span>
+        if (v===0 && l===0 && co===0) return <span className="text-ink-4 text-sm">{dash}</span>
+        return <span className="text-ink-2 text-xs whitespace-nowrap">👁 {kurz(v)} · ❤️ {kurz(l)} · 💬 {kurz(co)}</span>
       }
       case 'reelWert': return <span className="text-purple-400 text-sm">{fmtEur(c.reelWert)}</span>
       case 'affiliatePct': return <span className="text-blue-400 text-sm font-medium">{c.affiliatePct}</span>
-      default: return <span className="text-gray-700">{dash}</span>
+      default: return <span className="text-ink-4">{dash}</span>
     }
   }
 
-  const inputCls = "w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#7F77DD]/40"
-  const selectCls = "w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-[#7F77DD]/40"
-  const labelCls = "text-gray-500 text-xs mb-1.5 block font-medium"
+  const inputCls = "w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none focus:border-accent/40"
+  const selectCls = "w-full bg-surface-0 border border-hairline rounded-apple-sm px-3 py-2.5 text-ink-1 text-sm focus:outline-none focus:border-accent/40"
+  const labelCls = "text-ink-3 text-xs mb-1.5 block font-medium"
 
   return (
-    <div className="flex min-h-screen bg-[#0A0A0A]">
+    <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
       <main className="flex-1 md:ml-60 min-h-screen">
-        <div className="border-b border-white/[0.06] px-6 py-4 flex items-center justify-between bg-[#0A0A0A]/80 backdrop-blur sticky top-0 z-20">
+        <div className="border-b border-hairline-soft px-6 py-4 flex items-center justify-between bg-surface-0/80 backdrop-blur sticky top-0 z-20">
           <div>
-            <h1 className="text-white font-semibold text-lg">Creator</h1>
-            <p className="text-gray-500 text-xs mt-0.5">{creators.length} Creator · {creators.filter(c => c.status === 'Deal').length} Deals</p>
+            <h1 className="text-ink-1 font-semibold text-lg">Creator</h1>
+            <p className="text-ink-3 text-xs mt-0.5">{creators.length} Creator · {creators.filter(c => c.status === 'Deal').length} Deals</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <button onClick={() => setShowColPicker(!showColPicker)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs transition-colors ${showColPicker ? 'border-[#7F77DD]/50 text-[#7F77DD] bg-[#7F77DD]/10' : 'border-white/[0.08] text-gray-400 hover:bg-white/[0.04]'}`}>
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-apple-sm border text-xs transition-colors ${showColPicker ? 'border-accent/50 text-accent bg-accent/10' : 'border-hairline text-ink-2 hover:bg-white/[0.04]'}`}>
                 Spalten ({visibleCols.length})
               </button>
               {showColPicker && (
-                <div className="absolute right-0 top-10 bg-[#1A1A1A] border border-white/[0.08] rounded-2xl p-4 w-64 z-50 shadow-2xl max-h-[80vh] overflow-y-auto">
+                <div className="absolute right-0 top-10 bg-surface-3 border border-hairline rounded-apple-lg p-4 w-64 z-50 shadow-2xl max-h-[80vh] overflow-y-auto">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-white text-xs font-semibold">Spalten anpassen</span>
-                    <button onClick={() => setShowColPicker(false)} className="text-gray-600 hover:text-gray-300 text-lg leading-none">×</button>
+                    <span className="text-ink-1 text-xs font-semibold">Spalten anpassen</span>
+                    <button onClick={() => setShowColPicker(false)} className="text-ink-4 hover:text-ink-2 text-lg leading-none">×</button>
                   </div>
                   {groups.map(group => (
                     <div key={group} className="mb-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest">{group}</span>
-                        <button onClick={() => toggleGroup(group)} className="text-[10px] text-[#7F77DD] hover:underline">
+                        <span className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest">{group}</span>
+                        <button onClick={() => toggleGroup(group)} className="text-[10px] text-accent hover:underline">
                           {allColumns.filter(c => c.group === group).every(c => visibleCols.includes(c.key)) ? 'Alle aus' : 'Alle ein'}
                         </button>
                       </div>
                       {allColumns.filter(c => c.group === group).map(col => (
-                        <label key={col.key} className="flex items-center gap-2 px-1 py-1 rounded-lg hover:bg-white/[0.04] cursor-pointer" onClick={() => toggleCol(col.key)}>
-                          <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors flex-shrink-0 ${visibleCols.includes(col.key) ? 'bg-[#7F77DD] border-[#7F77DD]' : 'border-gray-600'}`}>
-                            {visibleCols.includes(col.key) && <span className="text-white text-[9px]">✓</span>}
+                        <label key={col.key} className="flex items-center gap-2 px-1 py-1 rounded-apple-sm hover:bg-white/[0.04] cursor-pointer" onClick={() => toggleCol(col.key)}>
+                          <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors flex-shrink-0 ${visibleCols.includes(col.key) ? 'bg-accent border-accent' : 'border-hairline'}`}>
+                            {visibleCols.includes(col.key) && <span className="text-ink-1 text-[9px]">✓</span>}
                           </div>
-                          <span className="text-gray-300 text-xs">{col.label}</span>
+                          <span className="text-ink-2 text-xs">{col.label}</span>
                         </label>
                       ))}
                     </div>
@@ -633,12 +633,12 @@ export default function CreatorPage() {
                   }
                   setRefreshing(false)
                 }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 text-gray-400 text-xs hover:bg-white/[0.04] transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm border border-white/10 text-ink-2 text-xs hover:bg-white/[0.04] transition-colors"
               >
                 <span className={refreshing ? 'animate-spin inline-block' : ''}>↻</span>
                 {refreshing ? 'Lädt...' : 'Aktualisieren'}
               </button>
-              <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#7F77DD] text-white text-xs hover:bg-[#534AB7] transition-colors font-medium">
+              <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
                 + Creator hinzufügen
               </button>
             </div>
@@ -648,35 +648,35 @@ export default function CreatorPage() {
         <div className="p-6">
           {tableLoading && (
             <div className="flex items-center justify-center py-20 gap-3">
-              <div className="w-5 h-5 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
-              <span className="text-gray-500 text-sm">Creator werden geladen...</span>
+              <div className="w-5 h-5 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
+              <span className="text-ink-3 text-sm">Creator werden geladen...</span>
             </div>
           )}
           <div className="flex gap-3 mb-5 flex-wrap" style={{display: tableLoading ? 'none' : 'flex'}}>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Name, Handle oder Code..."
-              className="flex-1 min-w-48 bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none" />
+              className="flex-1 min-w-48 bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none" />
             <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
-              className="bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-gray-400 text-sm focus:outline-none">
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
               <option value="">Alle Status</option>
               {['Deal', 'In Verhandlung', 'Kontaktiert', 'Offen', 'Abgelehnt'].map(s => <option key={s}>{s}</option>)}
             </select>
             <select value={filterTier} onChange={e => setFilterTier(e.target.value)}
-              className="bg-[#141414] border border-white/[0.08] rounded-xl px-4 py-2.5 text-gray-400 text-sm focus:outline-none">
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
               <option value="">Alle Tiers</option>
               {['Nano', 'Micro', 'Mid-Tier', 'Macro', 'Top-Tier'].map(t => <option key={t}>{t}</option>)}
             </select>
           </div>
 
-          <div className="bg-[#141414] rounded-2xl border border-white/[0.06] overflow-hidden">
+          <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full" style={{ minWidth: 'max-content' }}>
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
-                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-[#141414]">Creator</th>
+                  <tr className="border-b border-hairline-soft">
+                    <th className="text-left text-xs text-ink-4 px-5 py-3.5 font-medium whitespace-nowrap sticky left-0 bg-surface-2">Creator</th>
                     {allColumns.filter(c => visibleCols.includes(c.key)).map(col => (
-                      <th key={col.key} className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium whitespace-nowrap">{col.label}</th>
+                      <th key={col.key} className="text-left text-xs text-ink-4 px-5 py-3.5 font-medium whitespace-nowrap">{col.label}</th>
                     ))}
-                    <th className="text-left text-xs text-gray-600 px-5 py-3.5 font-medium">Aktionen</th>
+                    <th className="text-left text-xs text-ink-4 px-5 py-3.5 font-medium">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -713,8 +713,8 @@ export default function CreatorPage() {
                         setSnapshotLoading(true); getToken().then(token => fetch('/api/snapshots?creator_id=' + id, { headers: { authorization: 'Bearer ' + token } }).then(r => r.json()).then(d => { setSnapshots(Array.isArray(d) ? d : []); setSnapshotLoading(false) }))
                       }
                     }}
-                      className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-white/[0.04]' : ''}`}>
-                      <td className="px-5 py-4 sticky left-0 bg-[#141414] overflow-visible">
+                      className={`hover:bg-white/[0.02] cursor-pointer transition-colors ${i !== filtered.length - 1 ? 'border-b border-hairline-soft' : ''}`}>
+                      <td className="px-5 py-4 sticky left-0 bg-surface-2 overflow-visible">
                         <div className="flex items-center gap-3">
                           <button onClick={async e => {
                             e.stopPropagation()
@@ -729,32 +729,32 @@ export default function CreatorPage() {
                             const d = await res.json()
                             setExpandedPostings((prev:any) => ({...prev, [id]: Array.isArray(d) ? d : []}))
                             setLoadingPostings(null)
-                          }} className="text-gray-600 hover:text-white text-xs transition-colors flex-shrink-0 w-4 flex items-center justify-center">
+                          }} className="text-ink-4 hover:text-ink-1 text-xs transition-colors flex-shrink-0 w-4 flex items-center justify-center">
                             {loadingPostings === (c as any)._id
                               ? <span className="w-3 h-3 border-2 border-white/20 border-t-white/80 rounded-full animate-spin inline-block"/>
                               : expandedCreator === (c as any)._id ? '▲' : '▼'}
                           </button>
                           <div className="relative flex-shrink-0 w-12 h-9">
-                            <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-[#141414] bg-[#7F77DD] flex items-center justify-center text-white text-sm font-bold overflow-hidden z-10">
+                            <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#FF375F] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</span>
                               {(c.igImage || c.ttImage) && <img src={c.igImage || c.ttImage} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).remove() }} />}
                             </div>
-                            <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-[#141414] bg-[#555] flex items-center justify-center overflow-hidden z-20">
+                            <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-hairline bg-[#555] flex items-center justify-center overflow-hidden z-20">
                               {c.tt
-                                ? <span className="text-[6px] text-gray-400 font-bold">{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,1)}</span>
-                                : <span className="text-[6px] text-gray-600">—</span>}
+                                ? <span className="text-[6px] text-ink-2 font-bold">{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,1)}</span>
+                                : <span className="text-[6px] text-ink-4">—</span>}
                             </div>
                           </div>
                           <div>
                             <div className="flex items-center gap-1">
-                              <span className="text-white text-sm font-medium whitespace-nowrap">{c.name}</span>
+                              <span className="text-ink-1 text-sm font-medium whitespace-nowrap">{c.name}</span>
                               {c.igVerified && <span className="text-blue-400 text-xs">✓</span>}
                             </div>
                             {(() => {
                               const h = (c.ig || '').replace('@','').trim()
-                              if (!h) return <span className="text-gray-700 text-xs">—</span>
+                              if (!h) return <span className="text-ink-4 text-xs">—</span>
                               const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
-                              return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-gray-500 hover:text-[#7F77DD] text-xs transition-colors">{c.ig}</a>
+                              return <a href={url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="text-ink-3 hover:text-accent text-xs transition-colors">{c.ig}</a>
                             })()}
                           </div>
                         </div>
@@ -771,7 +771,7 @@ export default function CreatorPage() {
                           if ((c as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(c as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); }
                           setCreators(prev => prev.filter(x => x !== c))
                         }}
-                          className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-lg hover:bg-red-950/30 transition-colors">
+                          className="text-red-500/50 hover:text-red-400 text-xs px-2 py-1 rounded-apple-sm hover:bg-red-950/30 transition-colors">
                           Löschen
                         </button>
 
@@ -779,34 +779,34 @@ export default function CreatorPage() {
                     </tr>
                     {expandedCreator === (c as any)._id && expandedPostings[(c as any)._id] !== undefined && (
                       <tr>
-                        <td colSpan={20} className="p-0 bg-[#0A0A0A]">
-                          <div className="border-t border-b border-[#7F77DD]/20 bg-[#0D0D0D]">
-                            <div className="flex items-center justify-between px-8 py-2 border-b border-white/[0.04]">
-                              <span className="text-gray-500 text-[10px]">{expandedPostings[(c as any)._id].length} Posting(s)</span>
+                        <td colSpan={20} className="p-0 bg-surface-0">
+                          <div className="border-t border-b border-accent/20 bg-surface-1">
+                            <div className="flex items-center justify-between px-8 py-2 border-b border-hairline-soft">
+                              <span className="text-ink-3 text-[10px]">{expandedPostings[(c as any)._id].length} Posting(s)</span>
                               <button onClick={e => { e.stopPropagation(); setSelected(c); setDetailTab('postings'); setShowAddPosting(true) }}
-                                className="text-[10px] px-2 py-1 rounded-lg bg-[#7F77DD]/20 text-[#7F77DD] hover:bg-[#7F77DD]/30 transition-colors">
+                                className="text-[10px] px-2 py-1 rounded-apple-sm bg-accent/20 text-accent hover:bg-accent/30 transition-colors">
                                 + Posting hinzufügen
                               </button>
                             </div>
                             {expandedPostings[(c as any)._id].length === 0 ? (
-                              <div className="px-8 py-3 text-gray-600 text-xs">Noch keine Postings</div>
+                              <div className="px-8 py-3 text-ink-4 text-xs">Noch keine Postings</div>
                             ) : expandedPostings[(c as any)._id].map((p:any) => (
-                              <div key={p.id} className="flex items-center gap-6 px-8 py-2.5 border-b border-white/[0.03] last:border-0 flex-wrap">
+                              <div key={p.id} className="flex items-center gap-6 px-8 py-2.5 border-b border-hairline-soft last:border-0 flex-wrap">
                                 <div className="min-w-[120px]">
-                                  <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
-                                  <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                                  <div className="text-ink-1 text-xs font-medium">{p.kampagne||'—'}</div>
+                                  <div className="text-ink-4 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
                                   {(p.views > 0 || p.likes > 0 || p.comments > 0) && (
-                                    <div className="text-gray-500 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
+                                    <div className="text-ink-3 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
                                   )}
                                 </div>
                                 <div className="flex items-center gap-5 text-xs flex-wrap">
-                                  <div><div className="text-gray-600 text-[10px]">Fee</div><div className="text-white">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
-                                  <div><div className="text-gray-600 text-[10px]">Org. Umsatz</div><div className="text-emerald-400">{(p.org_umsatz||0).toLocaleString('de-DE')} €</div></div>
-                                  <div><div className="text-gray-600 text-[10px]">Org. ROAS</div><div className={p.org_roas>=3?'text-emerald-400':p.org_roas>=1?'text-amber-400':'text-gray-400'}>{p.org_roas>0?p.org_roas+'x':'—'}</div></div>
-                                  <div><div className="text-gray-600 text-[10px]">Ad Spend</div><div className="text-white">{(p.ad_spend||0).toLocaleString('de-DE')} €</div></div>
-                                  <div><div className="text-gray-600 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
-                                  <div><div className="text-gray-600 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-gray-400'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
-                                  {p.promo_code && <div><div className="text-gray-600 text-[10px]">Code</div><div className="text-[#7F77DD]">{p.promo_code}</div></div>}
+                                  <div><div className="text-ink-4 text-[10px]">Fee</div><div className="text-ink-1">{((p.fee||0)+(p.produkt||0)).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-ink-4 text-[10px]">Org. Umsatz</div><div className="text-emerald-400">{(p.org_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-ink-4 text-[10px]">Org. ROAS</div><div className={p.org_roas>=3?'text-emerald-400':p.org_roas>=1?'text-amber-400':'text-ink-2'}>{p.org_roas>0?p.org_roas+'x':'—'}</div></div>
+                                  <div><div className="text-ink-4 text-[10px]">Ad Spend</div><div className="text-ink-1">{(p.ad_spend||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-ink-4 text-[10px]">Ad Umsatz</div><div className="text-emerald-400">{(p.ad_umsatz||0).toLocaleString('de-DE')} €</div></div>
+                                  <div><div className="text-ink-4 text-[10px]">Ges. ROAS</div><div className={`font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-ink-2'}`}>{p.ges_roas>0?p.ges_roas+'x':'—'}</div></div>
+                                  {p.promo_code && <div><div className="text-ink-4 text-[10px]">Code</div><div className="text-accent">{p.promo_code}</div></div>}
                                   <div className="flex items-center gap-1 ml-auto">
                                     <button onClick={e => {
                                       e.stopPropagation()
@@ -814,10 +814,10 @@ export default function CreatorPage() {
                                       setDetailTab('postings')
                                       setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||'',post_link:p.post_link||'',views:p.views||0,likes:p.likes||0,comments:p.comments||0,shares:p.shares||0,caption:p.caption||''})
                                       setShowAddPosting(true)
-                                    }} className="text-gray-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
+                                    }} className="text-ink-3 hover:text-ink-1 text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
                                     {p.post_link && (
-                                      <button onClick={(e:any) => { e.stopPropagation(); refreshPosting(p) }} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-gray-500 hover:text-[#7F77DD] text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-[#7F77DD]/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                                      <button onClick={(e:any) => { e.stopPropagation(); refreshPosting(p) }} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
+                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
                                       </button>
                                     )}
                                     <button onClick={async e => {
@@ -853,19 +853,19 @@ export default function CreatorPage() {
         {selected && (
           <div className="fixed inset-0 z-50 flex" onClick={() => setSelected(null)}>
             <div className="flex-1 bg-black/60 backdrop-blur-sm" />
-            <div className="w-full max-w-2xl bg-[#111] border-l border-white/[0.08] h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06] sticky top-0 bg-[#111] z-10">
+            <div className="w-full max-w-2xl bg-surface-0 border-l border-hairline h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft sticky top-0 bg-surface-0 z-10">
                 <div className="flex items-center gap-4">
                   {selected.igImage ? (
                     <img src={selected.igImage} alt={selected.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-[#7F77DD]/20 flex items-center justify-center text-[#7F77DD] font-semibold text-xl">
+                    <div className="w-14 h-14 rounded-full bg-[#FF375F]/20 flex items-center justify-center text-[#FF375F] font-semibold text-xl">
                       {selected.name.split(' ').map(n => n[0]).join('')}
                     </div>
                   )}
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-semibold text-base">{selected.name}</span>
+                      <span className="text-ink-1 font-semibold text-base">{selected.name}</span>
                       {selected.igVerified && <span className="text-blue-400 text-sm">✓</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -873,27 +873,27 @@ export default function CreatorPage() {
                         const h = (selected.ig || '').replace('@','').trim()
                         if (!h) return null
                         const url = h.startsWith('http') ? h : 'https://instagram.com/' + h
-                        return <a href={url} target="_blank" rel="noopener noreferrer" title="Instagram-Profil öffnen" className="text-gray-400 hover:text-[#7F77DD] text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.ig} ↗</a>
+                        return <a href={url} target="_blank" rel="noopener noreferrer" title="Instagram-Profil öffnen" className="text-ink-2 hover:text-accent text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.ig} ↗</a>
                       })()}
                       {selected.tt && (() => {
                         const h = (selected.tt || '').replace('@','').trim()
                         const url = h.startsWith('http') ? h : 'https://tiktok.com/@' + h
-                        return <a href={url} target="_blank" rel="noopener noreferrer" title="TikTok-Profil öffnen" className="text-gray-400 hover:text-[#7F77DD] text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.tt} ↗</a>
+                        return <a href={url} target="_blank" rel="noopener noreferrer" title="TikTok-Profil öffnen" className="text-ink-2 hover:text-accent text-xs underline decoration-dotted underline-offset-2 transition-colors">{selected.tt} ↗</a>
                       })()}
                       <span className={`text-xs px-2 py-0.5 rounded-md ${tierStyle[selected.overallTier]}`}>{selected.overallTier}</span>
                       <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className={`text-xs px-2 py-0.5 rounded-md border-0 cursor-pointer ${statusStyle[selected.status]} bg-transparent`}>
-                        {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-[#1a1a1a] text-white">{s}</option>)}
+                        {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-surface-3 text-ink-1">{s}</option>)}
                       </select>
                     </div>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
+                <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2 hover:text-ink-1 text-lg">×</button>
               </div>
 
               <div className="flex gap-1 px-6 pt-4">
                 {([['overview', 'Übersicht'], ...((selected.igGenderMale || selected.igGenderFemale || selected.igTopCountries?.length) ? [['audience', 'Zielgruppe']] : []), ['postings', 'Postings'], ['communication', 'Communication'], ['performance', 'Performance']] as [string,string][]).map(([id, label]) => (
                   <button key={id} onClick={() => setDetailTab(id)}
-                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${detailTab === id ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'text-gray-500 hover:text-gray-300'}`}>
+                    className={`px-3 py-2 rounded-apple-sm text-xs font-medium transition-colors ${detailTab === id ? 'bg-accent/20 text-accent' : 'text-ink-3 hover:text-ink-2'}`}>
                     {label}
                   </button>
                 ))}
@@ -903,10 +903,10 @@ export default function CreatorPage() {
                 {detailTab === 'overview' && (
                   <>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
                         <div className="flex items-center gap-2 mb-3">
                           <span className="text-pink-400 text-sm">📸</span>
-                          <span className="text-gray-400 text-xs font-medium">Instagram</span>
+                          <span className="text-ink-2 text-xs font-medium">Instagram</span>
                         </div>
                         <div className="space-y-2">
                           {[
@@ -919,17 +919,17 @@ export default function CreatorPage() {
                             ['Posts/Woche', selected.igPostsPerWeek ? `${selected.igPostsPerWeek}` : '—'],
                           ].map(([l, v]) => (
                             <div key={l} className="flex justify-between">
-                              <span className="text-gray-600 text-xs">{l}</span>
-                              <span className="text-gray-200 text-xs font-medium">{v}</span>
+                              <span className="text-ink-4 text-xs">{l}</span>
+                              <span className="text-ink-1 text-xs font-medium">{v}</span>
                             </div>
                           ))}
                         </div>
                       </div>
 
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
                         <div className="flex items-center gap-2 mb-3">
-                          <span className="text-white text-sm">🎵</span>
-                          <span className="text-gray-400 text-xs font-medium">TikTok</span>
+                          <span className="text-ink-1 text-sm">🎵</span>
+                          <span className="text-ink-2 text-xs font-medium">TikTok</span>
                         </div>
                         {selected.ttFollower > 0 ? (
                           <div className="space-y-2">
@@ -943,17 +943,17 @@ export default function CreatorPage() {
                               ['Ø Reposts', selected.ttAvgReposts ? selected.ttAvgReposts.toLocaleString('de-DE') : '—'],
                             ].map(([l, v]) => (
                               <div key={l} className="flex justify-between">
-                                <span className="text-gray-600 text-xs">{l}</span>
-                                <span className="text-gray-200 text-xs font-medium">{v}</span>
+                                <span className="text-ink-4 text-xs">{l}</span>
+                                <span className="text-ink-1 text-xs font-medium">{v}</span>
                               </div>
                             ))}
                           </div>
-                        ) : <p className="text-gray-700 text-xs">Kein TikTok</p>}
+                        ) : <p className="text-ink-4 text-xs">Kein TikTok</p>}
                       </div>
                     </div>
 
-                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                      <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Qualität & Echtheit</p>
+                    <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                      <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Qualität & Echtheit</p>
                       <div className="grid grid-cols-3 gap-3 mb-3">
                         {(() => {
                           const igEr = selected.igEr || 0
@@ -991,7 +991,7 @@ export default function CreatorPage() {
                         })().map(m => (
                           <div key={m.label} className="text-center">
                             <div className={`text-xl font-bold mb-1 ${m.color}`}>{m.value}</div>
-                            <div className="text-gray-600 text-xs">{m.label}</div>
+                            <div className="text-ink-4 text-xs">{m.label}</div>
                           </div>
                         ))}
                       </div>
@@ -1009,12 +1009,12 @@ export default function CreatorPage() {
                     </div>
 
                     {(selected.igFollowerWachstum7d !== undefined || selected.ttFollowerWachstum7d !== undefined) && (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Follower Wachstum (7 Tage)</p>
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                        <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Follower Wachstum (7 Tage)</p>
                         <div className="grid grid-cols-2 gap-3">
                           {selected.igFollowerWachstum7d !== undefined && (
                             <div>
-                              <div className="text-gray-500 text-xs mb-1">Instagram</div>
+                              <div className="text-ink-3 text-xs mb-1">Instagram</div>
                               <div className={`text-lg font-bold ${(selected.igFollowerWachstum7d || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {(selected.igFollowerWachstum7d || 0) >= 0 ? '+' : ''}{selected.igFollowerWachstum7d?.toLocaleString('de-DE')}
                               </div>
@@ -1022,7 +1022,7 @@ export default function CreatorPage() {
                           )}
                           {selected.ttFollowerWachstum7d !== undefined && selected.ttFollower > 0 && (
                             <div>
-                              <div className="text-gray-500 text-xs mb-1">TikTok</div>
+                              <div className="text-ink-3 text-xs mb-1">TikTok</div>
                               <div className={`text-lg font-bold ${(selected.ttFollowerWachstum7d || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                                 {(selected.ttFollowerWachstum7d || 0) >= 0 ? '+' : ''}{selected.ttFollowerWachstum7d?.toLocaleString('de-DE')}
                               </div>
@@ -1036,18 +1036,18 @@ export default function CreatorPage() {
 
                 {detailTab === 'overview' && snapshotLoading && (
                   <div className="flex items-center gap-2 py-4 justify-center">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#7F77DD] rounded-full animate-spin"/>
-                    <span className="text-gray-500 text-xs">Verlauf wird geladen...</span>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
+                    <span className="text-ink-3 text-xs">Verlauf wird geladen...</span>
                   </div>
                 )}
                 {detailTab === 'overview' && !snapshotLoading && snapshots.length > 1 && (
-                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                  <div className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-gray-500 text-xs font-medium">Follower-Entwicklung</p>
+                      <p className="text-ink-3 text-xs font-medium">Follower-Entwicklung</p>
                       <div className="flex items-center gap-1">
                         {[7,15,30].map((d:number) => (
                           <button key={d} onClick={() => setFollowerDays(d)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${followerDays===d ? 'bg-[#7F77DD] text-white' : 'text-gray-500 hover:text-gray-300'}`}>
+                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${followerDays===d ? 'bg-accent text-ink-1' : 'text-ink-3 hover:text-ink-2'}`}>
                             {d}T
                           </button>
                         ))}
@@ -1056,7 +1056,7 @@ export default function CreatorPage() {
                     {(() => {
                       const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - followerDays)
                       const sl = snapshots.filter((s:any) => new Date(s.created_at) >= cutoff)
-                      if (sl.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
+                      if (sl.length < 2) return <div className="text-ink-4 text-xs text-center py-4">Noch nicht genug Daten</div>
                       const igLast = sl[sl.length-1]?.ig_follower||0
                       const ttLast = sl[sl.length-1]?.tt_follower||0
                       const igFirst = sl[0]?.ig_follower||0
@@ -1072,12 +1072,12 @@ export default function CreatorPage() {
                       const ttPts = sl.map((s:any,idx:number)=>`${idx*w},${90-(((s.tt_follower||0)-ttMin)/ttRange)*80}`).join(' ')
                       return (<>
                         <div className="flex items-center gap-4 mb-2">
-                          <span className="flex items-center gap-1.5 text-[10px] text-gray-300">
+                          <span className="flex items-center gap-1.5 text-[10px] text-ink-2">
                             <span className="w-2 h-0.5 bg-[#E1306C] inline-block rounded"/>
                             IG {igLast.toLocaleString('de-DE')}
                             <span className={igDiff>=0?'text-emerald-400':'text-red-400'}>{igDiff>=0?'+':''}{igDiff.toLocaleString('de-DE')}</span>
                           </span>
-                          <span className="flex items-center gap-1.5 text-[10px] text-gray-300">
+                          <span className="flex items-center gap-1.5 text-[10px] text-ink-2">
                             <span className="w-2 h-0.5 bg-white/60 inline-block rounded"/>
                             TT {ttLast.toLocaleString('de-DE')}
                             <span className={ttDiff>=0?'text-emerald-400':'text-red-400'}>{ttDiff>=0?'+':''}{ttDiff.toLocaleString('de-DE')}</span>
@@ -1098,8 +1098,8 @@ export default function CreatorPage() {
                           </svg>
                           {chartHover && (
                             <div className="absolute top-0 pointer-events-none z-10" style={{left:`${Math.min(chartHover.pct,70)}%`}}>
-                              <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-1.5 shadow-xl">
-                                <div className="text-gray-400 text-[10px] mb-1">{chartHover.date}</div>
+                              <div className="bg-surface-3 border border-white/10 rounded-apple-sm px-2 py-1.5 shadow-xl">
+                                <div className="text-ink-2 text-[10px] mb-1">{chartHover.date}</div>
                                 <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#E1306C] rounded-full inline-block"/>IG {chartHover.ig.toLocaleString('de-DE')}</div>
                                 <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-white/60 rounded-full inline-block"/>TT {chartHover.tt.toLocaleString('de-DE')}</div>
                               </div>
@@ -1111,16 +1111,16 @@ export default function CreatorPage() {
                   </div>
                 )}
                 {detailTab === 'overview' && !snapshotLoading && snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0).length > 1 && (
-                  <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                  <div className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px]">♪</span>
-                        <p className="text-gray-500 text-xs font-medium">Ø TikTok Views</p>
+                        <p className="text-ink-3 text-xs font-medium">Ø TikTok Views</p>
                       </div>
                       <div className="flex items-center gap-1">
                         {[7,15,30].map((d:number) => (
                           <button key={d} onClick={() => setViewsDays(d)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${viewsDays===d ? 'bg-[#F59E0B] text-black' : 'text-gray-500 hover:text-gray-300'}`}>
+                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${viewsDays===d ? 'bg-[#F59E0B] text-black' : 'text-ink-3 hover:text-ink-2'}`}>
                             {d}T
                           </button>
                         ))}
@@ -1129,7 +1129,7 @@ export default function CreatorPage() {
                     {(() => {
                       const cutoff2 = new Date(); cutoff2.setDate(cutoff2.getDate() - viewsDays)
                       const valid = snapshots.filter((s:any) => (s.tt_avg_video_views||0) > 0 && new Date(s.created_at) >= cutoff2)
-                      if (valid.length < 2) return <div className="text-gray-600 text-xs text-center py-4">Noch nicht genug Daten</div>
+                      if (valid.length < 2) return <div className="text-ink-4 text-xs text-center py-4">Noch nicht genug Daten</div>
                       const last = valid[valid.length-1].tt_avg_video_views||0
                       const first = valid[0].tt_avg_video_views||0
                       const diff = last - first
@@ -1139,7 +1139,7 @@ export default function CreatorPage() {
                       const pts = valid.map((s:any,i:number)=>`${i*w},${90-(((s.tt_avg_video_views||0)-minV)/range)*80}`).join(' ')
                       return (<>
                         <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] text-gray-300">{last.toLocaleString('de-DE')} Views</span>
+                          <span className="text-[10px] text-ink-2">{last.toLocaleString('de-DE')} Views</span>
                           <span className={`text-[10px] ${diff>=0?'text-emerald-400':'text-red-400'}`}>{diff>=0?'+':''}{diff.toLocaleString('de-DE')}</span>
                         </div>
                         <div className="relative" style={{height:'80px'}}
@@ -1156,8 +1156,8 @@ export default function CreatorPage() {
                           </svg>
                           {viewsHover && (
                             <div className="absolute top-0 pointer-events-none z-10" style={{left:`${Math.min(viewsHover.pct,70)}%`}}>
-                              <div className="bg-[#1a1a1a] border border-white/10 rounded-lg px-2 py-1.5 shadow-xl">
-                                <div className="text-gray-400 text-[10px] mb-1">{viewsHover.date}</div>
+                              <div className="bg-surface-3 border border-white/10 rounded-apple-sm px-2 py-1.5 shadow-xl">
+                                <div className="text-ink-2 text-[10px] mb-1">{viewsHover.date}</div>
                                 <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#F59E0B] rounded-full inline-block"/>⌀ {viewsHover.views.toLocaleString('de-DE')}</div>
                               </div>
                             </div>
@@ -1170,18 +1170,18 @@ export default function CreatorPage() {
                 {detailTab === 'postings' && (
                   <div className="space-y-3">
                     <button onClick={() => setShowAddPosting(true)}
-                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-gray-500 text-xs hover:border-[#7F77DD] hover:text-[#7F77DD] transition-colors">
+                      className="w-full py-2 rounded-apple-sm border border-dashed border-white/20 text-ink-3 text-xs hover:border-accent hover:text-accent transition-colors">
                       + Neues Posting hinzufügen
                     </button>
                     {showAddPosting && (
-                      <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
-                        <p className="text-white text-xs font-medium">Neues Posting</p>
+                      <div className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-4 space-y-3">
+                        <p className="text-ink-1 text-xs font-medium">Neues Posting</p>
                         <div>
-                          <label className="text-gray-600 text-xs block mb-1">Post-Link (TikTok / Instagram)</label>
+                          <label className="text-ink-4 text-xs block mb-1">Post-Link (TikTok / Instagram)</label>
                           <div className="flex gap-2">
                             <input type="text" value={postingForm.post_link} placeholder="TikTok- oder Instagram-Link einfügen..."
                               onChange={e => setPostingForm((p:any) => ({...p, post_link: e.target.value}))}
-                              className="flex-1 bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                              className="flex-1 bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs"/>
                             <button type="button" disabled={pullingStats || !postingForm.post_link}
                               onClick={async () => {
                                 setPullError(''); setPullingStats(true)
@@ -1201,16 +1201,16 @@ export default function CreatorPage() {
                                 } catch(e:any) { setPullError(e.message || 'Netzwerkfehler') }
                                 setPullingStats(false)
                               }}
-                              className={`px-3 py-1.5 rounded-lg text-xs whitespace-nowrap flex items-center gap-1 ${pullingStats||!postingForm.post_link ? 'bg-[#7F77DD]/40 text-white/60' : 'bg-[#7F77DD] text-white hover:bg-[#534AB7]'}`}>
+                              className={`px-3 py-1.5 rounded-apple-sm text-xs whitespace-nowrap flex items-center gap-1 ${pullingStats||!postingForm.post_link ? 'bg-accent/40 text-ink-1/60' : 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                               {pullingStats ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block"/> : '\ud83d\udcca'} Daten ziehen
                             </button>
                           </div>
                           {pullError && <p className="text-red-400 text-xs mt-1">{pullError}</p>}
                           {(postingForm.views > 0 || postingForm.likes > 0) && (
                             <div className="flex gap-4 mt-2 text-xs">
-                              <span className="text-gray-400">Views: <span className="text-white font-medium">{postingForm.views.toLocaleString('de-DE')}</span></span>
-                              <span className="text-gray-400">Likes: <span className="text-white font-medium">{postingForm.likes.toLocaleString('de-DE')}</span></span>
-                              <span className="text-gray-400">Kommentare: <span className="text-white font-medium">{postingForm.comments.toLocaleString('de-DE')}</span></span>
+                              <span className="text-ink-2">Views: <span className="text-ink-1 font-medium">{postingForm.views.toLocaleString('de-DE')}</span></span>
+                              <span className="text-ink-2">Likes: <span className="text-ink-1 font-medium">{postingForm.likes.toLocaleString('de-DE')}</span></span>
+                              <span className="text-ink-2">Kommentare: <span className="text-ink-1 font-medium">{postingForm.comments.toLocaleString('de-DE')}</span></span>
                             </div>
                           )}
                         </div>
@@ -1228,46 +1228,46 @@ export default function CreatorPage() {
                             {label:'Ad Umsatz €',key:'ad_umsatz',type:'number'},
                           ] as {label:string,key:string,type:string}[]).map(({label,key,type}) => (
                             <div key={key}>
-                              <label className="text-gray-600 text-xs block mb-1">{label}</label>
+                              <label className="text-ink-4 text-xs block mb-1">{label}</label>
                               {type === 'kampagne' ? (
                                 <div>
                                   <select value={(postingForm as any)[key]} onChange={e => e.target.value !== '__add__' && setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
-                                    className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                                    className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs">
                                     <option value="">— wählen —</option>
                                     {kampagnenList.map((k:string) => <option key={k} value={k}>{k}</option>)}
-                                    <option value="__add__" className="text-[#7F77DD]">+ Neue Kampagne</option>
+                                    <option value="__add__" className="text-accent">+ Neue Kampagne</option>
                                   </select>
                                   {(postingForm as any)[key] === '__add__' || !(kampagnenList.includes((postingForm as any)[key] || '')) && (postingForm as any)[key] ? (
                                     <input type="text" placeholder="Kampagnenname eingeben" value={(postingForm as any)[key] === '__add__' ? '' : (postingForm as any)[key]}
                                       onChange={e => setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
-                                      className="w-full mt-1 bg-[#111] border border-[#7F77DD]/50 rounded-lg px-2 py-1.5 text-white text-xs"/>
+                                      className="w-full mt-1 bg-surface-0 border border-accent/50 rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs"/>
                                   ) : null}
                                 </div>
                               ) : type === 'buchungstyp' ? (
                                 <div>
                                   <select value={(postingForm as any)[key]} onChange={e => e.target.value !== '__add__' ? setPostingForm((p:any) => ({...p, [key]: e.target.value})) : setPostingForm((p:any) => ({...p, [key]: ''}))}
-                                    className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                                    className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs">
                                     {['Reel','TikTok Post','Story','Story + Reel','Story + TikTok','Reel + TikTok','Bundle','UGC'].map(b => <option key={b} value={b}>{b}</option>)}
-                                    <option value="__add__" className="text-[#7F77DD]">+ Neuer Typ</option>
+                                    <option value="__add__" className="text-accent">+ Neuer Typ</option>
                                   </select>
                                   {(postingForm as any)[key] === '' ? (
                                     <input type="text" placeholder="Buchungstyp eingeben"
                                       onChange={e => setPostingForm((p:any) => ({...p, [key]: e.target.value}))}
-                                      className="w-full mt-1 bg-[#111] border border-[#7F77DD]/50 rounded-lg px-2 py-1.5 text-white text-xs"/>
+                                      className="w-full mt-1 bg-surface-0 border border-accent/50 rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs"/>
                                   ) : null}
                                 </div>
                               ) : (
                                 <input type={type} value={(postingForm as any)[key]}
                                   onChange={e => setPostingForm((p:any) => ({...p, [key]: type==='number' ? Number(e.target.value)||0 : e.target.value}))}
-                                  className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                                  className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs"/>
                               )}
                             </div>
                           ))}
                         </div>
                         <div>
-                          <label className="text-gray-600 text-xs block mb-1">Notizen</label>
+                          <label className="text-ink-4 text-xs block mb-1">Notizen</label>
                           <textarea value={postingForm.notizen} onChange={e => setPostingForm((p:any)=>({...p,notizen:e.target.value}))} rows={2}
-                            className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none"/>
+                            className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs resize-none"/>
                         </div>
                         <div className="flex gap-2">
                           <button onClick={async () => {
@@ -1305,32 +1305,32 @@ export default function CreatorPage() {
                               setPostingSaving(false)
                               ;(window as any).__postingSaving = false
                             }
-                          }} disabled={postingSaving} className={`flex-1 py-2 rounded-xl text-white text-xs flex items-center justify-center gap-2 ${postingSaving?'bg-[#7F77DD]/50':'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                          }} disabled={postingSaving} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${postingSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                             {postingSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                             {postingSaving ? 'Speichern...' : 'Speichern'}
                           </button>
-                          <button onClick={() => setShowAddPosting(false)} className="px-4 py-2 rounded-xl border border-white/10 text-gray-500 text-xs">Abbrechen</button>
+                          <button onClick={() => setShowAddPosting(false)} className="px-4 py-2 rounded-apple-sm border border-white/10 text-ink-3 text-xs">Abbrechen</button>
                         </div>
                       </div>
                     )}
                     {postings.length === 0 && !showAddPosting && (
-                      <div className="text-center py-8 text-gray-600 text-xs">Noch keine Postings</div>
+                      <div className="text-center py-8 text-ink-4 text-xs">Noch keine Postings</div>
                     )}
                     {postings.map((p:any) => (
-                      <div key={p.id} className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4">
+                      <div key={p.id} className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <div className="text-white text-xs font-medium">{p.kampagne||'—'}</div>
-                            <div className="text-gray-600 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
+                            <div className="text-ink-1 text-xs font-medium">{p.kampagne||'—'}</div>
+                            <div className="text-ink-4 text-[10px]">{p.buchungstyp} · {p.datum||'—'}</div>
                             {(p.views > 0 || p.likes > 0 || p.comments > 0) && (
-                              <div className="text-gray-500 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
+                              <div className="text-ink-3 text-[10px] mt-0.5">👁 {(p.views||0).toLocaleString('de-DE')} · ❤️ {(p.likes||0).toLocaleString('de-DE')} · 💬 {(p.comments||0).toLocaleString('de-DE')}</div>
                             )}
                           </div>
                           <div className="flex items-center gap-2">
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
                             {p.post_link && (
-                              <button onClick={() => refreshPosting(p)} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-gray-500 hover:text-[#7F77DD] text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-[#7F77DD]/30 border-t-[#7F77DD] rounded-full animate-spin"/> : '↻'}
+                              <button onClick={() => refreshPosting(p)} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
+                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
                               </button>
                             )}
                             <button onClick={async () => {
@@ -1349,13 +1349,13 @@ export default function CreatorPage() {
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           {[['Fee',`${(p.fee||0)+(p.produkt||0)} €`],['Org. Umsatz',`${p.org_umsatz||0} €`],['Org. ROAS',p.org_roas>0?`${p.org_roas}x`:'—'],['Ad Spend',`${p.ad_spend||0} €`],['Ad Umsatz',`${p.ad_umsatz||0} €`],['Ges. ROAS',p.ges_roas>0?`${p.ges_roas}x`:'—']].map(([l,v]) => (
-                            <div key={l} className="bg-[#111] rounded-lg p-2">
-                              <div className="text-gray-600 text-[10px] mb-0.5">{l}</div>
-                              <div className="text-white text-xs font-medium">{v}</div>
+                            <div key={l} className="bg-surface-0 rounded-apple-sm p-2">
+                              <div className="text-ink-4 text-[10px] mb-0.5">{l}</div>
+                              <div className="text-ink-1 text-xs font-medium">{v}</div>
                             </div>
                           ))}
                         </div>
-                        {p.promo_code && <div className="mt-2 text-gray-500 text-[10px]">Code: <span className="text-[#7F77DD]">{p.promo_code}</span></div>}
+                        {p.promo_code && <div className="mt-2 text-ink-3 text-[10px]">Code: <span className="text-accent">{p.promo_code}</span></div>}
                       </div>
                     ))}
                   </div>
@@ -1363,37 +1363,37 @@ export default function CreatorPage() {
                 {detailTab === 'communication' && (
                   <div className="space-y-3">
                     <button onClick={() => setShowAddAktiv(true)}
-                      className="w-full py-2 rounded-xl border border-dashed border-white/20 text-gray-500 text-xs hover:border-[#7F77DD] hover:text-[#7F77DD] transition-colors">
+                      className="w-full py-2 rounded-apple-sm border border-dashed border-white/20 text-ink-3 text-xs hover:border-accent hover:text-accent transition-colors">
                       + Eintrag hinzufügen
                     </button>
                     {showAddAktiv && (
-                      <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-4 space-y-3">
-                        <p className="text-white text-xs font-medium">Neuer Eintrag</p>
+                      <div className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-4 space-y-3">
+                        <p className="text-ink-1 text-xs font-medium">Neuer Eintrag</p>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="text-gray-600 text-xs block mb-1">Datum</label>
+                            <label className="text-ink-4 text-xs block mb-1">Datum</label>
                             <input type="date" value={aktivForm.datum} onChange={e => setAktivForm(p => ({...p, datum: e.target.value}))}
-                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs"/>
+                              className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs"/>
                           </div>
                           <div>
-                            <label className="text-gray-600 text-xs block mb-1">Kanal</label>
+                            <label className="text-ink-4 text-xs block mb-1">Kanal</label>
                             <select value={aktivForm.kanal} onChange={e => setAktivForm(p => ({...p, kanal: e.target.value}))}
-                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                              className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs">
                               <option>Mail</option><option>Instagram</option><option>Telefon</option><option>Sonstiges</option>
                             </select>
                           </div>
                           <div>
-                            <label className="text-gray-600 text-xs block mb-1">Richtung</label>
+                            <label className="text-ink-4 text-xs block mb-1">Richtung</label>
                             <select value={aktivForm.richtung} onChange={e => setAktivForm(p => ({...p, richtung: e.target.value}))}
-                              className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs">
+                              className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs">
                               <option value="raus">Gesendet</option><option value="rein">Erhalten</option>
                             </select>
                           </div>
                         </div>
                         <div>
-                          <label className="text-gray-600 text-xs block mb-1">Notiz / Nachricht</label>
+                          <label className="text-ink-4 text-xs block mb-1">Notiz / Nachricht</label>
                           <textarea value={aktivForm.notiz} onChange={e => setAktivForm(p => ({...p, notiz: e.target.value}))} rows={3}
-                            className="w-full bg-[#111] border border-white/[0.08] rounded-lg px-2 py-1.5 text-white text-xs resize-none"/>
+                            className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs resize-none"/>
                         </div>
                         <div className="flex gap-2">
                           <button disabled={aktivSaving} onClick={async () => {
@@ -1412,32 +1412,32 @@ export default function CreatorPage() {
                                 setShowAddAktiv(false)
                               }
                             } finally { setAktivSaving(false) }
-                          }} className={`flex-1 py-2 rounded-xl text-white text-xs flex items-center justify-center gap-2 ${aktivSaving?'bg-[#7F77DD]/50':'bg-[#7F77DD] hover:bg-[#534AB7]'}`}>
+                          }} className={`flex-1 py-2 rounded-apple-sm text-ink-1 text-xs flex items-center justify-center gap-2 ${aktivSaving?'bg-accent/50':'bg-accent hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]'}`}>
                             {aktivSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                             {aktivSaving ? 'Speichern...' : 'Speichern'}
                           </button>
-                          <button onClick={() => setShowAddAktiv(false)} className="px-4 py-2 rounded-xl border border-white/10 text-gray-500 text-xs">Abbrechen</button>
+                          <button onClick={() => setShowAddAktiv(false)} className="px-4 py-2 rounded-apple-sm border border-white/10 text-ink-3 text-xs">Abbrechen</button>
                         </div>
                       </div>
                     )}
-                    {loadingAktiv && <div className="text-center py-8 text-gray-600 text-xs">Lädt...</div>}
+                    {loadingAktiv && <div className="text-center py-8 text-ink-4 text-xs">Lädt...</div>}
                     {!loadingAktiv && aktivitaeten.length === 0 && !showAddAktiv && (
-                      <div className="text-center py-8 text-gray-600 text-xs">Noch keine Einträge</div>
+                      <div className="text-center py-8 text-ink-4 text-xs">Noch keine Einträge</div>
                     )}
                     {aktivitaeten.map((a:any) => {
                       const icon = a.kanal === 'Instagram' ? '📷' : a.kanal === 'Telefon' ? '📞' : a.kanal === 'Sonstiges' ? '💬' : '✉️'
                       const raus = a.richtung === 'raus'
                       return (
-                        <div key={a.id} className="bg-[#0A0A0A] rounded-xl border border-white/[0.06] p-3">
+                        <div key={a.id} className="bg-surface-0 rounded-apple-sm border border-hairline-soft p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-start gap-2 flex-1">
                               <span className="text-sm">{icon}</span>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${raus ? 'bg-[#7F77DD]/20 text-[#7F77DD]' : 'bg-emerald-500/15 text-emerald-400'}`}>{raus ? 'Gesendet' : 'Erhalten'}</span>
-                                  <span className="text-gray-600 text-[10px]">{a.kanal} · {a.datum || '—'}</span>
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${raus ? 'bg-accent/20 text-accent' : 'bg-emerald-500/15 text-emerald-400'}`}>{raus ? 'Gesendet' : 'Erhalten'}</span>
+                                  <span className="text-ink-4 text-[10px]">{a.kanal} · {a.datum || '—'}</span>
                                 </div>
-                                {a.notiz && <div className="text-gray-300 text-xs mt-1 whitespace-pre-wrap">{a.notiz}</div>}
+                                {a.notiz && <div className="text-ink-2 text-xs mt-1 whitespace-pre-wrap">{a.notiz}</div>}
                               </div>
                             </div>
                             <button disabled={deletingAktiv===a.id} onClick={async () => {
@@ -1458,16 +1458,16 @@ export default function CreatorPage() {
                 {detailTab === 'audience' && (
                   <>
                     {(selected.igGenderMale || selected.igGenderFemale) ? (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Geschlecht</p>
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                        <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Geschlecht</p>
                         <div className="flex items-center gap-4 mb-3">
                           <div className="text-center flex-1">
                             <div className="text-2xl font-bold text-blue-400">{selected.igGenderMale}%</div>
-                            <div className="text-gray-600 text-xs">Männlich</div>
+                            <div className="text-ink-4 text-xs">Männlich</div>
                           </div>
                           <div className="text-center flex-1">
                             <div className="text-2xl font-bold text-pink-400">{selected.igGenderFemale}%</div>
-                            <div className="text-gray-600 text-xs">Weiblich</div>
+                            <div className="text-ink-4 text-xs">Weiblich</div>
                           </div>
                         </div>
                         <div className="h-3 bg-white/[0.05] rounded-full overflow-hidden flex">
@@ -1476,23 +1476,23 @@ export default function CreatorPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06] text-center text-gray-600 text-sm">
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft text-center text-ink-4 text-sm">
                         Keine Zielgruppen-Daten. Creator mit API hinzufügen.
                       </div>
                     )}
 
                     {selected.igAgeDistribution && selected.igAgeDistribution.length > 0 && (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Altersverteilung</p>
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                        <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Altersverteilung</p>
                         <div className="flex flex-col gap-2">
                           {selected.igAgeDistribution.map(a => (
                             <div key={a.age}>
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-gray-500">{a.age.replace('_', '–')}</span>
-                                <span className="text-gray-300 font-medium">{a.pct}%</span>
+                                <span className="text-ink-3">{a.age.replace('_', '–')}</span>
+                                <span className="text-ink-2 font-medium">{a.pct}%</span>
                               </div>
                               <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
-                                <div className="h-full bg-[#7F77DD] rounded-full" style={{ width: `${Math.min(a.pct * 5, 100)}%` }} />
+                                <div className="h-full bg-accent rounded-full" style={{ width: `${Math.min(a.pct * 5, 100)}%` }} />
                               </div>
                             </div>
                           ))}
@@ -1501,14 +1501,14 @@ export default function CreatorPage() {
                     )}
 
                     {selected.igTopCountries && selected.igTopCountries.length > 0 && (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Länder</p>
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                        <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Länder</p>
                         <div className="flex flex-col gap-2">
                           {selected.igTopCountries.map(c => (
                             <div key={c.name}>
                               <div className="flex justify-between text-xs mb-1">
-                                <span className="text-gray-400 capitalize">{c.name.replace(/-/g, ' ')}</span>
-                                <span className="text-gray-300 font-medium">{c.pct}%</span>
+                                <span className="text-ink-2 capitalize">{c.name.replace(/-/g, ' ')}</span>
+                                <span className="text-ink-2 font-medium">{c.pct}%</span>
                               </div>
                               <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                                 <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(c.pct * 7, 100)}%` }} />
@@ -1520,12 +1520,12 @@ export default function CreatorPage() {
                     )}
 
                     {selected.igTopCities && selected.igTopCities.length > 0 && (
-                      <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                        <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Städte</p>
+                      <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                        <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Top Städte</p>
                         {selected.igTopCities.map(c => (
                           <div key={c.name} className="flex justify-between py-1">
-                            <span className="text-gray-400 text-xs capitalize">{c.name}</span>
-                            <span className="text-gray-300 text-xs font-medium">{c.pct}%</span>
+                            <span className="text-ink-2 text-xs capitalize">{c.name}</span>
+                            <span className="text-ink-2 text-xs font-medium">{c.pct}%</span>
                           </div>
                         ))}
                       </div>
@@ -1550,14 +1550,14 @@ export default function CreatorPage() {
                   <>
                     <div className="grid grid-cols-3 gap-2">
                       {[['Org. ROAS', pOrgROAS], ['Ad ROAS', pAdROAS], ['Ges. ROAS', pGesROAS]].map(([l, v]) => (
-                        <div key={l as string} className="bg-[#0A0A0A] rounded-xl p-3 border border-white/[0.06] text-center">
-                          <div className="text-gray-600 text-xs mb-1">{l}</div>
+                        <div key={l as string} className="bg-surface-0 rounded-apple-sm p-3 border border-hairline-soft text-center">
+                          <div className="text-ink-4 text-xs mb-1">{l}</div>
                           <div className={`text-lg font-bold ${roasColor(v as number)}`}>{(v as number) > 0 ? `${v}x` : '—'}</div>
                         </div>
                       ))}
                     </div>
 
-                    <div className="bg-[#0A0A0A] rounded-xl border border-white/[0.06]">
+                    <div className="bg-surface-0 rounded-apple-sm border border-hairline-soft">
                       {[
                         ['Org. Umsatz', fmtEur(totalOrgU), 'text-emerald-400'],
                         ['Org. Klicks', totalOrgK > 0 ? fmt(totalOrgK) : '—', ''],
@@ -1567,15 +1567,15 @@ export default function CreatorPage() {
                         ['Ad Umsatz', fmtEur(totalAdU), 'text-emerald-400'],
                         ['Ges. Umsatz', fmtEur(gesU), 'text-emerald-400 font-semibold'],
                       ].map(([l, v, cls]) => (
-                        <div key={l} className="flex justify-between px-4 py-2.5 border-b border-white/[0.04] last:border-0">
-                          <span className="text-gray-600 text-xs">{l}</span>
-                          <span className={`text-xs font-medium ${cls || 'text-gray-300'}`}>{v}</span>
+                        <div key={l} className="flex justify-between px-4 py-2.5 border-b border-hairline-soft last:border-0">
+                          <span className="text-ink-4 text-xs">{l}</span>
+                          <span className={`text-xs font-medium ${cls || 'text-ink-2'}`}>{v}</span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                      <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
+                    <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                      <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           ['Story Wert', fmtEur(selected.storyWert)],
@@ -1586,9 +1586,9 @@ export default function CreatorPage() {
                           ['TKP Post', selected.tkpPost > 0 ? `${selected.tkpPost} €` : '—'],
                           ['TKP TikTok', selected.tkpTT > 0 ? `${selected.tkpTT} €` : '—'],
                         ].map(([l, v]) => (
-                          <div key={l} className="bg-[#141414] rounded-xl p-3 border border-white/[0.06]">
-                            <div className="text-gray-600 text-xs mb-1">{l}</div>
-                            <div className="text-white text-sm font-semibold">{v}</div>
+                          <div key={l} className="bg-surface-2 rounded-apple-sm p-3 border border-hairline-soft">
+                            <div className="text-ink-4 text-xs mb-1">{l}</div>
+                            <div className="text-ink-1 text-sm font-semibold">{v}</div>
                           </div>
                         ))}
                       </div>
@@ -1614,16 +1614,16 @@ export default function CreatorPage() {
                       setTimeout(() => setSaveState('idle'), 2000)
                     }}
                     disabled={saveState === 'loading'}
-                    className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2
+                    className={`flex-1 py-2.5 rounded-apple-sm border text-sm font-medium transition-all flex items-center justify-center gap-2
                       ${saveState === 'done' ? 'border-emerald-500/50 text-emerald-400 bg-emerald-950/30' :
-                        saveState === 'loading' ? 'border-white/10 text-gray-500 cursor-not-allowed' :
-                        'border-white/20 text-white hover:bg-white/[0.06]'}`}
+                        saveState === 'loading' ? 'border-white/10 text-ink-3 cursor-not-allowed' :
+                        'border-white/20 text-ink-1 hover:bg-white/[0.06]'}`}
                   >
                     {saveState === 'loading' && <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white/80 rounded-full animate-spin" />}
                     {saveState === 'done' && <span>✓</span>}
                     {saveState === 'loading' ? 'Speichern...' : saveState === 'done' ? 'Gespeichert' : 'Speichern'}
                   </button>
-                  <button className="flex-1 py-2.5 rounded-xl bg-[#7F77DD] text-white text-sm hover:bg-[#534AB7] transition-colors font-medium">Outreach senden</button>
+                  <button className="flex-1 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">Outreach senden</button>
                   <button onClick={async (e) => {
                     const btn = e.currentTarget as HTMLButtonElement
                     btn.disabled = true
@@ -1631,7 +1631,7 @@ export default function CreatorPage() {
                     if ((selected as any)._id) { const t = await getToken(); await fetch(`/api/creators/${(selected as any)._id}`, { method: 'DELETE', headers: { authorization: 'Bearer ' + t } }); }
                     setCreators(prev => prev.filter(c => c !== selected)); setSelected(null)
                   }}
-                    className="px-4 py-2.5 rounded-xl border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">
+                    className="px-4 py-2.5 rounded-apple-sm border border-red-900/50 text-red-500 hover:bg-red-950/50 transition-colors text-sm">
                     Löschen
                   </button>
                 </div>
@@ -1643,18 +1643,18 @@ export default function CreatorPage() {
         {/* Modal */}
         {showModal && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={closeModal}>
-            <div className="bg-[#141414] rounded-2xl w-full max-w-lg border border-white/[0.08] max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
+            <div className="bg-surface-2 rounded-apple-lg w-full max-w-lg border border-hairline max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft">
                 <div>
-                  <h2 className="text-white font-semibold">Creator hinzufügen</h2>
-                  <p className="text-gray-500 text-xs mt-0.5">Handle eingeben → echte Daten werden geladen</p>
+                  <h2 className="text-ink-1 font-semibold">Creator hinzufügen</h2>
+                  <p className="text-ink-3 text-xs mt-0.5">Handle eingeben → echte Daten werden geladen</p>
                 </div>
-                <button onClick={closeModal} className="w-8 h-8 rounded-lg bg-white/[0.05] flex items-center justify-center text-gray-400 hover:text-white text-lg">×</button>
+                <button onClick={closeModal} className="w-8 h-8 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2 hover:text-ink-1 text-lg">×</button>
               </div>
 
               <div className="overflow-y-auto p-6 flex flex-col gap-4">
-                <div className="bg-[#0A0A0A] rounded-xl p-4 border border-white/[0.06]">
-                  <p className="text-gray-500 text-[10px] font-semibold uppercase tracking-widest mb-3">Auto-Fetch via RapidAPI</p>
+                <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
+                  <p className="text-ink-3 text-[10px] font-semibold uppercase tracking-widest mb-3">Auto-Fetch via RapidAPI</p>
                   <div className="flex flex-col gap-2 mb-3">
                     <input value={form.igHandle} onChange={e => setForm(p => ({ ...p, igHandle: e.target.value }))}
                       placeholder="Instagram Handle (z.B. sophiestyle)" className={inputCls} />
@@ -1662,11 +1662,11 @@ export default function CreatorPage() {
                       placeholder="TikTok Handle — optional" className={inputCls} />
                   </div>
                   <button onClick={doFetch} disabled={fetching || (!form.igHandle && !form.ttHandle)}
-                    className={`w-full py-2.5 rounded-xl text-sm font-medium transition-all ${fetching ? 'bg-[#7F77DD]/40 text-white/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-white' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                    className={`w-full py-2.5 rounded-apple-sm text-sm font-medium transition-all ${fetching ? 'bg-accent/40 text-ink-1/50 cursor-wait' : fetchDone ? 'bg-emerald-700 text-ink-1' : fetchError ? 'bg-red-950 text-red-400' : (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
                     {fetching ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"/>Lade Daten...</span> : fetchDone ? '✓ Daten geladen' : fetchError ? fetchError : 'Echte Daten laden (IG + TT)'}
                   </button>
                   {fetchDone && fetchedData && (
-                    <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-xl p-3 text-xs text-emerald-500 space-y-0.5">
+                    <div className="mt-3 bg-emerald-950/40 border border-emerald-800/30 rounded-apple-sm p-3 text-xs text-emerald-500 space-y-0.5">
                       <p className="text-emerald-400 font-medium mb-1">✓ Echte Daten von RapidAPI:</p>
                       {fetchedData.igFollower > 0 && <p>· IG: {fetchedData.igFollower?.toLocaleString('de-DE')} Follower · {fetchedData.igTier} · ER: {fetchedData.igEr}%</p>}
                       {fetchedData.igAvgReelViews > 0 && <p>· Ø Reel Views: {fetchedData.igAvgReelViews?.toLocaleString('de-DE')}</p>}
@@ -1708,11 +1708,11 @@ export default function CreatorPage() {
 
                   <div><label className={labelCls}>Notizen</label>
                     <textarea value={form.notizen} onChange={e => setForm(p => ({ ...p, notizen: e.target.value }))} placeholder="Agentur, Konditionen..." rows={2}
-                      className="w-full bg-[#0A0A0A] border border-white/[0.08] rounded-xl px-4 py-2.5 text-white text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
+                      className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
                 </div>
 
                 <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle) || saving}
-                  className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-[#7F77DD] text-white hover:bg-[#534AB7]' : 'bg-white/[0.05] text-gray-600 cursor-not-allowed'}`}>
+                  className={`w-full py-3 rounded-apple-sm text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
                   Creator hinzufügen
                 </button>
               </div>
