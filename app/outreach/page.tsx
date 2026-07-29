@@ -1,9 +1,12 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
-export default function Outreach() {
+function OutreachInner() {
+  const searchParams = useSearchParams()
+  const appliedParamRef = useRef(false)
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
   const [creators, setCreators] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,6 +54,13 @@ export default function Outreach() {
       const { data: rows } = await sb.from('creators').select('*').eq('user_id', userId).order('created_at', { ascending: false })
       if (!mounted) return
       setCreators(rows || [])
+      if (!appliedParamRef.current) {
+        const cid = searchParams.get('creator')
+        if (cid) {
+          const found = (rows || []).find((c: any) => c.id === cid)
+          if (found) { setSelected(found); appliedParamRef.current = true }
+        }
+      }
       setLoading(false)
     })
     return () => { mounted = false }
@@ -89,8 +99,31 @@ export default function Outreach() {
       body: JSON.stringify({ [field]: value })
     })
   }
+  const updateBestellungField = async (bid: string, field: string, value: any) => {
+    setBestellungen((prev:any) => prev.map((b:any) => b.id === bid ? { ...b, [field]: value } : b))
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/bestellungen/' + bid, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ [field]: value })
+    })
+  }
+  const createBestellungWithTracking = async (trackingNumber: string) => {
+    if (!selected?.id) return
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    const res = await fetch('/api/bestellungen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ creator_id: selected.id, produkt: '', status: 'Nicht versendet', tracking_nummer: trackingNumber })
+    })
+    const neu = await res.json()
+    setBestellungen((prev:any) => [...prev, neu])
+  }
   const [arrivedSet, setArrivedSet] = useState<Set<string>>(new Set())
   const [msgSet, setMsgSet] = useState<Set<string>>(new Set())
+  const [lrMap, setLrMap] = useState({} as Record<string, string>)
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token || ''
@@ -99,16 +132,19 @@ export default function Outreach() {
       const ang = new Set<string>()
       if (Array.isArray(best)) best.forEach((b:any) => { if (b.status === 'Angekommen' && b.creator_id) ang.add(b.creator_id) })
       setArrivedSet(ang)
-      const { data: akt } = await sb.from('aktivitaeten').select('creator_id')
+      const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
       const ms = new Set<string>()
-      if (Array.isArray(akt)) akt.forEach((a:any) => { if (a.creator_id) ms.add(a.creator_id) })
+      const lr: Record<string, string> = {}
+      if (Array.isArray(akt)) akt.forEach((a: any) => { if (a.creator_id) { ms.add(a.creator_id); if (a.richtung) lr[a.creator_id] = a.richtung } })
       setMsgSet(ms)
+      setLrMap(lr)
     })
   }, [])
   const prio = (c:any) => {
     if (arrivedSet.has(c.id)) return 0
-    if (!msgSet.has(c.id)) return 1
-    return 2
+    if (msgSet.has(c.id) && lrMap[c.id] === 'raus') return 1
+    if (!msgSet.has(c.id)) return 2
+    return 3
   }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
@@ -141,9 +177,11 @@ export default function Outreach() {
                   <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
                   {arrivedSet.has(c.id) ? (
                     <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</div>
+                  ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
+                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</div>
                   ) : (!msgSet.has(c.id) ? (
-                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-rose-400 bg-rose-500/10 rounded-full px-2 py-0.5">&#9999;&#65039; Bitte anschreiben</div>
-                  ) : null)}
+                    <div className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</div>
+                  ) : null))}
                 </div>
               </button>
             ))}
@@ -205,7 +243,7 @@ export default function Outreach() {
 
         {/* RECHTS: Info-Sidebar */}
         {selected && (
-          <div className="flex-shrink-0 border-l border-hairline-soft p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
+          <div key={selected.id} className="flex-shrink-0 border-l border-hairline-soft p-4 overflow-hidden flex flex-col" style={{width:"288px",minWidth:"288px",maxWidth:"288px"}}>
             <div className="text-ink-1 font-medium text-sm mb-4 flex-shrink-0">Collab-Infos</div>
             <div className="space-y-3 overflow-y-auto flex-1 min-h-0 pr-1">
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
@@ -237,8 +275,17 @@ export default function Outreach() {
                 </div>
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
-                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Bestellung</div>
-                {bestellungen.length === 0 && <div className="text-ink-4 text-xs">Keine Bestellung</div>}
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Bestellung &amp; Tracking</div>
+                {bestellungen.length === 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-ink-4 text-xs">Keine Bestellung</div>
+                  <input
+                    placeholder="Tracking-Nummer eintragen..."
+                    onBlur={e => { if (e.target.value.trim()) { createBestellungWithTracking(e.target.value.trim()) } }}
+                    className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-[11px] font-mono focus:outline-none"
+                  />
+                </div>
+              )}
                 {bestellungen.map((b:any) => {
                   const st = b.status || 'Nicht versendet'
                   const farbe = st === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400' : (st === 'Nicht versendet' ? 'bg-surface-3/40 text-ink-2' : 'bg-blue-500/15 text-blue-400')
@@ -248,11 +295,11 @@ export default function Outreach() {
                         <span className="text-ink-2 text-xs truncate">{b.produkt || 'Produkt'}</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${farbe}`}>{st}</span>
                       </div>
-                      {b.tracking_nummer && <div className="text-ink-4 text-[10px] font-mono truncate">{b.tracking_nummer}</div>}
+                      <input key={b.id} defaultValue={b.tracking_nummer || ""} placeholder="Tracking-Nummer" onBlur={e => { if (e.target.value !== (b.tracking_nummer || "")) { updateBestellungField(b.id, "tracking_nummer", e.target.value) } }} className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1 text-ink-1 text-[11px] font-mono focus:outline-none" />
                     </div>
                   )
                 })}
-                <div className="text-ink-4 text-[10px] pt-1">&rarr; im Bestellbereich bearbeiten</div>
+                <a href="/bestellungen" className="text-ink-4 text-[10px] pt-1 block hover:text-accent transition-colors">&rarr; in Bestellbereich bearbeiten</a>
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-1.5">
                 <div className="text-ink-3 text-[10px] uppercase tracking-wider mb-1">Reichweite</div>
@@ -352,5 +399,13 @@ export default function Outreach() {
 
       </div>
     </div>
+  )
+}
+
+export default function Outreach() {
+  return (
+    <Suspense fallback={null}>
+      <OutreachInner />
+    </Suspense>
   )
 }

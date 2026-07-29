@@ -205,14 +205,15 @@ export default function Kampagnen() {
                     {allCreators.filter((c:any) => (c.kampagne || '') === selected.name).length === 0 ? (
                       <div className="text-ink-4 text-xs">Noch keine Creator zugeordnet. Zuordnung erfolgt in der Creator-Tabelle (Spalte Kampagne).</div>
                     ) : allCreators.filter((c:any) => (c.kampagne || '') === selected.name).map((c:any) => (
-                      <div key={c.id} className="flex items-center gap-3 bg-surface-0 rounded-apple-sm px-3 py-2 border border-hairline-soft">
+                      <a key={c.id} href={'/outreach?creator=' + c.id} className="flex items-center gap-3 bg-surface-0 rounded-apple-sm px-3 py-2 border border-hairline-soft hover:border-white/20 hover:bg-white/[0.03] transition-colors cursor-pointer">
                         {c.ig_image ? (
                           <img src={c.ig_image} className="w-6 h-6 rounded-full object-cover" />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-[#FF9F0A]/20 flex items-center justify-center text-xs text-[#FF9F0A]">{c.name?.[0]?.toUpperCase()}</div>
                         )}
-                        <span className="text-ink-1 text-xs">{c.name}</span>
-                      </div>
+                        <span className="text-ink-1 text-xs flex-1">{c.name}</span>
+                        <span className="text-ink-4 text-[10px]">Outreach &rarr;</span>
+                      </a>
                     ))}
                   </div>
                 </div>
