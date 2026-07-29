@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
-export default function Outreach() {
+function OutreachInner() {
   const searchParams = useSearchParams()
   const appliedParamRef = useRef(false)
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -399,5 +399,13 @@ export default function Outreach() {
 
       </div>
     </div>
+  )
+}
+
+export default function Outreach() {
+  return (
+    <Suspense fallback={null}>
+      <OutreachInner />
+    </Suspense>
   )
 }
