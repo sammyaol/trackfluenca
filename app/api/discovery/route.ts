@@ -9,6 +9,14 @@ async function apiFetch(url: string, headers: Record<string,string>) {
   try { const r = await fetch(url, { headers }); return r.json() } catch { return null }
 }
 
+async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) {
+  for (let i = 0; i < tries; i++) {
+    try { const r = await fetch(url, { headers }); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {}
+    await new Promise(res => setTimeout(res, 400))
+  }
+  return null
+}
+
 function sanitize(raw: string | null): string {
   const s = (raw || '').trim().replace(/^@/, '')
   try {
@@ -57,9 +65,8 @@ export async function GET(req: NextRequest) {
   const handle = sanitize(searchParams.get('handle'))
   if (!handle) return NextResponse.json({ error: 'Handle fehlt' }, { status: 400 })
 
-  const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?nocors=false&user=${encodeURIComponent(handle)}`, IG_H)
+  const profile = await apiFetchRetry(`https://${IG_HOST}/ig/info_username/?nocors=false&user=${encodeURIComponent(handle)}`, IG_H)
   const u = profile?.user || profile?.data?.user || profile?.data || null
-  if (!u) console.log('DISCOVERY_DEBUG', handle, JSON.stringify(profile).slice(0,800))
   if (!u) return NextResponse.json({ error: 'Account nicht gefunden' }, { status: 404 })
 
   const origin = liteFromUser(u, handle)
