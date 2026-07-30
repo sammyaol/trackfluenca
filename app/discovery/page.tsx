@@ -67,8 +67,9 @@ export default function Discovery() {
         setLoading(false)
         return
       }
-      setResult(data)
-      setHistory(prev => [data, ...prev.filter(h => h.igHandle !== data.igHandle || h.ttHandle !== data.ttHandle)].slice(0, 10))
+      const enriched = { ...data, igHandle, ttHandle }
+      setResult(enriched)
+      setHistory(prev => [enriched, ...prev.filter(h => h.igHandle !== enriched.igHandle || h.ttHandle !== enriched.ttHandle)].slice(0, 10))
       setLoading(false)
     } catch (e: any) {
       setError(e.message || 'Fehler beim Suchen')
@@ -92,9 +93,12 @@ export default function Discovery() {
         setLoadingFull(false)
         return
       }
-      setResult(data)
+      setIgHandle(handle)
+      setTtHandle('')
+      const enriched = { ...data, igHandle: handle, ttHandle: '' }
+      setResult(enriched)
       setSuggestions([])
-      setHistory(prev => [data, ...prev.filter((h: any) => h.igHandle !== data.igHandle || h.ttHandle !== data.ttHandle)].slice(0, 10))
+      setHistory(prev => [enriched, ...prev.filter((h: any) => h.igHandle !== handle)].slice(0, 10))
       setLoadingFull(false)
     } catch (e: any) {
       setError(e.message || 'Fehler beim Laden')
@@ -316,10 +320,10 @@ export default function Discovery() {
                   <div key={i} className="flex items-center justify-between p-3 rounded-apple-sm bg-surface-0 border border-hairline-soft">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-[#64D2FF]/20 flex items-center justify-center text-[#64D2FF] text-xs font-semibold">
-                        {(h.name || '?').slice(0, 1).toUpperCase()}
+                        {(h.name || h.igHandle || h.ttHandle || '?').slice(0, 1).toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-ink-1 text-xs font-medium">{h.name || 'Unbekannt'}</div>
+                        <div className="text-ink-1 text-xs font-medium">{h.name || h.igHandle || h.ttHandle || 'Unbekannt'}</div>
                         <div className="text-ink-4 text-[10px]">
                           {h.igFollower ? `IG: ${h.igFollower.toLocaleString('de-DE')}` : ''}
                           {h.ttFollower ? ` · TT: ${h.ttFollower.toLocaleString('de-DE')}` : ''}
