@@ -19,6 +19,8 @@ export default function Discovery() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [loadingFull, setLoadingFull] = useState(false)
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
   const [history, setHistory] = useState<any[]>([])
@@ -34,11 +36,27 @@ export default function Discovery() {
     setError('')
     setResult(null)
     setAdded(false)
+    setSuggestions([])
 
     try {
       const token = await getToken()
+
+      if (igHandle) {
+        const res = await fetch('/api/discovery?handle=' + encodeURIComponent(igHandle.replace('@', '')), {
+          headers: { authorization: 'Bearer ' + token }
+        })
+        const data = await res.json()
+        if (data.error) {
+          setError(data.error)
+          setLoading(false)
+          return
+        }
+        setSuggestions([{ ...data.origin, isOrigin: true }, ...(data.similar || [])])
+        setLoading(false)
+        return
+      }
+
       const params = new URLSearchParams()
-      if (igHandle) params.set('ig', igHandle.replace('@', ''))
       if (ttHandle) params.set('tt', ttHandle.replace('@', ''))
       const res = await fetch('/api/creator?' + params.toString(), {
         headers: { authorization: 'Bearer ' + token }
@@ -55,6 +73,32 @@ export default function Discovery() {
     } catch (e: any) {
       setError(e.message || 'Fehler beim Suchen')
       setLoading(false)
+    }
+  }
+
+  const loadFull = async (handle: string) => {
+    setLoadingFull(true)
+    setError('')
+    try {
+      const token = await getToken()
+      const params = new URLSearchParams()
+      params.set('ig', handle.replace('@', ''))
+      const res = await fetch('/api/creator?' + params.toString(), {
+        headers: { authorization: 'Bearer ' + token }
+      })
+      const data = await res.json()
+      if (data.error) {
+        setError(data.error)
+        setLoadingFull(false)
+        return
+      }
+      setResult(data)
+      setSuggestions([])
+      setHistory(prev => [data, ...prev.filter((h: any) => h.igHandle !== data.igHandle || h.ttHandle !== data.ttHandle)].slice(0, 10))
+      setLoadingFull(false)
+    } catch (e: any) {
+      setError(e.message || 'Fehler beim Laden')
+      setLoadingFull(false)
     }
   }
 
@@ -162,8 +206,52 @@ export default function Discovery() {
           </div>
 
           {/* Ergebnis */}
+            {/* Aehnliche Accounts */}
+            {suggestions.length > 0 && !result && (
+              <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-6">
+                <h2 className="text-ink-1 font-medium text-sm mb-1">Vorschlaege</h2>
+                <p className="text-ink-4 text-xs mb-4">Der gesuchte Account und aehnliche Profile &ndash; klicke auf ein Profil fuer die vollen Werte</p>
+                {loadingFull && (
+                  <p className="text-ink-4 text-xs mb-3">Lade Profildaten...</p>
+                )}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {suggestions.map((sgg, i) => (
+                    <button
+                      key={sgg.username + i}
+                      onClick={() => loadFull(sgg.username)}
+                      disabled={loadingFull}
+                      className={`flex flex-col items-center text-center gap-2 bg-surface-0 rounded-apple-sm p-3 border transition-colors disabled:opacity-50 ${sgg.isOrigin ? 'border-accent/50 hover:border-accent' : 'border-hairline-soft hover:border-white/20'}`}
+                    >
+                      {sgg.profile_pic_url ? (
+                        <img src={sgg.profile_pic_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-accent/20 flex items-center justify-center text-ink-1 text-sm font-semibold">
+                          {(sgg.username || '?').slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 w-full">
+                        <div className="text-ink-1 text-xs font-medium truncate">@{sgg.username}</div>
+                        {sgg.full_name && <div className="text-ink-4 text-[10px] truncate">{sgg.full_name}</div>}
+                        {sgg.category && (
+                          <div className="mt-1 inline-block text-[9px] text-ink-3 bg-surface-3/60 rounded-full px-2 py-0.5 truncate max-w-full">{sgg.category}</div>
+                        )}
+                        {sgg.isOrigin && (
+                          <div className="mt-1 text-[9px] text-accent font-medium">Gesucht</div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
           {result && (
             <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-6">
+              {suggestions.length === 0 && (
+                <button onClick={() => { setResult(null) }} className="text-ink-4 hover:text-ink-1 text-xs mb-3 inline-flex items-center gap-1">
+                  &larr; Zurueck
+                </button>
+              )}
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#0A84FF] to-purple-700 flex items-center justify-center text-ink-1 text-xl font-bold">
@@ -250,7 +338,7 @@ export default function Discovery() {
           )}
 
           {/* Empty State */}
-          {!result && history.length === 0 && !loading && (
+          {!result && suggestions.length === 0 && history.length === 0 && !loading && (
             <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-12 text-center">
               <div className="w-16 h-16 rounded-apple-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A84FF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
