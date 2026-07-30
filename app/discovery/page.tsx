@@ -223,7 +223,7 @@ export default function Discovery() {
                       className={`flex flex-col items-center text-center gap-2 bg-surface-0 rounded-apple-sm p-3 border transition-colors disabled:opacity-50 ${sgg.isOrigin ? 'border-accent/50 hover:border-accent' : 'border-hairline-soft hover:border-white/20'}`}
                     >
                       {sgg.profile_pic_url ? (
-                        <img src={sgg.profile_pic_url} alt="" className="w-14 h-14 rounded-full object-cover" />
+                        <img src={'/api/img-proxy?url=' + encodeURIComponent(sgg.profile_pic_url)} alt="" className="w-14 h-14 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                       ) : (
                         <div className="w-14 h-14 rounded-full bg-accent/20 flex items-center justify-center text-ink-1 text-sm font-semibold">
                           {(sgg.username || '?').slice(0, 1).toUpperCase()}
