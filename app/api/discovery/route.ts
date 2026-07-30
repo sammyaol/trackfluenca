@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
 
   const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?nocors=false&user=${encodeURIComponent(handle)}`, IG_H)
   const u = profile?.user || profile?.data?.user || profile?.data || null
+  if (!u) console.log('DISCOVERY_DEBUG', handle, JSON.stringify(profile).slice(0,800))
   if (!u) return NextResponse.json({ error: 'Account nicht gefunden' }, { status: 404 })
 
   const origin = liteFromUser(u, handle)
