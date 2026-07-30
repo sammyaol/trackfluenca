@@ -22,15 +22,23 @@ function pickImg(u: any): string {
   return u?.hd_profile_pic_url_info?.url || u?.hd_profile_pic_versions?.[0]?.url || u?.profile_pic_url || ''
 }
 
+function cleanText(v: any): string {
+  const s = String(v || '')
+  if (!s) return ''
+  if (s.toLowerCase().includes('access delayed')) return ''
+  if (s.toLowerCase().includes('only the owner')) return ''
+  return s
+}
+
 function liteFromUser(u: any, fallbackHandle?: string) {
   if (!u) return null
   const username = u.username || fallbackHandle || ''
   if (!username) return null
   return {
     username,
-    full_name: u.full_name || u.fullName || '',
+    full_name: cleanText(u.full_name || u.fullName || ''),
     profile_pic_url: pickImg(u),
-    category: u.category_name || u.category || u.pageName || '',
+    category: cleanText(u.category_name || u.category || u.pageName || ''),
     is_verified: !!(u.is_verified || u.isVerified),
     follower_count: u.follower_count ?? u.followerCount ?? 0,
   }
