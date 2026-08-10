@@ -64,6 +64,7 @@ const roasColor = (r: number) => r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-am
 const allColumns = [
   { key: 'status', label: 'Status', group: 'Basis' },
   { key: 'versand', label: 'Versand', group: 'Basis' },
+  { key: 'sammyApproved', label: 'Sammy Approved', group: 'Basis' },
   { key: 'prio', label: 'Priorität', group: 'Basis' },
   { key: 'kategorie', label: 'Kategorie', group: 'Basis' },
   { key: 'ig', label: 'IG Handle', group: 'Instagram' },
@@ -114,6 +115,7 @@ export default function CreatorPage() {
         ttAvgViews: c.tt_avg_views || 0, ttAvgLikes: 0, ttAvgComments: 0,
         overallTier: c.overall_tier || '', gesamtReichweite: c.gesamt_reichweite || 0,
         status: c.status || 'Offen', prio: c.prio || 'Mittel',
+        sammyApproved: c.sammy_approved || 'Offen',
         kategorie: c.kategorie || 'Schmuck', mgmt: c.mgmt || 'Nein',
         notizen: c.notizen || '', kampagne: c.kampagne || '',
         buchungstyp: c.buchungstyp || 'Reel', fee: c.fee || 0,
@@ -172,7 +174,7 @@ export default function CreatorPage() {
   const [fetchDone, setFetchDone] = useState(false)
   const [fetchError, setFetchError] = useState('')
   const [fetchedData, setFetchedData] = useState<any>(null)
-  const DEFAULT_COLS = ['status', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS']
+  const DEFAULT_COLS = ['status', 'sammyApproved', 'igFollower', 'ttFollower', 'overallTier', 'kampagne', 'fee', 'promoCode', 'orgUmsatz', 'gesROAS']
   const [visibleCols, setVisibleCols] = useState<string[]>(DEFAULT_COLS)
   useEffect(() => {
     try {
@@ -461,6 +463,27 @@ export default function CreatorPage() {
             <option value="Nicht versendet">Nicht versendet</option>
             <option value="Versendet">Versendet</option>
             <option value="Angekommen">Angekommen</option>
+          </select>
+        )
+      }
+      case 'sammyApproved': {
+        const v = (c as any).sammyApproved || 'Offen'
+        const color = v === 'Kann schreiben' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+          : v === 'Nicht schreiben' ? 'bg-red-500/15 text-red-400 border-red-500/30'
+          : v === 'Bereits zusammengearbeitet' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+          : 'bg-ink-3/15 text-ink-2 border-hairline/30'
+        return (
+          <select value={v} onClick={e => e.stopPropagation()} onChange={async e => {
+            e.stopPropagation()
+            const newV = e.target.value
+            const token = await getToken()
+            await fetch('/api/creators/' + (c as any)._id, { method: 'PATCH', headers: {'Content-Type':'application/json', authorization:'Bearer '+token}, body: JSON.stringify({ sammy_approved: newV }) })
+            setCreators(prev => prev.map(x => x === c ? {...x, sammyApproved: newV} : x))
+          }} className={`text-xs px-2 py-1 rounded-full border ${color} cursor-pointer focus:outline-none`}>
+            <option value="Offen">Offen</option>
+            <option value="Kann schreiben">Kann schreiben</option>
+            <option value="Nicht schreiben">Nicht schreiben</option>
+            <option value="Bereits zusammengearbeitet">Bereits zusammengearbeitet</option>
           </select>
         )
       }
