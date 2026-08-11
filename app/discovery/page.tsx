@@ -137,7 +137,10 @@ export default function Discovery() {
         headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
         body: JSON.stringify(body)
       })
-      if (!res.ok) throw new Error('Fehler beim Hinzufügen')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Fehler beim Hinzufügen')
+      }
       setAdded(true)
       setAdding(false)
     } catch (e: any) {

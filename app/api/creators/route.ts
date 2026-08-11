@@ -30,6 +30,18 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (user) body.user_id = user.id
 
+  const norm = (s: any) => (s || '').toString().trim().replace('@', '').toLowerCase()
+  const igNorm = norm(body.ig)
+  const ttNorm = norm(body.tt)
+  if (user && (igNorm || ttNorm)) {
+    const { data: existing } = await supabase
+      .from('creators')
+      .select('id, ig, tt')
+      .eq('user_id', user.id)
+    const dup = (existing || []).find((c: any) => (igNorm && norm(c.ig) === igNorm) || (ttNorm && norm(c.tt) === ttNorm))
+    if (dup) return NextResponse.json({ error: 'Dieser Creator ist bereits in der Liste.' }, { status: 409 })
+  }
+
   const { data, error } = await supabase
     .from('creators')
     .insert([body])

@@ -227,6 +227,11 @@ export default function CreatorPage() {
   const [viewsDays, setViewsDays] = useState(30)
   const [viewsHover, setViewsHover] = useState<any>(null)
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
+  const [saveError, setSaveError] = useState('')
+  const [editingHandles, setEditingHandles] = useState(false)
+  const [handleForm, setHandleForm] = useState({ ig: '', tt: '' })
+  const [handleSaving, setHandleSaving] = useState(false)
+  const [handleError, setHandleError] = useState('')
 
   const toggleCol = (key: string) => setVisibleCols(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key])
   const toggleGroup = (group: string) => {
@@ -235,8 +240,8 @@ export default function CreatorPage() {
     setVisibleCols(prev => allOn ? prev.filter(k => !keys.includes(k)) : [...new Set([...prev, ...keys])])
   }
 
-  const openAdd = () => { setForm(emptyForm); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setShowModal(true) }
-  const closeModal = () => { setShowModal(false); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setForm(emptyForm) }
+  const openAdd = () => { setForm(emptyForm); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setSaveError(''); setShowModal(true) }
+  const closeModal = () => { setShowModal(false); setEditMode(false); setFetchDone(false); setFetchedData(null); setFetchError(''); setSaveError(''); setForm(emptyForm) }
 
   const doFetch = async () => {
     if (!form.igHandle && !form.ttHandle) return
@@ -262,14 +267,19 @@ export default function CreatorPage() {
   const handleSave = async () => {
     if (!form.name || (!form.igHandle && !form.ttHandle)) return
     if (saving) return
-    setSaving(true)
+    setSaveError('')
     const fee = Number(form.fee) || 0
     const produkt = Number(form.produkt) || 0
     const ig = form.igHandle.startsWith('@') ? form.igHandle : '@' + form.igHandle
     const tt = form.ttHandle ? (form.ttHandle.startsWith('@') ? form.ttHandle : '@' + form.ttHandle) : ''
+    const igNormCheck = ig.replace('@', '').toLowerCase()
+    const ttNormCheck = tt.replace('@', '').toLowerCase()
+    const isDup = creators.some(c => (igNormCheck && (c.ig || '').replace('@', '').toLowerCase() === igNormCheck) || (ttNormCheck && (c.tt || '').replace('@', '').toLowerCase() === ttNormCheck))
+    if (isDup) { setSaveError('Dieser Creator ist bereits in der Liste.'); return }
+    setSaving(true)
     const d = fetchedData || {}
     const token = await getToken()
-    await fetch('/api/creators', {
+    const createRes = await fetch('/api/creators', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify({
@@ -296,6 +306,12 @@ export default function CreatorPage() {
         tt_avg_video_views: d.ttAvgVideoViews || 0,
       })
     })
+    if (!createRes.ok) {
+      const errData = await createRes.json().catch(() => ({}))
+      setSaveError(errData.error || 'Fehler beim Speichern')
+      setSaving(false)
+      return
+    }
     // Hole neu erstellten Creator (mit ID) und simuliere 30 Tage Snapshots
     const token2 = await getToken()
     const resAll = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token2 } })
@@ -393,6 +409,23 @@ export default function CreatorPage() {
     if ('adROAS' in fields) body.ad_roas = fields.adROAS
     if ('gesUmsatz' in fields) body.ges_umsatz = fields.gesUmsatz
     if ('gesROAS' in fields) body.ges_roas = fields.gesROAS
+    if ('ig' in fields) body.ig = fields.ig
+    if ('tt' in fields) body.tt = fields.tt
+    if ('igFollower' in fields) body.ig_follower = fields.igFollower
+    if ('ttFollower' in fields) body.tt_follower = fields.ttFollower
+    if ('igTier' in fields) body.ig_tier = fields.igTier
+    if ('ttTier' in fields) body.tt_tier = fields.ttTier
+    if ('igEr' in fields) body.ig_er = fields.igEr
+    if ('ttEr' in fields) body.tt_er = fields.ttEr
+    if ('overallTier' in fields) body.overall_tier = fields.overallTier
+    if ('igImage' in fields) body.ig_image = fields.igImage
+    if ('igVerified' in fields) body.ig_verified = fields.igVerified
+    if ('igAvgLikes' in fields) body.ig_avg_likes = fields.igAvgLikes
+    if ('igAvgComments' in fields) body.ig_avg_comments = fields.igAvgComments
+    if ('igAvgReelViews' in fields) body.ig_avg_reel_views = fields.igAvgReelViews
+    if ('ttImage' in fields) body.tt_image = fields.ttImage
+    if ('ttVerified' in fields) body.tt_verified = fields.ttVerified
+    if ('ttAvgVideoViews' in fields) body.tt_avg_video_views = fields.ttAvgVideoViews
     const token = await getToken()
     await fetch(`/api/creators/${id}`, {
       method: 'PATCH',
@@ -400,6 +433,59 @@ export default function CreatorPage() {
       body: JSON.stringify(body)
     })
   }
+
+  const startEditHandles = () => {
+    if (!selected) return
+    setHandleForm({ ig: selected.ig || '', tt: selected.tt || '' })
+    setHandleError('')
+    setEditingHandles(true)
+  }
+
+  const saveHandles = async () => {
+    if (!selected) return
+    const igRaw = handleForm.ig.trim()
+    const ttRaw = handleForm.tt.trim()
+    const ig = igRaw ? (igRaw.startsWith('@') ? igRaw : '@' + igRaw) : ''
+    const tt = ttRaw ? (ttRaw.startsWith('@') ? ttRaw : '@' + ttRaw) : ''
+    if (!ig && !tt) { setHandleError('Bitte mindestens einen Handle angeben'); return }
+    setHandleSaving(true)
+    setHandleError('')
+    try {
+      const params = new URLSearchParams()
+      if (ig) params.append('ig', ig.replace('@', ''))
+      if (tt) params.append('tt', tt.replace('@', ''))
+      const token = await getToken()
+      const res = await fetch(`/api/creator?${params}`, { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      if (d.error) throw new Error(d.error)
+      const fields: Record<string, any> = { ig, tt }
+      if (d.igFollower !== undefined || d.ttFollower !== undefined) {
+        fields.igFollower = d.igFollower || 0
+        fields.ttFollower = d.ttFollower || 0
+        fields.igTier = d.igTier || getTier(d.igFollower || 0)
+        fields.ttTier = d.ttTier || ''
+        fields.igEr = d.igEr || 0
+        fields.ttEr = d.ttEr || 0
+        fields.overallTier = d.overallTier || getTier(d.igFollower || 0)
+        fields.igImage = d.igImage || selected.igImage || ''
+        fields.igVerified = d.igVerified || false
+        fields.igAvgLikes = d.igAvgLikes || 0
+        fields.igAvgComments = d.igAvgComments || 0
+        fields.igAvgReelViews = d.igAvgReelViews || 0
+        fields.ttImage = d.ttImage || selected.ttImage || ''
+        fields.ttVerified = d.ttVerified || false
+        fields.ttAvgVideoViews = d.ttAvgVideoViews || 0
+      }
+      await updateCreator(selected, fields)
+      setSelected(p => p ? { ...p, ...fields } : p)
+      setEditingHandles(false)
+    } catch (e: any) {
+      setHandleError(e.message || 'Fehler beim Aktualisieren')
+    } finally {
+      setHandleSaving(false)
+    }
+  }
+
   const refreshPosting = async (p:any) => {
     if (!p.post_link) return
     setRefreshingPosting(p.id)
@@ -907,7 +993,17 @@ export default function CreatorPage() {
                       <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className={`text-xs px-2 py-0.5 rounded-md border-0 cursor-pointer ${statusStyle[selected.status]} bg-transparent`}>
                         {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-surface-3 text-ink-1">{s}</option>)}
                       </select>
+                      <button onClick={startEditHandles} title="IG/TT Handle bearbeiten" className="text-ink-4 hover:text-accent text-xs px-1.5 py-0.5 rounded hover:bg-white/[0.05] transition-colors">Bearbeiten</button>
                     </div>
+                    {editingHandles && (
+                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <input type="text" value={handleForm.ig} onChange={e => setHandleForm(p => ({ ...p, ig: e.target.value }))} placeholder="@instagram" className="bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-1 w-32 focus:outline-none focus:border-accent/50" />
+                        <input type="text" value={handleForm.tt} onChange={e => setHandleForm(p => ({ ...p, tt: e.target.value }))} placeholder="@tiktok" className="bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-1 w-32 focus:outline-none focus:border-accent/50" />
+                        <button onClick={saveHandles} disabled={handleSaving} className="px-2 py-1 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover disabled:opacity-50">{handleSaving ? '...' : 'Speichern + Daten laden'}</button>
+                        <button onClick={() => setEditingHandles(false)} className="px-2 py-1 rounded-apple-sm bg-white/[0.05] text-ink-2 text-xs hover:text-ink-1">Abbrechen</button>
+                        {handleError && <span className="text-red-400 text-[10px] w-full">{handleError}</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => setSelected(null)} className="w-8 h-8 rounded-apple-sm bg-white/[0.05] flex items-center justify-center text-ink-2 hover:text-ink-1 text-lg">×</button>
@@ -1734,9 +1830,15 @@ export default function CreatorPage() {
                       className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none resize-none" /></div>
                 </div>
 
+                {saveError && (
+                  <div className="bg-red-950/30 border border-red-500/20 rounded-apple-sm px-4 py-3">
+                    <p className="text-red-400 text-xs">{saveError}</p>
+                  </div>
+                )}
+
                 <button onClick={handleSave} disabled={!form.name || (!form.igHandle && !form.ttHandle) || saving}
                   className={`w-full py-3 rounded-apple-sm text-sm font-medium transition-colors ${form.name && (form.igHandle || form.ttHandle) ? 'bg-accent text-ink-1 hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)]' : 'bg-white/[0.05] text-ink-4 cursor-not-allowed'}`}>
-                  Creator hinzufügen
+                  {saving ? 'Speichert...' : 'Creator hinzufügen'}
                 </button>
               </div>
             </div>
