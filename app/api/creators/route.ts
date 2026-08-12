@@ -37,13 +37,14 @@ export async function POST(req: NextRequest) {
 
   if (user && body.type === 'celeb') {
     const nameNorm = norm(body.name)
-    if (nameNorm) {
+    const igNorm = norm(body.ig)
+    if (nameNorm || igNorm) {
       const { data: existing } = await supabase
         .from('creators')
-        .select('id, name')
+        .select('id, name, ig')
         .eq('user_id', user.id)
         .eq('type', 'celeb')
-      const dup = (existing || []).find((c: any) => norm(c.name) === nameNorm)
+      const dup = (existing || []).find((c: any) => (nameNorm && norm(c.name) === nameNorm) || (igNorm && norm(c.ig) === igNorm))
       if (dup) return NextResponse.json({ error: 'Diese Person ist bereits bei Celebs in der Liste.' }, { status: 409 })
     }
   } else if (user) {
