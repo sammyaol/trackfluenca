@@ -15,7 +15,7 @@ function OutreachInner() {
   const [nachrichten, setNachrichten] = useState<any[]>([])
   const [loadingChat, setLoadingChat] = useState(false)
   const [neueNachricht, setNeueNachricht] = useState('')
-  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'>('rein')
+  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'|'kommentar'>('rein')
   const [chatKanal, setChatKanal] = useState('Instagram')
   const [sendingChat, setSendingChat] = useState(false)
   useEffect(() => {
@@ -42,7 +42,14 @@ function OutreachInner() {
         body: JSON.stringify({ creator_id: selected.id, datum: heute, kanal: chatKanal, richtung: chatRichtung, notiz: neueNachricht.trim(), quelle: 'manuell' })
       })
       const d = await res.json()
-      if (res.ok) { setNachrichten(prev => [...prev, d]); setNeueNachricht(''); setMsgSet(prev => new Set(prev).add(selected.id)) }
+      if (res.ok) {
+        setNachrichten(prev => [...prev, d])
+        setNeueNachricht('')
+        if (chatRichtung !== 'kommentar') {
+          setMsgSet(prev => new Set(prev).add(selected.id))
+          setLrMap(prev => ({ ...prev, [selected.id]: chatRichtung }))
+        }
+      }
     } finally { setSendingChat(false) }
   }
 
@@ -135,7 +142,7 @@ function OutreachInner() {
       const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
       const ms = new Set<string>()
       const lr: Record<string, string> = {}
-      if (Array.isArray(akt)) akt.forEach((a: any) => { if (a.creator_id) { ms.add(a.creator_id); if (a.richtung) lr[a.creator_id] = a.richtung } })
+      if (Array.isArray(akt)) akt.forEach((a: any) => { if (a.creator_id && (a.richtung === 'raus' || a.richtung === 'rein')) { ms.add(a.creator_id); lr[a.creator_id] = a.richtung } })
       setMsgSet(ms)
       setLrMap(lr)
     })
@@ -232,6 +239,17 @@ function OutreachInner() {
                 {loadingChat && <div className="text-center text-ink-4 text-xs">Lädt...</div>}
                 {!loadingChat && nachrichten.length === 0 && <div className="text-center text-ink-4 text-xs mt-8">Noch keine Nachrichten. Kopiere unten den Verlauf rein.</div>}
                 {nachrichten.map((m:any) => {
+                  if (m.richtung === 'kommentar') {
+                    return (
+                      <div key={m.id} className="flex justify-center">
+                        <div className="max-w-[85%] rounded-apple-lg px-4 py-2 bg-red-500/10 border border-red-500/30">
+                          <div className="text-[10px] font-semibold text-red-400 mb-0.5">&#128172; Sammy Kommentar</div>
+                          <div className="text-sm whitespace-pre-wrap break-words text-red-100">{m.notiz}</div>
+                          <div className="text-[10px] mt-1 text-red-400/60">{m.datum || ''}</div>
+                        </div>
+                      </div>
+                    )
+                  }
                   const raus = m.richtung === 'raus'
                   return (
                     <div key={m.id} className={`flex ${raus ? 'justify-end' : 'justify-start'}`}>
@@ -247,6 +265,7 @@ function OutreachInner() {
                 <div className="flex items-center gap-2 mb-2">
                   <button onClick={() => setChatRichtung('rein')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-ink-3 hover:text-ink-2'}`}>Von Creator</button>
                   <button onClick={() => setChatRichtung('raus')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='raus' ? 'bg-accent/20 text-accent' : 'text-ink-3 hover:text-ink-2'}`}>Von mir</button>
+                  <button onClick={() => setChatRichtung('kommentar')} className={`text-xs px-3 py-1 rounded-apple-sm flex items-center gap-1 ${chatRichtung==='kommentar' ? 'bg-red-500/20 text-red-400' : 'text-ink-3 hover:text-ink-2'}`}><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>Sammy Kommentar</button>
                   <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-2 focus:outline-none ml-auto">
                     <option>Instagram</option><option>Mail</option><option>Telefon</option><option>Sonstiges</option>
                   </select>
