@@ -18,6 +18,9 @@ function OutreachInner() {
   const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'|'kommentar'>('rein')
   const [chatKanal, setChatKanal] = useState('Instagram')
   const [sendingChat, setSendingChat] = useState(false)
+  const [editingMsgId, setEditingMsgId] = useState<string | null>(null)
+  const [editMsgText, setEditMsgText] = useState('')
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null)
   useEffect(() => {
     if (!selected?.id) { setNachrichten([]); return }
     setLoadingChat(true)
@@ -51,6 +54,34 @@ function OutreachInner() {
         }
       }
     } finally { setSendingChat(false) }
+  }
+  const startEditMsg = (m: any) => { setEditingMsgId(m.id); setEditMsgText(m.notiz || '') }
+  const cancelEditMsg = () => { setEditingMsgId(null); setEditMsgText('') }
+  const saveEditMsg = async (id: string) => {
+    if (!editMsgText.trim()) return
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/aktivitaeten/' + id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ notiz: editMsgText.trim() })
+    })
+    setNachrichten(prev => prev.map(m => m.id === id ? { ...m, notiz: editMsgText.trim() } : m))
+    setEditingMsgId(null)
+    setEditMsgText('')
+  }
+  const deleteMsg = async (id: string) => {
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/aktivitaeten/' + id, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })
+    setNachrichten(prev => prev.filter(m => m.id !== id))
+  }
+  const copyMsg = async (m: any) => {
+    try {
+      await navigator.clipboard.writeText(m.notiz || '')
+      setCopiedMsgId(m.id)
+      setTimeout(() => setCopiedMsgId(prev => prev === m.id ? null : prev), 1500)
+    } catch {}
   }
 
   useEffect(() => {
@@ -239,13 +270,34 @@ function OutreachInner() {
                 {loadingChat && <div className="text-center text-ink-4 text-xs">Lädt...</div>}
                 {!loadingChat && nachrichten.length === 0 && <div className="text-center text-ink-4 text-xs mt-8">Noch keine Nachrichten. Kopiere unten den Verlauf rein.</div>}
                 {nachrichten.map((m:any) => {
+                  const isEditing = editingMsgId === m.id
+                  const msgActions = (
+                    <div className="absolute -top-2 right-2 hidden group-hover:flex items-center gap-0.5 bg-surface-0 border border-hairline-soft rounded-full px-1 py-0.5 shadow-lg z-10">
+                      <button onClick={() => copyMsg(m)} title="Kopieren" className="text-ink-3 hover:text-accent text-[11px] w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/[0.08]">{copiedMsgId === m.id ? '✓' : '⧉'}</button>
+                      <button onClick={() => startEditMsg(m)} title="Bearbeiten" className="text-ink-3 hover:text-accent text-[11px] w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/[0.08]">&#9998;</button>
+                      <button onClick={() => deleteMsg(m.id)} title="Löschen" className="text-ink-3 hover:text-red-400 text-[11px] w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/[0.08]">&#128465;</button>
+                    </div>
+                  )
                   if (m.richtung === 'kommentar') {
                     return (
                       <div key={m.id} className="flex justify-center">
-                        <div className="max-w-[85%] rounded-apple-lg px-4 py-2 bg-red-500/10 border border-red-500/30">
+                        <div className="group relative max-w-[85%] rounded-apple-lg px-4 py-2 bg-red-500/10 border border-red-500/30">
+                          {msgActions}
                           <div className="text-[10px] font-semibold text-red-400 mb-0.5">&#128172; Sammy Kommentar</div>
-                          <div className="text-sm whitespace-pre-wrap break-words text-red-100">{m.notiz}</div>
-                          <div className="text-[10px] mt-1 text-red-400/60">{m.datum || ''}</div>
+                          {isEditing ? (
+                            <div className="space-y-1">
+                              <textarea value={editMsgText} onChange={e => setEditMsgText(e.target.value)} rows={2} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-red-100 focus:outline-none resize-none" />
+                              <div className="flex gap-1 justify-end">
+                                <button onClick={() => saveEditMsg(m.id)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-red-100">Speichern</button>
+                                <button onClick={cancelEditMsg} className="text-[10px] px-2 py-0.5 rounded hover:bg-white/10 text-red-300">Abbrechen</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="text-sm whitespace-pre-wrap break-words text-red-100">{m.notiz}</div>
+                              <div className="text-[10px] mt-1 text-red-400/60">{m.datum || ''}</div>
+                            </>
+                          )}
                         </div>
                       </div>
                     )
@@ -253,9 +305,22 @@ function OutreachInner() {
                   const raus = m.richtung === 'raus'
                   return (
                     <div key={m.id} className={`flex ${raus ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-apple-lg px-4 py-2 ${raus ? 'bg-accent text-ink-1' : 'bg-surface-3 text-ink-1 border border-hairline-soft'}`}>
-                        <div className="text-sm whitespace-pre-wrap break-words">{m.notiz}</div>
-                        <div className={`text-[10px] mt-1 ${raus ? 'text-ink-1/60' : 'text-ink-4'}`}>{m.kanal} · {m.datum || ''}</div>
+                      <div className={`group relative max-w-[70%] rounded-apple-lg px-4 py-2 ${raus ? 'bg-accent text-ink-1' : 'bg-surface-3 text-ink-1 border border-hairline-soft'}`}>
+                        {msgActions}
+                        {isEditing ? (
+                          <div className="space-y-1">
+                            <textarea value={editMsgText} onChange={e => setEditMsgText(e.target.value)} rows={2} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-inherit focus:outline-none resize-none" />
+                            <div className="flex gap-1 justify-end">
+                              <button onClick={() => saveEditMsg(m.id)} className="text-[10px] px-2 py-0.5 rounded bg-white/20 hover:bg-white/30">Speichern</button>
+                              <button onClick={cancelEditMsg} className="text-[10px] px-2 py-0.5 rounded hover:bg-white/10">Abbrechen</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-sm whitespace-pre-wrap break-words">{m.notiz}</div>
+                            <div className={`text-[10px] mt-1 ${raus ? 'text-ink-1/60' : 'text-ink-4'}`}>{m.kanal} · {m.datum || ''}</div>
+                          </>
+                        )}
                       </div>
                     </div>
                   )
