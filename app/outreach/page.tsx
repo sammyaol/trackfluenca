@@ -140,11 +140,18 @@ function OutreachInner() {
       setLrMap(lr)
     })
   }, [])
+  const sammyBand = (c:any) => {
+    if (c.sammy_approved === 'Kann schreiben') return 0
+    if (c.sammy_approved === 'Bereits zusammengearbeitet') return 1
+    if (c.sammy_approved === 'Nicht schreiben') return 3
+    return 2
+  }
   const prio = (c:any) => {
-    if (arrivedSet.has(c.id)) return 0
-    if (msgSet.has(c.id) && lrMap[c.id] === 'raus') return 1
-    if (!msgSet.has(c.id)) return 2
-    return 3
+    let p = 3
+    if (arrivedSet.has(c.id)) p = 0
+    else if (msgSet.has(c.id) && lrMap[c.id] === 'raus') p = 1
+    else if (!msgSet.has(c.id)) p = 2
+    return sammyBand(c) * 10 + p
   }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
@@ -175,13 +182,24 @@ function OutreachInner() {
                 <div className="min-w-0 flex-1">
                   <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
                   <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
-                  {arrivedSet.has(c.id) ? (
-                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</div>
-                  ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
-                    <div className="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</div>
-                  ) : (!msgSet.has(c.id) ? (
-                    <div className="mt-1 inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</div>
-                  ) : null))}
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    {c.sammy_approved === 'Kann schreiben' && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#9989; Kann schreiben</span>
+                    )}
+                    {c.sammy_approved === 'Nicht schreiben' && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">&#128683; Nicht schreiben</span>
+                    )}
+                    {c.sammy_approved === 'Bereits zusammengearbeitet' && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-400 bg-blue-500/10 rounded-full px-2 py-0.5">&#129309; Bereits zusammengearbeitet</span>
+                    )}
+                    {arrivedSet.has(c.id) ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</span>
+                    ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
+                    ) : (!msgSet.has(c.id) ? (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
+                    ) : null))}
+                  </div>
                 </div>
               </button>
             ))}
@@ -203,6 +221,11 @@ function OutreachInner() {
                 <div>
                   <div className="text-ink-1 text-sm font-medium">{selected.name}</div>
                   <div className="text-ink-4 text-xs">{selected.ig || ''}</div>
+                  {selected.sammy_approved && selected.sammy_approved !== 'Offen' && (
+                    <span className={`inline-block mt-1 text-[10px] font-medium rounded-full px-2 py-0.5 ${selected.sammy_approved === 'Kann schreiben' ? 'text-emerald-400 bg-emerald-500/10' : selected.sammy_approved === 'Nicht schreiben' ? 'text-red-400 bg-red-500/10' : 'text-blue-400 bg-blue-500/10'}`}>
+                      {selected.sammy_approved === 'Kann schreiben' ? '✅ Kann schreiben' : selected.sammy_approved === 'Nicht schreiben' ? '🚫 Nicht schreiben' : '🤝 Bereits zusammengearbeitet'}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
