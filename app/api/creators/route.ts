@@ -14,11 +14,13 @@ export async function GET(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser(token)
   if (!user) return NextResponse.json([], { status: 200 })
 
-  const { data, error } = await supabase
+  const typeParam = req.nextUrl.searchParams.get('type') || 'creator'
+  let query = supabase
     .from('creators')
     .select('*')
     .eq('user_id', user.id)
-    .order('created_at', { ascending: false })
+  if (typeParam !== 'all') query = query.eq('type', typeParam)
+  const { data, error } = await query.order('created_at', { ascending: false })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
@@ -29,17 +31,33 @@ export async function POST(req: NextRequest) {
   const token = authHeader?.replace('Bearer ', '')
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (user) body.user_id = user.id
+  body.type = body.type === 'celeb' ? 'celeb' : 'creator'
 
   const norm = (s: any) => (s || '').toString().trim().replace('@', '').toLowerCase()
-  const igNorm = norm(body.ig)
-  const ttNorm = norm(body.tt)
-  if (user && (igNorm || ttNorm)) {
-    const { data: existing } = await supabase
-      .from('creators')
-      .select('id, ig, tt')
-      .eq('user_id', user.id)
-    const dup = (existing || []).find((c: any) => (igNorm && norm(c.ig) === igNorm) || (ttNorm && norm(c.tt) === ttNorm))
-    if (dup) return NextResponse.json({ error: 'Dieser Creator ist bereits in der Liste.' }, { status: 409 })
+
+  if (user && body.type === 'celeb') {
+    const nameNorm = norm(body.name)
+    if (nameNorm) {
+      const { data: existing } = await supabase
+        .from('creators')
+        .select('id, name')
+        .eq('user_id', user.id)
+        .eq('type', 'celeb')
+      const dup = (existing || []).find((c: any) => norm(c.name) === nameNorm)
+      if (dup) return NextResponse.json({ error: 'Diese Person ist bereits bei Celebs in der Liste.' }, { status: 409 })
+    }
+  } else if (user) {
+    const igNorm = norm(body.ig)
+    const ttNorm = norm(body.tt)
+    if (igNorm || ttNorm) {
+      const { data: existing } = await supabase
+        .from('creators')
+        .select('id, ig, tt')
+        .eq('user_id', user.id)
+        .eq('type', 'creator')
+      const dup = (existing || []).find((c: any) => (igNorm && norm(c.ig) === igNorm) || (ttNorm && norm(c.tt) === ttNorm))
+      if (dup) return NextResponse.json({ error: 'Dieser Creator ist bereits in der Liste.' }, { status: 409 })
+    }
   }
 
   const { data, error } = await supabase

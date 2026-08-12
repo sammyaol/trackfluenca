@@ -113,6 +113,7 @@ export default function Discovery() {
       const token = await getToken()
       const body = {
         name: result.name || igHandle || ttHandle,
+        type: 'creator',
         ig: igHandle ? '@' + igHandle.replace('@', '') : '',
         tt: ttHandle ? '@' + ttHandle.replace('@', '') : '',
         ig_follower: result.igFollower || 0,

@@ -104,7 +104,7 @@ export default function CreatorPage() {
     sb.auth.getSession().then(async ({data: sessionData}) => {
       const userId = sessionData.session?.user?.id
       if (!userId) return
-      const { data } = await sb.from('creators').select('*').eq('user_id', userId).order('created_at', {ascending: false})
+      const { data } = await sb.from('creators').select('*').eq('user_id', userId).eq('type', 'creator').order('created_at', {ascending: false})
       if (!mounted || !data) return
       setTableLoading(false)
       setCreators(data.map((c: any) => ({
@@ -283,7 +283,7 @@ export default function CreatorPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
       body: JSON.stringify({
-        name: form.name, ig, tt,
+        name: form.name, ig, tt, type: 'creator',
         ig_follower: d.igFollower || 0, tt_follower: d.ttFollower || 0,
         ig_tier: d.igTier || getTier(d.igFollower || 0), tt_tier: d.ttTier || '',
         ig_er: d.igEr || 0, tt_er: d.ttEr || 0,
@@ -314,7 +314,7 @@ export default function CreatorPage() {
     }
     // Hole neu erstellten Creator (mit ID) und simuliere 30 Tage Snapshots
     const token2 = await getToken()
-    const resAll = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token2 } })
+    const resAll = await fetch('/api/creators?type=creator', { headers: { authorization: 'Bearer ' + token2 } })
     const allData = await resAll.json()
     if (Array.isArray(allData)) {
       const newCreator = allData.find((c:any) => c.ig === ig && c.name === form.name)
@@ -356,7 +356,7 @@ export default function CreatorPage() {
         await Promise.all(snapshots)
       }
     }
-    const res = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token2 } })
+    const res = await fetch('/api/creators?type=creator', { headers: { authorization: 'Bearer ' + token2 } })
     const data = await res.json()
     if (Array.isArray(data)) setCreators(data.map((c: any) => ({
       name: c.name || '', ig: c.ig || '', tt: c.tt || '',
@@ -663,7 +663,7 @@ export default function CreatorPage() {
                   setRefreshing(true)
                   const token = await getToken()
                   // Hole alle Creator
-                  const res = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
+                  const res = await fetch('/api/creators?type=creator', { headers: { authorization: 'Bearer ' + token } })
                   const data = await res.json()
                   if (Array.isArray(data)) {
                     // Für jeden Creator: frische API-Daten holen + Snapshot speichern
@@ -706,7 +706,7 @@ export default function CreatorPage() {
                       } catch(e) { console.error('Fehler bei', c.name, e) }
                     }
                     // Neu laden
-                    const res2 = await fetch('/api/creators', { headers: { authorization: 'Bearer ' + token } })
+                    const res2 = await fetch('/api/creators?type=creator', { headers: { authorization: 'Bearer ' + token } })
                     const data2 = await res2.json()
                     if (Array.isArray(data2)) {
                       setCreators(data2.map((c: any) => ({
