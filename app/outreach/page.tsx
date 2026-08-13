@@ -179,9 +179,9 @@ function OutreachInner() {
     })
   }, [])
   const sammyBand = (c:any) => {
+    if (c.sammy_approved === 'Nicht schreiben' || c.sammy_approved === 'Bereits zusammengearbeitet') return 3
     if (c.sammy_approved === 'Kann schreiben') return 0
-    if (c.sammy_approved === 'Bereits zusammengearbeitet') return 1
-    if (c.sammy_approved === 'Nicht schreiben') return 3
+    if (c.type === 'celeb' && !msgSet.has(c.id)) return 0
     return 2
   }
   const prio = (c:any) => {
