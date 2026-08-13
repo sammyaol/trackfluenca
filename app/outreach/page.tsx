@@ -215,7 +215,7 @@ function OutreachInner() {
               <button key={c.id} onClick={() => setSelected(c)}
                 className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
-                  {c.ig_image ? <img src={c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
+                  {(c.tt_image || c.ig_image) ? <img src={c.tt_image || c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
@@ -254,7 +254,7 @@ function OutreachInner() {
             <>
               <div className="p-4 border-b border-hairline-soft flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden">
-                  {selected.ig_image ? <img src={selected.ig_image} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
+                  {(selected.tt_image || selected.ig_image) ? <img src={selected.tt_image || selected.ig_image} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
                 </div>
                 <div>
                   <div className="text-ink-1 text-sm font-medium">{selected.name}</div>

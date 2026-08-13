@@ -17,6 +17,7 @@ type Celeb = {
   ig_follower?: number
   ig_tier?: string
   ig_image?: string
+  tt_image?: string
   ig_verified?: boolean
 }
 
@@ -207,7 +208,7 @@ export default function CelebsPage() {
               <button key={c.id} onClick={() => { setSelected(c); setConfirmDelete(false); setEditingIg(false) }}
                 className="w-full flex items-center gap-4 px-6 py-4 border-b border-hairline-soft last:border-b-0 text-left hover:bg-white/[0.03] transition-colors">
                 <div className="w-10 h-10 rounded-full bg-[#BF5AF2]/20 flex items-center justify-center text-[#BF5AF2] text-sm font-semibold flex-shrink-0 overflow-hidden">
-                  {c.ig_image ? <img src={c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
+                  {(c.tt_image || c.ig_image) ? <img src={c.tt_image || c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-ink-1 text-sm font-medium truncate">{c.name}</div>
@@ -229,7 +230,7 @@ export default function CelebsPage() {
               <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft sticky top-0 bg-surface-0 z-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-[#BF5AF2]/20 flex items-center justify-center text-[#BF5AF2] font-semibold text-lg overflow-hidden">
-                    {selected.ig_image ? <img src={selected.ig_image} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
+                    {(selected.tt_image || selected.ig_image) ? <img src={selected.tt_image || selected.ig_image} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
                   </div>
                   <div>
                     <div className="text-ink-1 font-semibold text-base flex items-center gap-1.5">

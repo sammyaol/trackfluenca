@@ -24,7 +24,7 @@ export default function CompanyBanner() {
   if (!show || dismissed) return null
 
   return (
-    <div className="fixed top-0 left-0 right-0 md:left-60 z-50 bg-amber-500/[0.08] backdrop-blur-xl border-b border-amber-500/15 px-4 py-2.5">
+    <div className="fixed top-0 left-0 right-0 md:left-60 z-50 bg-[#3a2a0f] border-b border-amber-500/15 px-4 py-2.5">
       <div className="flex items-center justify-between gap-3 max-w-7xl mx-auto">
         <div className="flex items-center gap-2 text-xs">
           <span className="text-amber-400">⚠</span>

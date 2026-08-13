@@ -42,7 +42,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-surface-0/95 backdrop-blur-2xl border-r border-hairline-soft fixed h-full z-30">
+      <aside className="hidden md:flex w-60 flex-col bg-surface-0/98 backdrop-blur-sm border-r border-hairline-soft fixed h-full z-30">
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="w-8 h-8 rounded-apple-sm bg-accent flex items-center justify-center flex-shrink-0 shadow-apple-sm">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -93,7 +93,7 @@ export default function Sidebar() {
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink-4 group-hover:text-ink-2 transition-colors"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             {showMenu && (
-              <div className="absolute bottom-12 left-0 right-0 bg-surface-3/95 backdrop-blur-xl border border-hairline rounded-apple-lg p-2 space-y-1 shadow-apple-lg">
+              <div className="absolute bottom-12 left-0 right-0 bg-surface-3/98 backdrop-blur-sm border border-hairline rounded-apple-lg p-2 space-y-1 shadow-apple-lg">
                 <Link href="/einstellungen" onClick={() => setShowMenu(false)} className="flex items-center gap-2 px-3 py-2 rounded-apple-sm hover:bg-white/[0.05] text-ink-2 text-xs transition-colors">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 0 0-16 0"/></svg>
                   Profil bearbeiten
@@ -109,7 +109,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-0/90 backdrop-blur-2xl border-t border-hairline-soft flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-0/97 backdrop-blur-sm border-t border-hairline-soft flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
         {nav.flatMap(g => g.items).slice(0, 7).map(item => {
           const active = path === item.href;
           return (
