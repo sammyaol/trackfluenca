@@ -51,6 +51,8 @@ function OutreachInner() {
         if (chatRichtung !== 'kommentar') {
           setMsgSet(prev => new Set(prev).add(selected.id))
           setLrMap(prev => ({ ...prev, [selected.id]: chatRichtung }))
+        } else {
+          setCommentSet(prev => new Set(prev).add(selected.id))
         }
       }
     } finally { setSendingChat(false) }
@@ -74,7 +76,18 @@ function OutreachInner() {
     const { data } = await sb.auth.getSession()
     const token = data.session?.access_token || ''
     await fetch('/api/aktivitaeten/' + id, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })
-    setNachrichten(prev => prev.filter(m => m.id !== id))
+    setNachrichten(prev => {
+      const next = prev.filter(m => m.id !== id)
+      if (selected?.id) {
+        const stillHasComment = next.some(m => m.richtung === 'kommentar')
+        setCommentSet(cs => {
+          const copy = new Set(cs)
+          if (stillHasComment) copy.add(selected.id); else copy.delete(selected.id)
+          return copy
+        })
+      }
+      return next
+    })
   }
   const copyMsg = async (m: any) => {
     try {
@@ -162,6 +175,7 @@ function OutreachInner() {
   const [arrivedSet, setArrivedSet] = useState<Set<string>>(new Set())
   const [msgSet, setMsgSet] = useState<Set<string>>(new Set())
   const [lrMap, setLrMap] = useState({} as Record<string, string>)
+  const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token || ''
@@ -173,9 +187,15 @@ function OutreachInner() {
       const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
       const ms = new Set<string>()
       const lr: Record<string, string> = {}
-      if (Array.isArray(akt)) akt.forEach((a: any) => { if (a.creator_id && (a.richtung === 'raus' || a.richtung === 'rein')) { ms.add(a.creator_id); lr[a.creator_id] = a.richtung } })
+      const cs = new Set<string>()
+      if (Array.isArray(akt)) akt.forEach((a: any) => {
+        if (!a.creator_id) return
+        if (a.richtung === 'raus' || a.richtung === 'rein') { ms.add(a.creator_id); lr[a.creator_id] = a.richtung }
+        if (a.richtung === 'kommentar') cs.add(a.creator_id)
+      })
       setMsgSet(ms)
       setLrMap(lr)
+      setCommentSet(cs)
     })
   }, [])
   const sammyBand = (c:any) => {
@@ -230,6 +250,9 @@ function OutreachInner() {
                     {c.sammy_approved === 'Bereits zusammengearbeitet' && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-400 bg-blue-500/10 rounded-full px-2 py-0.5">&#129309; Bereits zusammengearbeitet</span>
                     )}
+                    {commentSet.has(c.id) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">&#128172; Sammy Kommentar</span>
+                    )}
                     {arrivedSet.has(c.id) ? (
                       <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</span>
                     ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
@@ -259,11 +282,16 @@ function OutreachInner() {
                 <div>
                   <div className="text-ink-1 text-sm font-medium">{selected.name}</div>
                   <div className="text-ink-4 text-xs">{selected.ig || ''}</div>
-                  {selected.sammy_approved && selected.sammy_approved !== 'Offen' && (
-                    <span className={`inline-block mt-1 text-[10px] font-medium rounded-full px-2 py-0.5 ${selected.sammy_approved === 'Kann schreiben' ? 'text-emerald-400 bg-emerald-500/10' : selected.sammy_approved === 'Nicht schreiben' ? 'text-red-400 bg-red-500/10' : 'text-blue-400 bg-blue-500/10'}`}>
-                      {selected.sammy_approved === 'Kann schreiben' ? '✅ Kann schreiben' : selected.sammy_approved === 'Nicht schreiben' ? '🚫 Nicht schreiben' : '🤝 Bereits zusammengearbeitet'}
-                    </span>
-                  )}
+                  <div className="flex flex-wrap items-center gap-1 mt-1">
+                    {selected.sammy_approved && selected.sammy_approved !== 'Offen' && (
+                      <span className={`inline-block text-[10px] font-medium rounded-full px-2 py-0.5 ${selected.sammy_approved === 'Kann schreiben' ? 'text-emerald-400 bg-emerald-500/10' : selected.sammy_approved === 'Nicht schreiben' ? 'text-red-400 bg-red-500/10' : 'text-blue-400 bg-blue-500/10'}`}>
+                        {selected.sammy_approved === 'Kann schreiben' ? '✅ Kann schreiben' : selected.sammy_approved === 'Nicht schreiben' ? '🚫 Nicht schreiben' : '🤝 Bereits zusammengearbeitet'}
+                      </span>
+                    )}
+                    {commentSet.has(selected.id) && (
+                      <span className="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 text-red-400 bg-red-500/10">&#128172; Sammy Kommentar</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex-1 overflow-y-auto p-6 space-y-3">
