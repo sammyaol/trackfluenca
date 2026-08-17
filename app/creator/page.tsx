@@ -3,6 +3,13 @@ import { useState, useEffect } from 'react'
 import Sidebar from '../components/Sidebar'
 import { createBrowserClient } from '@supabase/ssr'
 
+const avatarSrc = (url?: string | null) => {
+  if (!url) return url as any
+  if (url.includes('cdninstagram.com') || url.includes('fbcdn.net') || url.includes('tiktokcdn')) {
+    return '/api/img-proxy?url=' + encodeURIComponent(url)
+  }
+  return url
+}
 
 
 type Creator = {
@@ -846,7 +853,7 @@ export default function CreatorPage() {
                           <div className="relative flex-shrink-0 w-12 h-9">
                             <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#FF375F] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</span>
-                              {(c.ttImage || c.igImage) && <img src={c.ttImage || c.igImage} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).remove() }} />}
+                              {(c.ttImage || c.igImage) && <img src={avatarSrc(c.ttImage || c.igImage)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).remove() }} />}
                             </div>
                             <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-hairline bg-[#555] flex items-center justify-center overflow-hidden z-20">
                               {c.tt
@@ -966,7 +973,7 @@ export default function CreatorPage() {
               <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft sticky top-0 bg-surface-0 z-10">
                 <div className="flex items-center gap-4">
                   {(selected.ttImage || selected.igImage) ? (
-                    <img src={selected.ttImage || selected.igImage} alt={selected.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    <img src={avatarSrc(selected.ttImage || selected.igImage)} alt={selected.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-[#FF375F]/20 flex items-center justify-center text-[#FF375F] font-semibold text-xl">
                       {selected.name.split(' ').map(n => n[0]).join('')}

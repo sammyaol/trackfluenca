@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const ALLOWED_HOSTS = [/\.cdninstagram\.com$/, /\.fbcdn\.net$/]
+const ALLOWED_HOSTS = [/\.cdninstagram\.com$/, /\.fbcdn\.net$/, /\.tiktokcdn(-us|-eu)?\.com$/, /\.ibyteimg\.com$/, /\.tiktokcdn\.com$/]
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
