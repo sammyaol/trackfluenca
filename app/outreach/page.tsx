@@ -265,7 +265,7 @@ function OutreachInner() {
                       <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</span>
                     ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
-                    ) : (!msgSet.has(c.id) ? (
+                    ) : (!msgSet.has(c.id) && c.sammy_approved !== 'Nicht schreiben' && c.sammy_approved !== 'Bereits zusammengearbeitet' ? (
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
                     ) : null))}
                   </div>
