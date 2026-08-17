@@ -47,7 +47,9 @@ export default function ReelsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState(emptyForm)
   const [creatorSearch, setCreatorSearch] = useState('')
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ current: number, total: number } | null>(null)
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -92,7 +94,7 @@ export default function ReelsPage() {
   const openAdd = () => {
     setEditingId(null)
     setForm(emptyForm)
-    setFile(null)
+    setFiles([])
     setUploadError('')
     setCreatorSearch('')
     setShowModal(true)
@@ -101,7 +103,7 @@ export default function ReelsPage() {
   const openEdit = (r: Reel) => {
     setEditingId(r.id)
     setForm({ title: r.title || '', category: r.category || '', creatorIds: r.creator_ids || [] })
-    setFile(null)
+    setFiles([])
     setUploadError('')
     setCreatorSearch('')
     setShowModal(true)
@@ -129,35 +131,47 @@ export default function ReelsPage() {
       return
     }
 
-    if (!file) { setUploadError('Bitte eine Videodatei auswählen'); return }
+    if (files.length === 0) { setUploadError('Bitte mindestens eine Videodatei auswählen'); return }
     setUploading(true)
-    try {
-      const urlRes = await fetch('/api/reels/upload-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ filename: file.name }),
-      })
-      const urlData = await urlRes.json()
-      if (!urlRes.ok) throw new Error(urlData.error || 'Upload-URL fehlgeschlagen')
+    const failed: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i]
+      setUploadProgress({ current: i + 1, total: files.length })
+      try {
+        const urlRes = await fetch('/api/reels/upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ filename: f.name }),
+        })
+        const urlData = await urlRes.json()
+        if (!urlRes.ok) throw new Error(urlData.error || 'Upload-URL fehlgeschlagen')
 
-      const { error: uploadErr } = await sb.storage.from('reels').uploadToSignedUrl(urlData.path, urlData.token, file)
-      if (uploadErr) throw uploadErr
+        const { error: uploadErr } = await sb.storage.from('reels').uploadToSignedUrl(urlData.path, urlData.token, f)
+        if (uploadErr) throw uploadErr
 
-      const saveRes = await fetch('/api/reels', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ path: urlData.path, title: form.title, category: form.category, creatorIds: form.creatorIds }),
-      })
-      const saveData = await saveRes.json()
-      if (!saveRes.ok) throw new Error(saveData.error || 'Speichern fehlgeschlagen')
+        const titleForFile = files.length > 1
+          ? (form.title ? `${form.title} (${i + 1})` : f.name.replace(/\.[^/.]+$/, ''))
+          : (form.title || f.name.replace(/\.[^/.]+$/, ''))
 
-      setShowModal(false)
-      load()
-    } catch (e: any) {
-      setUploadError(e.message || 'Upload fehlgeschlagen')
-    } finally {
-      setUploading(false)
+        const saveRes = await fetch('/api/reels', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ path: urlData.path, title: titleForFile, category: form.category, creatorIds: form.creatorIds }),
+        })
+        const saveData = await saveRes.json()
+        if (!saveRes.ok) throw new Error(saveData.error || 'Speichern fehlgeschlagen')
+      } catch (e: any) {
+        failed.push(f.name)
+      }
     }
+    setUploading(false)
+    setUploadProgress(null)
+    if (failed.length > 0) {
+      setUploadError(`Fehlgeschlagen: ${failed.join(', ')}`)
+    } else {
+      setShowModal(false)
+    }
+    load()
   }
 
   const deleteReel = async (id: string) => {
@@ -265,9 +279,32 @@ export default function ReelsPage() {
               <div className="p-6 flex flex-col gap-4">
                 {!editingId && (
                   <div>
-                    <label className={labelCls}>Videodatei</label>
-                    <input ref={fileInputRef} type="file" accept="video/*" onChange={e => setFile(e.target.files?.[0] || null)}
-                      className="w-full text-ink-2 text-xs file:mr-3 file:px-3 file:py-2 file:rounded-apple-sm file:border-0 file:bg-white/[0.08] file:text-ink-1 file:text-xs file:cursor-pointer" />
+                    <label className={labelCls}>Videodateien (mehrere möglich)</label>
+                    <div
+                      onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                      onDragLeave={() => setIsDragging(false)}
+                      onDrop={e => {
+                        e.preventDefault()
+                        setIsDragging(false)
+                        const dropped = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('video/'))
+                        if (dropped.length) setFiles(prev => [...prev, ...dropped])
+                      }}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`w-full border-2 border-dashed rounded-apple-sm px-4 py-6 text-center cursor-pointer transition-colors ${isDragging ? 'border-accent bg-accent/5' : 'border-hairline'}`}>
+                      <input ref={fileInputRef} type="file" accept="video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])])}
+                        className="hidden" />
+                      <div className="text-xs text-ink-3">Dateien hierher ziehen oder klicken zum Auswählen</div>
+                      {files.length > 0 && (
+                        <div className="mt-3 flex flex-col gap-1 text-left" onClick={e => e.stopPropagation()}>
+                          {files.map((f, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs text-ink-2 bg-white/[0.05] rounded-apple-sm px-2 py-1">
+                              <span className="truncate">{f.name}</span>
+                              <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-ink-4 hover:text-red-400 ml-2 flex-shrink-0">×</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div>
@@ -297,7 +334,7 @@ export default function ReelsPage() {
                 {uploadError && <div className="text-red-400 text-xs">{uploadError}</div>}
                 <button onClick={save} disabled={uploading}
                   className="w-full py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors disabled:opacity-50">
-                  {uploading ? 'Wird gespeichert...' : (editingId ? 'Speichern' : 'Hochladen')}
+                  {uploading ? (uploadProgress ? `Lade ${uploadProgress.current}/${uploadProgress.total} hoch...` : 'Wird gespeichert...') : (editingId ? 'Speichern' : `Hochladen${files.length > 1 ? ` (${files.length})` : ''}`)}
                 </button>
               </div>
             </div>

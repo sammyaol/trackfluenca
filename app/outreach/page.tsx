@@ -184,6 +184,8 @@ function OutreachInner() {
   const [msgSet, setMsgSet] = useState<Set<string>>(new Set())
   const [lrMap, setLrMap] = useState({} as Record<string, string>)
   const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
+  const [lastAt, setLastAt] = useState({} as Record<string, string>)
+  const [lastRealAt, setLastRealAt] = useState({} as Record<string, string>)
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token || ''
@@ -195,17 +197,36 @@ function OutreachInner() {
       const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
       const ms = new Set<string>()
       const lr: Record<string, string> = {}
-      const cs = new Set<string>()
+      const lastType: Record<string, string> = {}
+      const la: Record<string, string> = {}
+      const lra: Record<string, string> = {}
       if (Array.isArray(akt)) akt.forEach((a: any) => {
         if (!a.creator_id) return
-        if (a.richtung === 'raus' || a.richtung === 'rein') { ms.add(a.creator_id); lr[a.creator_id] = a.richtung }
-        if (a.richtung === 'kommentar') cs.add(a.creator_id)
+        lastType[a.creator_id] = a.richtung
+        la[a.creator_id] = a.created_at
+        if (a.richtung === 'raus' || a.richtung === 'rein') { ms.add(a.creator_id); lr[a.creator_id] = a.richtung; lra[a.creator_id] = a.created_at }
       })
+      const cs = new Set<string>()
+      Object.keys(lastType).forEach(cid => { if (lastType[cid] === 'kommentar') cs.add(cid) })
       setMsgSet(ms)
       setLrMap(lr)
       setCommentSet(cs)
+      setLastAt(la)
+      setLastRealAt(lra)
     })
   }, [])
+  const daysSince = (iso?: string) => { if (!iso) return 0; return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000) }
+  const timeAgo = (iso?: string) => {
+    if (!iso) return ''
+    const diffMs = Date.now() - new Date(iso).getTime()
+    const mins = Math.floor(diffMs / 60000)
+    if (mins < 1) return 'gerade eben'
+    if (mins < 60) return `vor ${mins} Min.`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `vor ${hours} Std.`
+    const days = Math.floor(hours / 24)
+    return `vor ${days} Tag${days === 1 ? '' : 'en'}`
+  }
   const sammyBand = (c:any) => {
     if (c.sammy_approved === 'Nicht schreiben' || c.sammy_approved === 'Bereits zusammengearbeitet') return 3
     if (c.sammy_approved === 'Kann schreiben') return 0
@@ -222,7 +243,13 @@ function OutreachInner() {
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
     return !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
-  }).slice().sort((a:any,b:any) => prio(a) - prio(b))
+  }).slice().sort((a:any,b:any) => {
+    const pa = prio(a), pb = prio(b)
+    if (pa !== pb) return pa - pb
+    const ta = lastAt[a.id] ? new Date(lastAt[a.id]).getTime() : 0
+    const tb = lastAt[b.id] ? new Date(lastAt[b.id]).getTime() : 0
+    return tb - ta
+  })
 
   return (
     <div className="h-screen bg-surface-0 text-ink-1 overflow-hidden">
@@ -239,14 +266,21 @@ function OutreachInner() {
           <div className="flex-1 overflow-y-auto">
             {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
             {!loading && filtered.length === 0 && <div className="p-4 text-ink-4 text-sm">Keine Creator</div>}
-            {filtered.map(c => (
+            {filtered.map(c => {
+              const overdue = msgSet.has(c.id) && lrMap[c.id] === 'raus' && daysSince(lastRealAt[c.id]) >= 3
+              return (
               <button key={c.id} onClick={() => setSelected(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''}`}>
+                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${overdue ? 'bg-red-500/[0.06] border-l-2 border-l-red-500' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
                   {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
+                    {lastAt[c.id] && (
+                      <span className={`text-[10px] flex-shrink-0 ${overdue ? 'text-red-400 font-semibold' : 'text-ink-4'}`}>{timeAgo(lastAt[c.id])}</span>
+                    )}
+                  </div>
                   <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     {c.sammy_approved === 'Kann schreiben' && (
@@ -264,14 +298,18 @@ function OutreachInner() {
                     {arrivedSet.has(c.id) ? (
                       <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</span>
                     ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
+                      overdue ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-red-500 rounded-full px-2 py-0.5">&#128308; Seit {daysSince(lastRealAt[c.id])} Tagen keine Antwort</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
+                      )
                     ) : (!msgSet.has(c.id) && c.sammy_approved !== 'Nicht schreiben' && c.sammy_approved !== 'Bereits zusammengearbeitet' ? (
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
                     ) : null))}
                   </div>
                 </div>
               </button>
-            ))}
+            )})}
           </div>
         </div>
 
@@ -298,6 +336,12 @@ function OutreachInner() {
                     )}
                     {commentSet.has(selected.id) && (
                       <span className="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 text-red-400 bg-red-500/10">&#128172; Sammy Kommentar</span>
+                    )}
+                    {msgSet.has(selected.id) && lrMap[selected.id] === 'raus' && daysSince(lastRealAt[selected.id]) >= 3 && (
+                      <span className="inline-block text-[10px] font-semibold rounded-full px-2 py-0.5 text-white bg-red-500">&#128308; Seit {daysSince(lastRealAt[selected.id])} Tagen keine Antwort</span>
+                    )}
+                    {lastAt[selected.id] && (
+                      <span className="inline-block text-[10px] text-ink-4">{timeAgo(lastAt[selected.id])}</span>
                     )}
                   </div>
                 </div>
