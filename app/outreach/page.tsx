@@ -234,10 +234,12 @@ function OutreachInner() {
     return 2
   }
   const prio = (c:any) => {
-    let p = 3
-    if (arrivedSet.has(c.id)) p = 0
-    else if (msgSet.has(c.id) && lrMap[c.id] === 'raus') p = 1
-    else if (!msgSet.has(c.id)) p = 2
+    let p = 4
+    const overdue = msgSet.has(c.id) && lrMap[c.id] === 'raus' && daysSince(lastRealAt[c.id]) >= 3
+    if (overdue) p = 0
+    else if (arrivedSet.has(c.id)) p = 1
+    else if (msgSet.has(c.id) && lrMap[c.id] === 'raus') p = 2
+    else if (!msgSet.has(c.id)) p = 3
     return sammyBand(c) * 10 + p
   }
   const filtered = creators.filter(c => {
