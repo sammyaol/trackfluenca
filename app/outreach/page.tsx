@@ -186,6 +186,7 @@ function OutreachInner() {
   const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
   const [lastAt, setLastAt] = useState({} as Record<string, string>)
   const [lastRealAt, setLastRealAt] = useState({} as Record<string, string>)
+  const [sortMode, setSortMode] = useState<'wichtigkeit' | 'datum'>('wichtigkeit')
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token || ''
@@ -229,7 +230,6 @@ function OutreachInner() {
   }
   const sammyBand = (c:any) => {
     if (c.sammy_approved === 'Nicht schreiben' || c.sammy_approved === 'Bereits zusammengearbeitet') return 3
-    if (c.sammy_approved === 'Kann schreiben') return 0
     if (c.type === 'celeb' && !msgSet.has(c.id)) return 0
     return 2
   }
@@ -246,10 +246,14 @@ function OutreachInner() {
     const s = search.toLowerCase()
     return !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
   }).slice().sort((a:any,b:any) => {
-    const pa = prio(a), pb = prio(b)
-    if (pa !== pb) return pa - pb
     const ta = lastAt[a.id] ? new Date(lastAt[a.id]).getTime() : 0
     const tb = lastAt[b.id] ? new Date(lastAt[b.id]).getTime() : 0
+    if (sortMode === 'datum') {
+      if (ta !== tb) return tb - ta
+      return prio(a) - prio(b)
+    }
+    const pa = prio(a), pb = prio(b)
+    if (pa !== pb) return pa - pb
     return tb - ta
   })
 
@@ -264,6 +268,16 @@ function OutreachInner() {
             <h1 className="text-ink-1 font-semibold text-lg mb-3">Outreach</h1>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen..."
               className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent" />
+            <div className="flex gap-2 mt-2">
+              <button onClick={() => setSortMode('wichtigkeit')}
+                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'wichtigkeit' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Wichtigkeit
+              </button>
+              <button onClick={() => setSortMode('datum')}
+                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'datum' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Datum
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
