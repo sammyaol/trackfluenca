@@ -24,6 +24,8 @@ export default function Discovery() {
   const [adding, setAdding] = useState(false)
   const [added, setAdded] = useState(false)
   const [history, setHistory] = useState<any[]>([])
+  const [targetGender, setTargetGender] = useState('')
+  const [targetAge, setTargetAge] = useState('')
 
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
 
@@ -67,7 +69,7 @@ export default function Discovery() {
         setLoading(false)
         return
       }
-      const enriched = { ...data, igHandle, ttHandle }
+      const enriched = { ...data, igHandle, ttHandle, targetGender, targetAge }
       setResult(enriched)
       setHistory(prev => [enriched, ...prev.filter(h => h.igHandle !== enriched.igHandle || h.ttHandle !== enriched.ttHandle)].slice(0, 10))
       setLoading(false)
@@ -95,7 +97,7 @@ export default function Discovery() {
       }
       setIgHandle(handle)
       setTtHandle('')
-      const enriched = { ...data, igHandle: handle, ttHandle: '' }
+      const enriched = { ...data, igHandle: handle, ttHandle: '', targetGender, targetAge }
       setResult(enriched)
       setSuggestions([])
       setHistory(prev => [enriched, ...prev.filter((h: any) => h.igHandle !== handle)].slice(0, 10))
@@ -187,6 +189,32 @@ export default function Discovery() {
                   className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-3 py-2.5 text-ink-1 text-sm focus:outline-none focus:border-accent/50 transition-colors"/>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              <div>
+                <label className="text-ink-2 text-xs block mb-1.5">Ziel-Geschlecht (optional)</label>
+                <select value={targetGender} onChange={e => setTargetGender(e.target.value)}
+                  className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-3 py-2.5 text-ink-1 text-sm focus:outline-none focus:border-accent/50 transition-colors">
+                  <option value="">Egal</option>
+                  <option value="Weiblich">Weiblich</option>
+                  <option value="Männlich">Männlich</option>
+                  <option value="Divers">Divers</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-ink-2 text-xs block mb-1.5">Ziel-Altersgruppe (optional)</label>
+                <select value={targetAge} onChange={e => setTargetAge(e.target.value)}
+                  className="w-full bg-surface-0 border border-hairline rounded-apple-sm px-3 py-2.5 text-ink-1 text-sm focus:outline-none focus:border-accent/50 transition-colors">
+                  <option value="">Egal</option>
+                  <option value="13_17">13–17</option>
+                  <option value="18_24">18–24</option>
+                  <option value="25_34">25–34</option>
+                  <option value="35_44">35–44</option>
+                  <option value="45_plus">45+</option>
+                </select>
+              </div>
+            </div>
+            <p className="text-ink-4 text-[10px] -mt-2 mb-4">Werden als Suchkriterium bei der Suche gespeichert (in der Historie sichtbar). FlashAPI liefert für Vorschläge keine Alters-/Geschlechtsdaten, daher wird die Vorschlagsliste dadurch nicht gefiltert.</p>
 
             <button onClick={search} disabled={loading || (!igHandle && !ttHandle)}
               className="w-full md:w-auto px-6 py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
@@ -334,11 +362,18 @@ export default function Discovery() {
                         </div>
                       </div>
                     </div>
-                    {(h.overallTier || h.igTier) && (
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${tierStyle[h.overallTier || h.igTier]}`}>
-                        {h.overallTier || h.igTier}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {(h.targetGender || h.targetAge) && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-medium text-purple-400 bg-purple-950/60 border border-purple-800/30">
+                          {h.targetGender || ''}{h.targetGender && h.targetAge ? ' · ' : ''}{h.targetAge ? h.targetAge.replace('_', '–').replace('plus', '+') : ''}
+                        </span>
+                      )}
+                      {(h.overallTier || h.igTier) && (
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-medium ${tierStyle[h.overallTier || h.igTier]}`}>
+                          {h.overallTier || h.igTier}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

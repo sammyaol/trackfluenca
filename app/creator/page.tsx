@@ -31,6 +31,7 @@ type Creator = {
   igTopCities?: {name: string, pct: number}[];
   igGenderMale?: number; igGenderFemale?: number;
   igTopAge?: string; igAgeDistribution?: {age: string, pct: number}[];
+  geschlecht?: string;
   igRealFollowers?: number; igFakeFollowers?: number;
   igFollowerWachstum7d?: number; igQualityScore?: number; igPostsPerWeek?: number;
   ttImage?: string; ttVerified?: boolean; ttAvgVideoViews?: number; ttAvgVideoLikes?: number;
@@ -74,6 +75,7 @@ const allColumns = [
   { key: 'sammyApproved', label: 'Sammy Approved', group: 'Basis' },
   { key: 'prio', label: 'Priorität', group: 'Basis' },
   { key: 'kategorie', label: 'Kategorie', group: 'Basis' },
+  { key: 'geschlecht', label: 'Geschlecht', group: 'Basis' },
   { key: 'ig', label: 'IG Handle', group: 'Instagram' },
   { key: 'igFollower', label: 'IG Follower', group: 'Instagram' },
   { key: 'igTier', label: 'IG Tier', group: 'Instagram' },
@@ -142,6 +144,7 @@ export default function CreatorPage() {
         igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
         igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
         ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+        geschlecht: c.geschlecht || '',
         tkpReel: c.tkp_reel, _id: c.id,
       })))
       // Engagement-Summen aus Postings nachladen und mergen
@@ -173,6 +176,7 @@ export default function CreatorPage() {
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterTier, setFilterTier] = useState('')
+  const [filterGeschlecht, setFilterGeschlecht] = useState('')
   const [selected, setSelected] = useState<Creator | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -392,6 +396,7 @@ export default function CreatorPage() {
       igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
       igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
       ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+      geschlecht: c.geschlecht || '',
       tkpReel: c.tkp_reel, _id: c.id,
     })))
     setSaving(false)
@@ -522,6 +527,7 @@ export default function CreatorPage() {
     return (!s || c.name.toLowerCase().includes(s) || c.ig.includes(s) || c.promoCode.toLowerCase().includes(s))
       && (!filterStatus || c.status === filterStatus)
       && (!filterTier || c.overallTier === filterTier)
+      && (!filterGeschlecht || c.geschlecht === filterGeschlecht)
   })
 
   const fmt = (n?: number) => n && n > 0 ? n.toLocaleString('de-DE') : '—'
@@ -583,6 +589,27 @@ export default function CreatorPage() {
       case 'status': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${statusStyle[c.status]}`}>{c.status}</span>
       case 'prio': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${c.prio === 'Hoch' ? 'text-red-400 bg-red-950 border border-red-800/30' : c.prio === 'Mittel' ? 'text-amber-400 bg-amber-950 border border-amber-800/30' : 'text-ink-2 bg-surface-3 border border-hairline/50'}`}>{c.prio}</span>
       case 'kategorie': return <span className="text-ink-2 text-sm">{c.kategorie}</span>
+      case 'geschlecht': {
+        const v = (c as any).geschlecht || ''
+        const color = v === 'Weiblich' ? 'bg-pink-500/15 text-pink-400 border-pink-500/30'
+          : v === 'Männlich' ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
+          : v === 'Divers' ? 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+          : 'bg-ink-3/15 text-ink-2 border-hairline/30'
+        return (
+          <select value={v} onClick={e => e.stopPropagation()} onChange={async e => {
+            e.stopPropagation()
+            const newV = e.target.value
+            const token = await getToken()
+            await fetch('/api/creators/' + (c as any)._id, { method: 'PATCH', headers: {'Content-Type':'application/json', authorization:'Bearer '+token}, body: JSON.stringify({ geschlecht: newV }) })
+            setCreators(prev => prev.map(x => x === c ? {...x, geschlecht: newV} : x))
+          }} className={`text-xs px-2 py-1 rounded-full border ${color} cursor-pointer focus:outline-none`}>
+            <option value="">Unbekannt</option>
+            <option value="Weiblich">Weiblich</option>
+            <option value="Männlich">Männlich</option>
+            <option value="Divers">Divers</option>
+          </select>
+        )
+      }
       case 'igFollower': return <span className="text-ink-2 text-sm">{fmt(c.igFollower)}</span>
       case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.igTier]}`}>{c.igTier}</span> : <span className="text-ink-4">{dash}</span>
       case 'igEr': return <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
@@ -743,6 +770,7 @@ export default function CreatorPage() {
                         igAvgLikes: c.ig_avg_likes, igAvgComments: c.ig_avg_comments,
                         igAvgReelViews: c.ig_avg_reel_views, ttImage: c.tt_image,
                         ttVerified: c.tt_verified, ttAvgVideoViews: c.tt_avg_video_views,
+                        geschlecht: c.geschlecht || '',
                         tkpReel: c.tkp_reel, _id: c.id,
                       })))
                     }
@@ -780,6 +808,11 @@ export default function CreatorPage() {
               className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
               <option value="">Alle Tiers</option>
               {['Nano', 'Micro', 'Mid-Tier', 'Macro', 'Top-Tier'].map(t => <option key={t}>{t}</option>)}
+            </select>
+            <select value={filterGeschlecht} onChange={e => setFilterGeschlecht(e.target.value)}
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
+              <option value="">Alle Geschlechter</option>
+              {['Weiblich', 'Männlich', 'Divers'].map(g => <option key={g}>{g}</option>)}
             </select>
           </div>
 
