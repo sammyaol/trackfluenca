@@ -1457,6 +1457,14 @@ export default function CreatorPage() {
                               })
                               const d = await res.json()
                               if (d.id) {
+                                // TikTok-Kooperationsvideo automatisch in Reels laden (still, nicht blockierend)
+                                if (postingForm.post_link && /tiktok\.com/i.test(postingForm.post_link)) {
+                                  fetch('/api/reels/auto-import', {
+                                    method: 'POST',
+                                    headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
+                                    body: JSON.stringify({ postLink: postingForm.post_link, creatorId: (selected as any)._id })
+                                  }).catch(() => {})
+                                }
                                 const newPostings = [d, ...postings]
                                 setPostings(newPostings)
                                 setExpandedPostings((prev:any) => ({...prev, [(selected as any)._id]: newPostings}))

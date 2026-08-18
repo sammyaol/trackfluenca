@@ -25,6 +25,7 @@ type Reel = {
   id: string
   title?: string
   category?: string
+  video_type?: 'kooperation' | 'beispiel'
   video_path: string
   video_url: string
   creator_ids: string[]
@@ -38,9 +39,11 @@ type CreatorLite = {
   tt?: string
   ig_image?: string
   tt_image?: string
+  geschlecht?: string
+  ig_top_age?: string
 }
 
-const emptyForm = { title: '', category: '', creatorIds: [] as string[] }
+const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' }
 
 export default function ReelsPage() {
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -52,6 +55,9 @@ export default function ReelsPage() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [creatorFilter, setCreatorFilter] = useState('')
+  const [videoTypeFilter, setVideoTypeFilter] = useState<'' | 'kooperation' | 'beispiel'>('')
+  const [genderFilter, setGenderFilter] = useState('')
+  const [ageFilter, setAgeFilter] = useState('')
 
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -98,7 +104,11 @@ export default function ReelsPage() {
     const matchesSearch = !s || (r.title || '').toLowerCase().includes(s) || (r.category || '').toLowerCase().includes(s)
     const matchesCategory = !categoryFilter || r.category === categoryFilter
     const matchesCreator = !creatorFilter || r.creator_ids.includes(creatorFilter)
-    return matchesSearch && matchesCategory && matchesCreator
+    const matchesVideoType = !videoTypeFilter || (r.video_type || 'beispiel') === videoTypeFilter
+    const linkedCreators = r.creator_ids.map(id => creatorById[id]).filter(Boolean) as CreatorLite[]
+    const matchesGender = !genderFilter || linkedCreators.some(c => c.geschlecht === genderFilter)
+    const matchesAge = !ageFilter || linkedCreators.some(c => c.ig_top_age === ageFilter)
+    return matchesSearch && matchesCategory && matchesCreator && matchesVideoType && matchesGender && matchesAge
   })
 
   const openAdd = () => {
@@ -112,7 +122,7 @@ export default function ReelsPage() {
 
   const openEdit = (r: Reel) => {
     setEditingId(r.id)
-    setForm({ title: r.title || '', category: r.category || '', creatorIds: r.creator_ids || [] })
+    setForm({ title: r.title || '', category: r.category || '', creatorIds: r.creator_ids || [], videoType: (r.video_type as any) || 'beispiel' })
     setFiles([])
     setUploadError('')
     setCreatorSearch('')
@@ -132,7 +142,7 @@ export default function ReelsPage() {
       const res = await fetch(`/api/reels/${editingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: form.title, category: form.category, creatorIds: form.creatorIds }),
+        body: JSON.stringify({ title: form.title, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType }),
       })
       setUploading(false)
       if (!res.ok) { setUploadError('Speichern fehlgeschlagen'); return }
@@ -166,7 +176,7 @@ export default function ReelsPage() {
         const saveRes = await fetch('/api/reels', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ path: urlData.path, title: titleForFile, category: form.category, creatorIds: form.creatorIds }),
+          body: JSON.stringify({ path: urlData.path, title: titleForFile, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType }),
         })
         const saveData = await saveRes.json()
         if (!saveRes.ok) throw new Error(saveData.error || 'Speichern fehlgeschlagen')
@@ -225,6 +235,28 @@ export default function ReelsPage() {
               <option value="">Alle Creator</option>
               {creators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+            <select value={videoTypeFilter} onChange={e => setVideoTypeFilter(e.target.value as any)}
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
+              <option value="">Alle Videotypen</option>
+              <option value="kooperation">Kooperationsvideo</option>
+              <option value="beispiel">Beispielvideo</option>
+            </select>
+            <select value={genderFilter} onChange={e => setGenderFilter(e.target.value)}
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
+              <option value="">Alle Geschlechter</option>
+              <option value="Weiblich">Weiblich</option>
+              <option value="Männlich">Männlich</option>
+              <option value="Divers">Divers</option>
+            </select>
+            <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)}
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
+              <option value="">Alle Altersgruppen</option>
+              <option value="13_17">13–17</option>
+              <option value="18_24">18–24</option>
+              <option value="25_34">25–34</option>
+              <option value="35_44">35–44</option>
+              <option value="45_plus">45+</option>
+            </select>
           </div>
 
           {loading && <div className="text-ink-4 text-sm">Lädt...</div>}
@@ -236,6 +268,11 @@ export default function ReelsPage() {
                 <video src={r.video_url} controls preload="metadata" className="w-full aspect-[9/16] bg-black object-cover" />
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${ (r.video_type || 'beispiel') === 'kooperation' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/[0.08] text-ink-3'}`}>
+                        {(r.video_type || 'beispiel') === 'kooperation' ? 'Kooperation' : 'Beispiel'}
+                      </span>
+                    </div>
                     <div className="text-ink-1 text-sm font-medium truncate">{r.title || 'Ohne Titel'}</div>
                     {r.category && <div className="text-ink-4 text-xs mt-0.5">{r.category}</div>}
                   </div>
@@ -317,6 +354,19 @@ export default function ReelsPage() {
                     </div>
                   </div>
                 )}
+                <div>
+                  <label className={labelCls}>Video-Typ</label>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'beispiel' }))}
+                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'beispiel' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                      Beispielvideo
+                    </button>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'kooperation' }))}
+                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'kooperation' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                      Kooperationsvideo
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label className={labelCls}>Titel</label>
                   <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={inputCls} placeholder="z.B. Unboxing Beispiel" />

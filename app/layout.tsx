@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import CompanyBanner from "./components/CompanyBanner";
+import ClaudeSupport from "./components/ClaudeSupport";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-surface-0 text-ink-1">
         <CompanyBanner />
         {children}
+        <ClaudeSupport />
       </body>
     </html>
   );
