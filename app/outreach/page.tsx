@@ -33,7 +33,7 @@ function OutreachInner() {
   const [nachrichten, setNachrichten] = useState<any[]>([])
   const [loadingChat, setLoadingChat] = useState(false)
   const [neueNachricht, setNeueNachricht] = useState('')
-  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'|'kommentar'>('rein')
+  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'|'kommentar'|'kommentar_philipp'>('rein')
   const [chatKanal, setChatKanal] = useState('Instagram')
   const [sendingChat, setSendingChat] = useState(false)
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null)
@@ -66,11 +66,13 @@ function OutreachInner() {
       if (res.ok) {
         setNachrichten(prev => [...prev, d])
         setNeueNachricht('')
-        if (chatRichtung !== 'kommentar') {
+        if (chatRichtung === 'raus' || chatRichtung === 'rein') {
           setMsgSet(prev => new Set(prev).add(selected.id))
           setLrMap(prev => ({ ...prev, [selected.id]: chatRichtung }))
-        } else {
+        } else if (chatRichtung === 'kommentar') {
           setCommentSet(prev => new Set(prev).add(selected.id))
+        } else {
+          setPhilippCommentSet(prev => new Set(prev).add(selected.id))
         }
       }
     } finally { setSendingChat(false) }
@@ -98,9 +100,15 @@ function OutreachInner() {
       const next = prev.filter(m => m.id !== id)
       if (selected?.id) {
         const stillHasComment = next.some(m => m.richtung === 'kommentar')
+        const stillHasPhilippComment = next.some(m => m.richtung === 'kommentar_philipp')
         setCommentSet(cs => {
           const copy = new Set(cs)
           if (stillHasComment) copy.add(selected.id); else copy.delete(selected.id)
+          return copy
+        })
+        setPhilippCommentSet(cs => {
+          const copy = new Set(cs)
+          if (stillHasPhilippComment) copy.add(selected.id); else copy.delete(selected.id)
           return copy
         })
       }
@@ -169,7 +177,13 @@ function OutreachInner() {
     })
   }
   const updateBestellungField = async (bid: string, field: string, value: any) => {
-    setBestellungen((prev:any) => prev.map((b:any) => b.id === bid ? { ...b, [field]: value } : b))
+    let updatedRef: any = null
+    setBestellungen((prev:any) => prev.map((b:any) => {
+      if (b.id !== bid) return b
+      updatedRef = { ...b, [field]: value }
+      return updatedRef
+    }))
+    if (selected?.id && updatedRef) setBestellMap(bm => ({ ...bm, [selected.id]: updatedRef }))
     const { data } = await sb.auth.getSession()
     const token = data.session?.access_token || ''
     await fetch('/api/bestellungen/' + bid, {
@@ -178,17 +192,66 @@ function OutreachInner() {
       body: JSON.stringify({ [field]: value })
     })
   }
-  const createBestellungWithTracking = async (trackingNumber: string) => {
+  const updateBestellungStatus = async (b: any, status: string) => {
+    const extra: any = { status }
+    if (status === 'Versendet' && !b.versandt_am) extra.versandt_am = new Date().toISOString().slice(0,10)
+    if (status === 'Angekommen' && !b.angekommen_am) extra.angekommen_am = new Date().toISOString().slice(0,10)
+    const updated = { ...b, ...extra }
+    setBestellungen((prev:any) => prev.map((x:any) => x.id === b.id ? updated : x))
+    if (selected?.id) setBestellMap(prev => ({ ...prev, [selected.id]: updated }))
+    if (status === 'Angekommen') setArrivedSet(prev => new Set(prev).add(b.creator_id))
+    else setArrivedSet(prev => { const copy = new Set(prev); copy.delete(b.creator_id); return copy })
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/bestellungen/' + b.id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify(extra)
+    })
+  }
+  const [dhlTracking, setDhlTracking] = useState<Record<string, any>>({})
+  const [dhlLoading, setDhlLoading] = useState<string | null>(null)
+  const trackShipment = async (b: any) => {
+    if (!b.tracking_nummer) return
+    setDhlLoading(b.id)
+    try {
+      const res = await fetch('/api/tracking?number=' + encodeURIComponent(b.tracking_nummer))
+      const data = await res.json()
+      setDhlTracking(prev => ({ ...prev, [b.id]: data }))
+      if (data.status && data.status !== b.status && !data.error) {
+        await updateBestellungStatus(b, data.status)
+      }
+    } finally {
+      setDhlLoading(null)
+    }
+  }
+  const markVersendet = async () => {
     if (!selected?.id) return
+    const heute = new Date().toISOString().slice(0,10)
     const { data } = await sb.auth.getSession()
     const token = data.session?.access_token || ''
     const res = await fetch('/api/bestellungen', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
-      body: JSON.stringify({ creator_id: selected.id, produkt: '', status: 'Nicht versendet', tracking_nummer: trackingNumber })
+      body: JSON.stringify({ creator_id: selected.id, produkt: '', status: 'Versendet', versandt_am: heute })
     })
     const neu = await res.json()
     setBestellungen((prev:any) => [...prev, neu])
+    setBestellMap(prev => ({ ...prev, [selected.id]: neu }))
+  }
+  const createBestellungWithTracking = async (trackingNumber: string) => {
+    if (!selected?.id) return
+    const heute = new Date().toISOString().slice(0,10)
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    const res = await fetch('/api/bestellungen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+      body: JSON.stringify({ creator_id: selected.id, produkt: '', status: 'Versendet', tracking_nummer: trackingNumber, versandt_am: heute })
+    })
+    const neu = await res.json()
+    setBestellungen((prev:any) => [...prev, neu])
+    setBestellMap(prev => ({ ...prev, [selected.id]: neu }))
   }
   const [arrivedSet, setArrivedSet] = useState<Set<string>>(new Set())
   const [msgSet, setMsgSet] = useState<Set<string>>(new Set())
@@ -196,15 +259,25 @@ function OutreachInner() {
   const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
   const [lastAt, setLastAt] = useState({} as Record<string, string>)
   const [lastRealAt, setLastRealAt] = useState({} as Record<string, string>)
-  const [sortMode, setSortMode] = useState<'wichtigkeit' | 'datum'>('wichtigkeit')
+  const [sortMode, setSortMode] = useState<'wichtigkeit' | 'datum' | 'versand'>('wichtigkeit')
+  const [personFilter, setPersonFilter] = useState<'none' | 'sammy' | 'philipp'>('none')
+  const [philippCommentSet, setPhilippCommentSet] = useState<Set<string>>(new Set())
+  const [bestellMap, setBestellMap] = useState<Record<string, any>>({})
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
       const token = data.session?.access_token || ''
       const res = await fetch('/api/bestellungen', { headers: { authorization: 'Bearer ' + token } })
       const best = await res.json()
       const ang = new Set<string>()
-      if (Array.isArray(best)) best.forEach((b:any) => { if (b.status === 'Angekommen' && b.creator_id) ang.add(b.creator_id) })
+      const bm: Record<string, any> = {}
+      if (Array.isArray(best)) best.forEach((b:any) => {
+        if (!b.creator_id) return
+        if (b.status === 'Angekommen') ang.add(b.creator_id)
+        const existing = bm[b.creator_id]
+        if (!existing || new Date(b.created_at || 0).getTime() >= new Date(existing.created_at || 0).getTime()) bm[b.creator_id] = b
+      })
       setArrivedSet(ang)
+      setBestellMap(bm)
       const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
       const ms = new Set<string>()
       const lr: Record<string, string> = {}
@@ -218,10 +291,15 @@ function OutreachInner() {
         if (a.richtung === 'raus' || a.richtung === 'rein') { ms.add(a.creator_id); lr[a.creator_id] = a.richtung; lra[a.creator_id] = a.created_at }
       })
       const cs = new Set<string>()
-      Object.keys(lastType).forEach(cid => { if (lastType[cid] === 'kommentar') cs.add(cid) })
+      const csp = new Set<string>()
+      Object.keys(lastType).forEach(cid => {
+        if (lastType[cid] === 'kommentar') cs.add(cid)
+        if (lastType[cid] === 'kommentar_philipp') csp.add(cid)
+      })
       setMsgSet(ms)
       setLrMap(lr)
       setCommentSet(cs)
+      setPhilippCommentSet(csp)
       setLastAt(la)
       setLastRealAt(lra)
     })
@@ -238,6 +316,11 @@ function OutreachInner() {
     const days = Math.floor(hours / 24)
     return `vor ${days} Tag${days === 1 ? '' : 'en'}`
   }
+  const shipStatus = (c:any) => bestellMap[c.id]?.status || 'Nicht versendet'
+  const shipTracking = (c:any) => bestellMap[c.id]?.tracking_nummer || ''
+  const shipDaysSince = (c:any) => daysSince(bestellMap[c.id]?.versandt_am)
+  const needsTracking = (c:any) => shipStatus(c) === 'Versendet' && !shipTracking(c) && shipDaysSince(c) >= 2
+  const needsArrivalCheck = (c:any) => !!shipTracking(c) && shipStatus(c) !== 'Angekommen' && shipDaysSince(c) >= 4
   const sammyBand = (c:any) => {
     if (c.sammy_approved === 'Nicht schreiben' || c.sammy_approved === 'Bereits zusammengearbeitet') return 3
     if (c.type === 'celeb' && !msgSet.has(c.id)) return 0
@@ -245,12 +328,23 @@ function OutreachInner() {
   }
   const prio = (c:any) => {
     let p = 4
-    const overdue = msgSet.has(c.id) && lrMap[c.id] === 'raus' && daysSince(lastRealAt[c.id]) >= 3
-    if (overdue) p = 0
+    if (needsTracking(c) || needsArrivalCheck(c)) p = 0
     else if (arrivedSet.has(c.id)) p = 1
     else if (msgSet.has(c.id) && lrMap[c.id] === 'raus') p = 2
     else if (!msgSet.has(c.id)) p = 3
     return sammyBand(c) * 10 + p
+  }
+  const versandPrio = (c:any) => {
+    if (needsTracking(c)) return 0
+    if (needsArrivalCheck(c)) return 1
+    if (arrivedSet.has(c.id)) return 2
+    return 3
+  }
+  const personBoost = (c:any) => {
+    if (sortMode !== 'wichtigkeit' || personFilter === 'none') return 1
+    if (personFilter === 'sammy' && philippCommentSet.has(c.id)) return 0
+    if (personFilter === 'philipp' && commentSet.has(c.id)) return 0
+    return 1
   }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
@@ -262,6 +356,15 @@ function OutreachInner() {
       if (ta !== tb) return tb - ta
       return prio(a) - prio(b)
     }
+    if (sortMode === 'versand') {
+      const va = versandPrio(a), vb = versandPrio(b)
+      if (va !== vb) return va - vb
+      const da = shipDaysSince(a), db = shipDaysSince(b)
+      if (da !== db) return db - da
+      return tb - ta
+    }
+    const ba = personBoost(a), bb = personBoost(b)
+    if (ba !== bb) return ba - bb
     const pa = prio(a), pb = prio(b)
     if (pa !== pb) return pa - pb
     return tb - ta
@@ -287,16 +390,30 @@ function OutreachInner() {
                 className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'datum' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
                 Datum
               </button>
+              <button onClick={() => setSortMode('versand')}
+                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'versand' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Versand
+              </button>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <button onClick={() => { setPersonFilter(p => p === 'sammy' ? 'none' : 'sammy'); setSortMode('wichtigkeit') }}
+                className={`flex-1 text-[11px] font-medium rounded-apple-sm px-2 py-1 transition-colors ${personFilter === 'sammy' ? 'bg-red-500/20 text-red-400' : 'bg-surface-2 text-ink-4 hover:text-ink-2'}`}>
+                Sammy-Filter
+              </button>
+              <button onClick={() => { setPersonFilter(p => p === 'philipp' ? 'none' : 'philipp'); setSortMode('wichtigkeit') }}
+                className={`flex-1 text-[11px] font-medium rounded-apple-sm px-2 py-1 transition-colors ${personFilter === 'philipp' ? 'bg-violet-500/20 text-violet-400' : 'bg-surface-2 text-ink-4 hover:text-ink-2'}`}>
+                Philipp-Filter
+              </button>
             </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
             {!loading && filtered.length === 0 && <div className="p-4 text-ink-4 text-sm">Keine Creator</div>}
             {filtered.map(c => {
-              const overdue = msgSet.has(c.id) && lrMap[c.id] === 'raus' && daysSince(lastRealAt[c.id]) >= 3
+              const shipUrgent = needsTracking(c) || needsArrivalCheck(c)
               return (
               <button key={c.id} onClick={() => setSelected(c)}
-                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${overdue ? 'bg-red-500/[0.06] border-l-2 border-l-red-500' : ''}`}>
+                className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${shipUrgent ? 'bg-amber-500/[0.06] border-l-2 border-l-amber-500' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
                   {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : initials(c.name)}
                 </div>
@@ -304,7 +421,7 @@ function OutreachInner() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
                     {lastAt[c.id] && (
-                      <span className={`text-[10px] flex-shrink-0 ${overdue ? 'text-red-400 font-semibold' : 'text-ink-4'}`}>{timeAgo(lastAt[c.id])}</span>
+                      <span className="text-[10px] flex-shrink-0 text-ink-4">{timeAgo(lastAt[c.id])}</span>
                     )}
                   </div>
                   <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
@@ -321,14 +438,19 @@ function OutreachInner() {
                     {commentSet.has(c.id) && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">&#128172; Sammy Kommentar</span>
                     )}
+                    {philippCommentSet.has(c.id) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-400 bg-violet-500/10 rounded-full px-2 py-0.5">&#128172; Philipp Kommentar</span>
+                    )}
+                    {needsTracking(c) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-amber-500 rounded-full px-2 py-0.5">&#128230; Trackingnummer fehlt (seit {shipDaysSince(c)}T)</span>
+                    )}
+                    {needsArrivalCheck(c) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-blue-500 rounded-full px-2 py-0.5">&#128231; Nachfragen: Paket da? (seit {shipDaysSince(c)}T)</span>
+                    )}
                     {arrivedSet.has(c.id) ? (
                       <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#128230; Anweisungen schicken</span>
                     ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
-                      overdue ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-red-500 rounded-full px-2 py-0.5">&#128308; Seit {daysSince(lastRealAt[c.id])} Tagen keine Antwort</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
-                      )
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
                     ) : (!msgSet.has(c.id) && c.sammy_approved !== 'Nicht schreiben' && c.sammy_approved !== 'Bereits zusammengearbeitet' ? (
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
                     ) : null))}
@@ -363,8 +485,8 @@ function OutreachInner() {
                     {commentSet.has(selected.id) && (
                       <span className="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 text-red-400 bg-red-500/10">&#128172; Sammy Kommentar</span>
                     )}
-                    {msgSet.has(selected.id) && lrMap[selected.id] === 'raus' && daysSince(lastRealAt[selected.id]) >= 3 && (
-                      <span className="inline-block text-[10px] font-semibold rounded-full px-2 py-0.5 text-white bg-red-500">&#128308; Seit {daysSince(lastRealAt[selected.id])} Tagen keine Antwort</span>
+                    {philippCommentSet.has(selected.id) && (
+                      <span className="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 text-violet-400 bg-violet-500/10">&#128172; Philipp Kommentar</span>
                     )}
                     {lastAt[selected.id] && (
                       <span className="inline-block text-[10px] text-ink-4">{timeAgo(lastAt[selected.id])}</span>
@@ -384,24 +506,28 @@ function OutreachInner() {
                       <button onClick={() => deleteMsg(m.id)} title="Löschen" className="text-ink-3 hover:text-red-400 text-[11px] w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/[0.08]">&#128465;</button>
                     </div>
                   )
-                  if (m.richtung === 'kommentar') {
+                  if (m.richtung === 'kommentar' || m.richtung === 'kommentar_philipp') {
+                    const isPhilipp = m.richtung === 'kommentar_philipp'
+                    const cx = isPhilipp
+                      ? { bubble: 'bg-violet-500/10 border-violet-500/30', label: 'text-violet-400', text: 'text-violet-100', meta: 'text-violet-400/60', cancel: 'text-violet-300' }
+                      : { bubble: 'bg-red-500/10 border-red-500/30', label: 'text-red-400', text: 'text-red-100', meta: 'text-red-400/60', cancel: 'text-red-300' }
                     return (
                       <div key={m.id} className="flex justify-center">
-                        <div className="group relative max-w-[85%] rounded-apple-lg px-4 py-2 bg-red-500/10 border border-red-500/30">
+                        <div className={`group relative max-w-[85%] rounded-apple-lg px-4 py-2 border ${cx.bubble}`}>
                           {msgActions}
-                          <div className="text-[10px] font-semibold text-red-400 mb-0.5">&#128172; Sammy Kommentar</div>
+                          <div className={`text-[10px] font-semibold ${cx.label} mb-0.5`}>&#128172; {isPhilipp ? 'Philipp Kommentar' : 'Sammy Kommentar'}</div>
                           {isEditing ? (
                             <div className="space-y-1">
-                              <textarea value={editMsgText} onChange={e => setEditMsgText(e.target.value)} rows={2} className="w-full bg-black/20 rounded px-2 py-1 text-sm text-red-100 focus:outline-none resize-none" />
+                              <textarea value={editMsgText} onChange={e => setEditMsgText(e.target.value)} rows={2} className={`w-full bg-black/20 rounded px-2 py-1 text-sm ${cx.text} focus:outline-none resize-none`} />
                               <div className="flex gap-1 justify-end">
-                                <button onClick={() => saveEditMsg(m.id)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-red-100">Speichern</button>
-                                <button onClick={cancelEditMsg} className="text-[10px] px-2 py-0.5 rounded hover:bg-white/10 text-red-300">Abbrechen</button>
+                                <button onClick={() => saveEditMsg(m.id)} className={`text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 ${cx.text}`}>Speichern</button>
+                                <button onClick={cancelEditMsg} className={`text-[10px] px-2 py-0.5 rounded hover:bg-white/10 ${cx.cancel}`}>Abbrechen</button>
                               </div>
                             </div>
                           ) : (
                             <>
-                              <div className="text-sm whitespace-pre-wrap break-words text-red-100">{m.notiz}</div>
-                              <div className="text-[10px] mt-1 text-red-400/60">{m.datum || ''}</div>
+                              <div className={`text-sm whitespace-pre-wrap break-words ${cx.text}`}>{m.notiz}</div>
+                              <div className={`text-[10px] mt-1 ${cx.meta}`}>{m.datum || ''}</div>
                             </>
                           )}
                         </div>
@@ -433,10 +559,11 @@ function OutreachInner() {
                 })}
               </div>
               <div className="p-3 border-t border-hairline-soft">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <button onClick={() => setChatRichtung('rein')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-ink-3 hover:text-ink-2'}`}>Von Creator</button>
                   <button onClick={() => setChatRichtung('raus')} className={`text-xs px-3 py-1 rounded-apple-sm ${chatRichtung==='raus' ? 'bg-accent/20 text-accent' : 'text-ink-3 hover:text-ink-2'}`}>Von mir</button>
                   <button onClick={() => setChatRichtung('kommentar')} className={`text-xs px-3 py-1 rounded-apple-sm flex items-center gap-1 ${chatRichtung==='kommentar' ? 'bg-red-500/20 text-red-400' : 'text-ink-3 hover:text-ink-2'}`}><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>Sammy Kommentar</button>
+                  <button onClick={() => setChatRichtung('kommentar_philipp')} className={`text-xs px-3 py-1 rounded-apple-sm flex items-center gap-1 ${chatRichtung==='kommentar_philipp' ? 'bg-violet-500/20 text-violet-400' : 'text-ink-3 hover:text-ink-2'}`}><span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block"></span>Philipp Kommentar</button>
                   <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-2 focus:outline-none ml-auto">
                     <option>Instagram</option><option>Mail</option><option>Telefon</option><option>Sonstiges</option>
                   </select>
@@ -492,8 +619,9 @@ function OutreachInner() {
                 {bestellungen.length === 0 && (
                 <div className="space-y-1.5">
                   <div className="text-ink-4 text-xs">Keine Bestellung</div>
+                  <button onClick={markVersendet} className="w-full text-[11px] font-medium text-white bg-amber-500 hover:bg-amber-600 rounded-apple-sm px-2 py-1.5 transition-colors">&#128230; Als versendet markieren</button>
                   <input
-                    placeholder="Tracking-Nummer eintragen..."
+                    placeholder="Oder Tracking-Nummer eintragen..."
                     onBlur={e => { if (e.target.value.trim()) { createBestellungWithTracking(e.target.value.trim()) } }}
                     className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-[11px] font-mono focus:outline-none"
                   />
@@ -502,13 +630,32 @@ function OutreachInner() {
                 {bestellungen.map((b:any) => {
                   const st = b.status || 'Nicht versendet'
                   const farbe = st === 'Angekommen' ? 'bg-emerald-500/15 text-emerald-400' : (st === 'Nicht versendet' ? 'bg-surface-3/40 text-ink-2' : 'bg-blue-500/15 text-blue-400')
+                  const dhl = dhlTracking[b.id]
                   return (
                     <div key={b.id} className="space-y-1">
                       <div className="flex justify-between items-center gap-2">
                         <span className="text-ink-2 text-xs truncate">{b.produkt || 'Produkt'}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ${farbe}`}>{st}</span>
+                        <select value={st} onChange={e => updateBestellungStatus(b, e.target.value)}
+                          className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 border-0 cursor-pointer focus:outline-none ${farbe}`}>
+                          <option value="Nicht versendet">Nicht versendet</option>
+                          <option value="Versendet">Versendet</option>
+                          <option value="Angekommen">Angekommen</option>
+                        </select>
                       </div>
-                      <input key={b.id} defaultValue={b.tracking_nummer || ""} placeholder="Tracking-Nummer" onBlur={e => { if (e.target.value !== (b.tracking_nummer || "")) { updateBestellungField(b.id, "tracking_nummer", e.target.value) } }} className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1 text-ink-1 text-[11px] font-mono focus:outline-none" />
+                      <div className="flex items-center gap-1">
+                        <input key={b.id} defaultValue={b.tracking_nummer || ""} placeholder="Tracking-Nummer" onBlur={e => { if (e.target.value !== (b.tracking_nummer || "")) { updateBestellungField(b.id, "tracking_nummer", e.target.value) } }} className="flex-1 bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1 text-ink-1 text-[11px] font-mono focus:outline-none" />
+                        {b.tracking_nummer && (
+                          <button onClick={() => trackShipment(b)} disabled={dhlLoading === b.id} title="DHL-Status abrufen" className="text-ink-3 hover:text-ink-1 text-xs px-1.5 transition-colors">
+                            {dhlLoading === b.id ? <span className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin inline-block"/> : '↻'}
+                          </button>
+                        )}
+                      </div>
+                      {dhl && !dhl.error && (
+                        <div className="text-[10px] text-ink-3">{dhl.description}{dhl.lastUpdate ? ' · ' + new Date(dhl.lastUpdate).toLocaleDateString('de-DE') : ''}</div>
+                      )}
+                      {dhl?.error && (
+                        <div className="text-[10px] text-red-400/70">DHL: {dhl.error}</div>
+                      )}
                     </div>
                   )
                 })}
