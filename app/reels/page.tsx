@@ -10,6 +10,16 @@ const avatarSrc = (url?: string | null) => {
   }
   return url
 }
+const avatarOnError = (fallbackUrl?: string | null) => (e: any) => {
+  const img = e.currentTarget as HTMLImageElement
+  if (fallbackUrl && img.dataset.fb !== '1') {
+    img.dataset.fb = '1'
+    img.src = avatarSrc(fallbackUrl) as string
+  } else {
+    img.style.display = 'none'
+  }
+}
+
 
 type Reel = {
   id: string
@@ -237,7 +247,7 @@ export default function ReelsPage() {
                         return (
                           <span key={cid} className="inline-flex items-center gap-1.5 text-[10px] text-ink-2 bg-white/[0.05] rounded-full pl-1 pr-2 py-0.5">
                             <span className="w-4 h-4 rounded-full bg-[#30D158]/30 overflow-hidden flex items-center justify-center text-[8px] flex-shrink-0">
-                              {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" /> : (c.name || '?')[0]}
+                              {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : (c.name || '?')[0]}
                             </span>
                             {c.name}
                           </span>

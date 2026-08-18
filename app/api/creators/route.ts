@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cacheAvatarUrl } from '@/lib/avatarCache'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -68,18 +69,16 @@ export async function POST(req: NextRequest) {
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const imageUrl = body.ig_image || body.tt_image
-  if (imageUrl && data?.id) {
+  if (data?.id) {
     try {
-      const imgRes = await fetch(imageUrl)
-      if (imgRes.ok) {
-        const buffer = await imgRes.arrayBuffer()
-        await supabase.storage.from('avatars').upload(`${data.id}.jpg`, buffer, {
-          contentType: 'image/jpeg', upsert: true
-        })
-        const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(`${data.id}.jpg`)
-        await supabase.from('creators').update({ ig_image: urlData.publicUrl }).eq('id', data.id)
-        data.ig_image = urlData.publicUrl
+      const updates: any = {}
+      const newIg = await cacheAvatarUrl(supabase, data.id, body.ig_image, 'ig')
+      const newTt = await cacheAvatarUrl(supabase, data.id, body.tt_image, 'tt')
+      if (newIg && newIg !== body.ig_image) updates.ig_image = newIg
+      if (newTt && newTt !== body.tt_image) updates.tt_image = newTt
+      if (Object.keys(updates).length) {
+        await supabase.from('creators').update(updates).eq('id', data.id)
+        Object.assign(data, updates)
       }
     } catch {}
   }

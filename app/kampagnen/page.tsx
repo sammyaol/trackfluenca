@@ -12,6 +12,16 @@ const avatarSrc = (url?: string | null) => {
   }
   return url
 }
+const avatarOnError = (fallbackUrl?: string | null) => (e: any) => {
+  const img = e.currentTarget as HTMLImageElement
+  if (fallbackUrl && img.dataset.fb !== '1') {
+    img.dataset.fb = '1'
+    img.src = avatarSrc(fallbackUrl) as string
+  } else {
+    img.style.display = 'none'
+  }
+}
+
 
 const farben = ['from-violet-600 to-purple-800','from-blue-600 to-cyan-800','from-amber-600 to-orange-800','from-emerald-600 to-teal-800','from-rose-600 to-pink-800']
 const statusStyle: Record<string, string> = {
@@ -216,7 +226,7 @@ export default function Kampagnen() {
                     ) : allCreators.filter((c:any) => (c.kampagne || '') === selected.name).map((c:any) => (
                       <a key={c.id} href={'/outreach?creator=' + c.id} className="flex items-center gap-3 bg-surface-0 rounded-apple-sm px-3 py-2 border border-hairline-soft hover:border-white/20 hover:bg-white/[0.03] transition-colors cursor-pointer">
                         {(c.tt_image || c.ig_image) ? (
-                          <img src={avatarSrc(c.tt_image || c.ig_image)} className="w-6 h-6 rounded-full object-cover" />
+                          <img src={avatarSrc(c.tt_image || c.ig_image)} className="w-6 h-6 rounded-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} />
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-[#FF9F0A]/20 flex items-center justify-center text-xs text-[#FF9F0A]">{c.name?.[0]?.toUpperCase()}</div>
                         )}

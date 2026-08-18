@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { cacheAvatarUrl } from '@/lib/avatarCache'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,6 +15,10 @@ export async function PATCH(req: NextRequest, ctx: Context) {
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
+  try {
+    if ('ig_image' in body) body.ig_image = await cacheAvatarUrl(supabase, id, body.ig_image, 'ig')
+    if ('tt_image' in body) body.tt_image = await cacheAvatarUrl(supabase, id, body.tt_image, 'tt')
+  } catch {}
   const { data, error } = await supabase
     .from('creators')
     .update(body)

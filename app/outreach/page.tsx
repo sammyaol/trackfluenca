@@ -11,6 +11,16 @@ const avatarSrc = (url?: string | null) => {
   }
   return url
 }
+const avatarOnError = (fallbackUrl?: string | null) => (e: any) => {
+  const img = e.currentTarget as HTMLImageElement
+  if (fallbackUrl && img.dataset.fb !== '1') {
+    img.dataset.fb = '1'
+    img.src = avatarSrc(fallbackUrl) as string
+  } else {
+    img.style.display = 'none'
+  }
+}
+
 
 function OutreachInner() {
   const searchParams = useSearchParams()
@@ -288,7 +298,7 @@ function OutreachInner() {
               <button key={c.id} onClick={() => setSelected(c)}
                 className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${overdue ? 'bg-red-500/[0.06] border-l-2 border-l-red-500' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
-                  {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
+                  {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -339,7 +349,7 @@ function OutreachInner() {
             <>
               <div className="p-4 border-b border-hairline-soft flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden">
-                  {(selected.tt_image || selected.ig_image) ? <img src={avatarSrc(selected.tt_image || selected.ig_image)} alt="" className="w-full h-full object-cover" /> : initials(selected.name)}
+                  {(selected.tt_image || selected.ig_image) ? <img src={avatarSrc(selected.tt_image || selected.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(selected.tt_image ? selected.ig_image : null)} /> : initials(selected.name)}
                 </div>
                 <div>
                   <div className="text-ink-1 text-sm font-medium">{selected.name}</div>
