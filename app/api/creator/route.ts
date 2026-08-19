@@ -13,6 +13,7 @@ function tkp(views: number, price: number) { return views > 0 ? Math.round((pric
 async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
 async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { try { const r = await fetch(url, { headers }); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} await new Promise(res => setTimeout(res, 400)) } return null }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
+function rawAvg(arr: number[]) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0 }
 function num(v: any) { const n = parseInt(String(v ?? 0), 10); return Number.isFinite(n) ? n : 0 }
 function sanitize(raw: string | null): string { const s = (raw ?? '').trim().replace(/^@/, ''); try { const u = new URL(s.includes('://') ? s : 'https://' + s); const parts = u.pathname.split('/').filter(Boolean); return parts[parts.length-1] || u.hostname.replace('www.','') } catch { return s } }
 
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   const result: any = {}
 
   if (ig) {
-    const profile = await apiFetch(`https://${IG_HOST}/ig/info_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
+    const profile = await apiFetchRetry(`https://${IG_HOST}/ig/info_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
     const u = profile?.user || profile?.data?.user || profile || {}
 
     if (u && u.follower_count != null) {
@@ -62,14 +63,14 @@ export async function GET(req: NextRequest) {
         result.igAvgComments = avg(cmts)
         result.igAvgReelViews = views.length ? avg(views) : 0
         result.igEr = result.igFollower > 0
-          ? Math.round(((avg(lks) + avg(cmts)) / result.igFollower) * 100 * 100) / 100
+          ? Math.round(((rawAvg(lks) + rawAvg(cmts)) / result.igFollower) * 100 * 100) / 100
           : 0
       }
     }
   }
 
   if (tt) {
-    const info = await apiFetch(`https://${TT_HOST}/api/user/info?uniqueId=${encodeURIComponent(tt)}`, TT_H)
+    const info = await apiFetchRetry(`https://${TT_HOST}/api/user/info?uniqueId=${encodeURIComponent(tt)}`, TT_H)
     const ui = info?.userInfo
     let secUid = ''
 
@@ -87,7 +88,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (secUid) {
-      const posts = await apiFetch(`https://${TT_HOST}/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=30&cursor=0`, TT_H)
+      const posts = await apiFetchRetry(`https://${TT_HOST}/api/user/posts?secUid=${encodeURIComponent(secUid)}&count=30&cursor=0`, TT_H)
       const videos = posts?.data?.itemList || posts?.itemList || []
 
       if (videos.length) {
@@ -110,8 +111,9 @@ export async function GET(req: NextRequest) {
           result.ttAvgVideoViews = avg(views)
           result.ttAvgVideoLikes = avg(lks)
           result.ttAvgVideoComments = avg(cmts)
-          if (result.ttFollower && result.ttAvgVideoViews) {
-            result.ttEr = Math.round(((result.ttAvgVideoLikes + result.ttAvgVideoComments) / result.ttAvgVideoViews) * 100 * 10) / 10
+          const ttRawAvgViews = rawAvg(views)
+          if (result.ttFollower && ttRawAvgViews) {
+            result.ttEr = Math.round(((rawAvg(lks) + rawAvg(cmts)) / ttRawAvgViews) * 100 * 10) / 10
           }
         }
       }

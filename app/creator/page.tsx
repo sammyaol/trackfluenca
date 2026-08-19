@@ -216,6 +216,7 @@ export default function CreatorPage() {
   const [expandedPostings, setExpandedPostings] = useState<Record<string,any[]>>({})
   const [postings, setPostings] = useState<any[]>([])
   const [showAddPosting, setShowAddPosting] = useState(false)
+  const [editingPostingId, setEditingPostingId] = useState<string | null>(null)
   const [postingSaving, setPostingSaving] = useState(false)
   const [deletingPosting, setDeletingPosting] = useState<string|null>(null)
   const [loadingPostings, setLoadingPostings] = useState<string|null>(null)
@@ -942,7 +943,7 @@ export default function CreatorPage() {
                           <div className="border-t border-b border-accent/20 bg-surface-1">
                             <div className="flex items-center justify-between px-8 py-2 border-b border-hairline-soft">
                               <span className="text-ink-3 text-[10px]">{expandedPostings[(c as any)._id].length} Posting(s)</span>
-                              <button onClick={e => { e.stopPropagation(); setSelected(c); setDetailTab('postings'); setShowAddPosting(true) }}
+                              <button onClick={e => { e.stopPropagation(); setSelected(c); setDetailTab('postings'); setEditingPostingId(null); setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''}); setPullError(''); setShowAddPosting(true) }}
                                 className="text-[10px] px-2 py-1 rounded-apple-sm bg-accent/20 text-accent hover:bg-accent/30 transition-colors">
                                 + Posting hinzufügen
                               </button>
@@ -971,6 +972,7 @@ export default function CreatorPage() {
                                       e.stopPropagation()
                                       setSelected(c)
                                       setDetailTab('postings')
+                                      setEditingPostingId(p.id)
                                       setPostingForm({kampagne:p.kampagne||'',buchungstyp:p.buchungstyp||'Reel',datum:p.datum||'',fee:p.fee||0,produkt:p.produkt||0,promo_code:p.promo_code||'',org_umsatz:p.org_umsatz||0,org_klicks:p.org_klicks||0,ad_spend:p.ad_spend||0,ad_umsatz:p.ad_umsatz||0,notizen:p.notizen||'',post_link:p.post_link||'',views:p.views||0,likes:p.likes||0,comments:p.comments||0,shares:p.shares||0,caption:p.caption||''})
                                       setShowAddPosting(true)
                                     }} className="text-ink-3 hover:text-ink-1 text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
@@ -1338,7 +1340,7 @@ export default function CreatorPage() {
                 )}
                 {detailTab === 'postings' && (
                   <div className="space-y-3">
-                    <button onClick={() => setShowAddPosting(true)}
+                    <button onClick={() => { setEditingPostingId(null); setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''}); setPullError(''); setShowAddPosting(true) }}
                       className="w-full py-2 rounded-apple-sm border border-dashed border-white/20 text-ink-3 text-xs hover:border-accent hover:text-accent transition-colors">
                       + Neues Posting hinzufügen
                     </button>
@@ -1450,26 +1452,27 @@ export default function CreatorPage() {
                               const ad_roas = postingForm.ad_spend > 0 ? Math.round(postingForm.ad_umsatz/postingForm.ad_spend*100)/100 : 0
                               const ges_umsatz = postingForm.org_umsatz + postingForm.ad_umsatz
                               const ges_roas = (gesamt+postingForm.ad_spend) > 0 ? Math.round(ges_umsatz/(gesamt+postingForm.ad_spend)*100)/100 : 0
-                              const res = await fetch('/api/postings', {
-                                method: 'POST',
+                              const res = await fetch(editingPostingId ? ('/api/postings/'+editingPostingId) : '/api/postings', {
+                                method: editingPostingId ? 'PATCH' : 'POST',
                                 headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
                                 body: JSON.stringify({...postingForm, creator_id: (selected as any)._id, org_roas, ad_roas, ges_umsatz, ges_roas})
                               })
                               const d = await res.json()
+                              if (!res.ok || d.error) { setPullError(d.error || 'Fehler beim Speichern'); (window as any).__postingSaving = false; setPostingSaving(false); return }
                               if (d.id) {
                                 // TikTok-Kooperationsvideo automatisch in Reels laden (still, nicht blockierend)
-                                if (postingForm.post_link && /tiktok\.com/i.test(postingForm.post_link)) {
+                                if (!editingPostingId && postingForm.post_link && /tiktok\.com/i.test(postingForm.post_link)) {
                                   fetch('/api/reels/auto-import', {
                                     method: 'POST',
                                     headers: {'Content-Type':'application/json', authorization:'Bearer '+token},
                                     body: JSON.stringify({ postLink: postingForm.post_link, creatorId: (selected as any)._id })
                                   }).catch(() => {})
                                 }
-                                const newPostings = [d, ...postings]
+                                const newPostings = editingPostingId ? postings.map((p:any) => p.id === d.id ? d : p) : [d, ...postings]
                                 setPostings(newPostings)
                                 setExpandedPostings((prev:any) => ({...prev, [(selected as any)._id]: newPostings}))
                                 setShowAddPosting(false)
-                                setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''}); setPullError('')
+                                setPostingForm({kampagne:'',buchungstyp:'Reel',datum:'',fee:0,produkt:0,promo_code:'',org_umsatz:0,org_klicks:0,ad_spend:0,ad_umsatz:0,notizen:'',post_link:'',views:0,likes:0,comments:0,shares:0,caption:''}); setPullError(''); setEditingPostingId(null)
                                 const totalOrgU = newPostings.reduce((s:number,p:any)=>s+(p.org_umsatz||0),0)
                                 const totalAdU = newPostings.reduce((s:number,p:any)=>s+(p.ad_umsatz||0),0)
                                 const totalFee = newPostings.reduce((s:number,p:any)=>s+(p.fee||0)+(p.produkt||0),0)
@@ -1486,7 +1489,7 @@ export default function CreatorPage() {
                             {postingSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"/>}
                             {postingSaving ? 'Speichern...' : 'Speichern'}
                           </button>
-                          <button onClick={() => setShowAddPosting(false)} className="px-4 py-2 rounded-apple-sm border border-white/10 text-ink-3 text-xs">Abbrechen</button>
+                          <button onClick={() => { setEditingPostingId(null); setPullError(''); setShowAddPosting(false) }} className="px-4 py-2 rounded-apple-sm border border-white/10 text-ink-3 text-xs">Abbrechen</button>
                         </div>
                       </div>
                     )}

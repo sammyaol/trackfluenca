@@ -9,6 +9,10 @@ export async function PATCH(req: NextRequest, ctx: Context) {
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const body = await req.json()
+  if (body.post_link && body.creator_id) {
+    const { data: existing } = await supabase.from('postings').select('id').eq('creator_id', body.creator_id).eq('post_link', body.post_link).eq('user_id', user.id).neq('id', id).maybeSingle()
+    if (existing) return NextResponse.json({ error: 'Dieser Post-Link wurde bereits hinzugefuegt.' }, { status: 409 })
+  }
   const { data, error } = await supabase.from('postings').update(body).eq('id', id).eq('user_id', user.id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
