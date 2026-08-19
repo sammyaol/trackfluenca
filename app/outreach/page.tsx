@@ -176,6 +176,20 @@ function OutreachInner() {
       body: JSON.stringify({ [field]: value })
     })
   }
+  const markRead = async (cid: string) => {
+    setCreators((prev: any) => prev.map((x: any) => x.id === cid ? { ...x, unread: false } : x))
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/creators/' + cid, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ unread: false }) })
+  }
+  const toggleUnread = async (c: any, e: any) => {
+    e.stopPropagation()
+    const next = !c.unread
+    setCreators((prev: any) => prev.map((x: any) => x.id === c.id ? { ...x, unread: next } : x))
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/creators/' + c.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ unread: next }) })
+  }
   const updateBestellungField = async (bid: string, field: string, value: any) => {
     let updatedRef: any = null
     setBestellungen((prev:any) => prev.map((b:any) => {
@@ -258,6 +272,8 @@ function OutreachInner() {
   const [lrMap, setLrMap] = useState({} as Record<string, string>)
   const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
   const [lastAt, setLastAt] = useState({} as Record<string, string>)
+  const [lastMsgMap, setLastMsgMap] = useState({} as Record<string, string>)
+  const [onlyUnread, setOnlyUnread] = useState(false)
   const [lastRealAt, setLastRealAt] = useState({} as Record<string, string>)
   const [sortMode, setSortMode] = useState<'wichtigkeit' | 'datum' | 'versand'>('wichtigkeit')
   const [personFilter, setPersonFilter] = useState<'none' | 'sammy' | 'philipp'>('none')
@@ -278,16 +294,18 @@ function OutreachInner() {
       })
       setArrivedSet(ang)
       setBestellMap(bm)
-      const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at').order('created_at', { ascending: true })
+      const { data: akt } = await sb.from('aktivitaeten').select('creator_id, richtung, created_at, notiz').order('created_at', { ascending: true })
       const ms = new Set<string>()
       const lr: Record<string, string> = {}
       const lastType: Record<string, string> = {}
       const la: Record<string, string> = {}
+      const lm: Record<string, string> = {}
       const lra: Record<string, string> = {}
       if (Array.isArray(akt)) akt.forEach((a: any) => {
         if (!a.creator_id) return
         lastType[a.creator_id] = a.richtung
         la[a.creator_id] = a.created_at
+        lm[a.creator_id] = a.notiz || ''
         if (a.richtung === 'raus' || a.richtung === 'rein') { ms.add(a.creator_id); lr[a.creator_id] = a.richtung; lra[a.creator_id] = a.created_at }
       })
       const cs = new Set<string>()
@@ -301,6 +319,7 @@ function OutreachInner() {
       setCommentSet(cs)
       setPhilippCommentSet(csp)
       setLastAt(la)
+      setLastMsgMap(lm)
       setLastRealAt(lra)
     })
   }, [])
@@ -348,7 +367,7 @@ function OutreachInner() {
   }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
-    return !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
+    return (!s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)) && (!onlyUnread || c.unread)
   }).slice().sort((a:any,b:any) => {
     const ta = lastAt[a.id] ? new Date(lastAt[a.id]).getTime() : 0
     const tb = lastAt[b.id] ? new Date(lastAt[b.id]).getTime() : 0
@@ -405,6 +424,10 @@ function OutreachInner() {
                 Philipp-Filter
               </button>
             </div>
+            <button onClick={() => setOnlyUnread(v => !v)}
+              className={`w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${onlyUnread ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+              {onlyUnread ? 'Alle anzeigen' : (creators.filter((cc: any) => cc.unread).length > 0 ? `Nur ungelesen (${creators.filter((cc: any) => cc.unread).length})` : 'Nur ungelesen')}
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
@@ -412,19 +435,28 @@ function OutreachInner() {
             {filtered.map(c => {
               const shipUrgent = needsTracking(c) || needsArrivalCheck(c)
               return (
-              <button key={c.id} onClick={() => setSelected(c)}
+              <button key={c.id} onClick={() => { setSelected(c); if (c.unread) markRead(c.id) }}
                 className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${shipUrgent ? 'bg-amber-500/[0.06] border-l-2 border-l-amber-500' : ''}`}>
                 <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
                   {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-ink-1 text-sm font-medium truncate">{c.name || '—'}</div>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {c.unread && <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>}
+                      <div className={`text-sm truncate ${c.unread ? "text-ink-1 font-semibold" : "text-ink-1 font-medium"}`}>{c.name || "-"}</div>
+                    </div>
                     {lastAt[c.id] && (
                       <span className="text-[10px] flex-shrink-0 text-ink-4">{timeAgo(lastAt[c.id])}</span>
                     )}
+                    <span onClick={(e: any) => toggleUnread(c, e)} title={c.unread ? "Als gelesen markieren" : "Als ungelesen markieren"} className={`w-2.5 h-2.5 rounded-full cursor-pointer flex-shrink-0 ${c.unread ? "bg-accent" : "border border-hairline hover:border-accent"}`}></span>
                   </div>
-                  <div className="text-ink-4 text-xs truncate">{c.ig || ''}</div>
+                  <div className="text-ink-4 text-xs truncate flex items-center gap-1">
+                    {shipStatus(c) !== "Nicht versendet" && (
+                      <span className={shipStatus(c) === "Angekommen" ? "text-accent flex-shrink-0" : "text-ink-4 flex-shrink-0"} title={shipStatus(c) === "Angekommen" ? "Paket angekommen" : "Paket versendet"}>{shipStatus(c) === "Angekommen" ? "✓✓" : "✓"}</span>
+                    )}
+                    <span className="truncate">{lastMsgMap[c.id] || c.ig || ""}</span>
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
                     {c.sammy_approved === 'Kann schreiben' && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#9989; Kann schreiben</span>
