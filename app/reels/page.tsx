@@ -25,7 +25,7 @@ type Reel = {
   id: string
   title?: string
   category?: string
-  video_type?: 'kooperation' | 'beispiel'
+  video_type?: 'kooperation' | 'beispiel' | 'kunde'
   video_path: string
   video_url: string
   creator_ids: string[]
@@ -43,7 +43,7 @@ type CreatorLite = {
   ig_top_age?: string
 }
 
-const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' }
+const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' | 'kunde' }
 
 export default function ReelsPage() {
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -55,7 +55,7 @@ export default function ReelsPage() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [creatorFilter, setCreatorFilter] = useState('')
-  const [videoTypeFilter, setVideoTypeFilter] = useState<'' | 'kooperation' | 'beispiel'>('')
+  const [videoTypeFilter, setVideoTypeFilter] = useState<'' | 'kooperation' | 'beispiel' | 'kunde'>('')
   const [genderFilter, setGenderFilter] = useState('')
   const [ageFilter, setAgeFilter] = useState('')
 
@@ -239,6 +239,7 @@ export default function ReelsPage() {
               className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
               <option value="">Alle Videotypen</option>
               <option value="kooperation">Kooperationsvideo</option>
+              <option value="kunde">Kundenvideo</option>
               <option value="beispiel">Beispielvideo</option>
             </select>
             <select value={genderFilter} onChange={e => setGenderFilter(e.target.value)}
@@ -269,8 +270,11 @@ export default function ReelsPage() {
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${ (r.video_type || 'beispiel') === 'kooperation' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/[0.08] text-ink-3'}`}>
-                        {(r.video_type || 'beispiel') === 'kooperation' ? 'Kooperation' : 'Beispiel'}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                        (r.video_type || 'beispiel') === 'kooperation' ? 'bg-emerald-500/20 text-emerald-400' :
+                        (r.video_type || 'beispiel') === 'kunde' ? 'bg-sky-500/20 text-sky-400' :
+                        'bg-white/[0.08] text-ink-3'}`}>
+                        {(r.video_type || 'beispiel') === 'kooperation' ? 'Kooperation' : (r.video_type || 'beispiel') === 'kunde' ? 'Kunde' : 'Beispiel'}
                       </span>
                     </div>
                     <div className="text-ink-1 text-sm font-medium truncate">{r.title || 'Ohne Titel'}</div>
@@ -364,6 +368,10 @@ export default function ReelsPage() {
                     <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'kooperation' }))}
                       className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'kooperation' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
                       Kooperationsvideo
+                    </button>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'kunde' }))}
+                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'kunde' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                      Kundenvideo
                     </button>
                   </div>
                 </div>

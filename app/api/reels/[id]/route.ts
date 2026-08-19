@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, ctx: Context) {
   if ('title' in body) allowed.title = body.title
   if ('category' in body) allowed.category = body.category
   if ('creatorIds' in body) allowed.creator_ids = Array.isArray(body.creatorIds) ? body.creatorIds : []
-  if ('videoType' in body) allowed.video_type = body.videoType === 'kooperation' ? 'kooperation' : 'beispiel'
+  if ('videoType' in body) allowed.video_type = ['kooperation','kunde'].includes(body.videoType) ? body.videoType : 'beispiel'
   const { data, error } = await supabase.from('reels').update(allowed).eq('id', id).eq('user_id', user.id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
