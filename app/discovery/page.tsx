@@ -132,6 +132,7 @@ export default function Discovery() {
         ig_avg_likes: result.igAvgLikes || 0,
         tt_avg_video_views: result.ttAvgVideoViews || 0,
         echte_pct: result.echtePct || 0,
+        land: result.land || '',
         status: 'Offen',
         kategorie: '',
       }

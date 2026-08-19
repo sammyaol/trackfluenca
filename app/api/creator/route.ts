@@ -15,6 +15,29 @@ async function apiFetchRetry(url: string, headers: Record<string,string>, tries 
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function rawAvg(arr: number[]) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0 }
 function num(v: any) { const n = parseInt(String(v ?? 0), 10); return Number.isFinite(n) ? n : 0 }
+
+async function guessCountry(bio: string, name: string, ig: string, tt: string): Promise<string> {
+  const apiKey = process.env.ANTHROPIC_API_KEY
+  if (!apiKey || (!bio && !name)) return ''
+  try {
+    const ctrl = new AbortController()
+    const to = setTimeout(function () { ctrl.abort() }, 8000)
+    const info = 'Name: ' + (name || '-') + '\n' + 'Instagram: ' + (ig || '-') + '\n' + 'TikTok: ' + (tt || '-') + '\n' + 'Bio: ' + (bio || '-')
+    const promptText = 'Bestimme das wahrscheinlichste Herkunftsland (auf Deutsch, z.B. Deutschland, Oesterreich, Tuerkei, USA) dieser Person anhand von Name, Handles, Bio-Text und Sprache. Antworte NUR mit dem Laendernamen auf Deutsch, ohne weitere Erklaerung. Falls unklar, antworte mit Unbekannt.\n\n' + info
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-5', max_tokens: 20, messages: [{ role: 'user', content: promptText }] }),
+      signal: ctrl.signal
+    })
+    clearTimeout(to)
+    if (!r.ok) return ''
+    const j = await r.json()
+    const text = ((j && j.content && j.content[0] && j.content[0].text) || '').trim()
+    if (!text || text.toLowerCase().indexOf('unbekannt') !== -1) return ''
+    return text.split('\n')[0].slice(0, 40)
+  } catch (e) { return '' }
+}
 function sanitize(raw: string | null): string { const s = (raw ?? '').trim().replace(/^@/, ''); try { const u = new URL(s.includes('://') ? s : 'https://' + s); const parts = u.pathname.split('/').filter(Boolean); return parts[parts.length-1] || u.hostname.replace('www.','') } catch { return s } }
 
 import { createClient } from '@supabase/supabase-js'
@@ -133,6 +156,8 @@ export async function GET(req: NextRequest) {
   result.tkpReel = tkp(result.igAvgReelViews || 0, reelWert)
   result.tkpStory = tkp(result.igAvgReelViews ? result.igFollower * 0.05 : 0, storyWert)
   result.tkpTT = tkp(result.ttAvgVideoViews || 0, ttWert)
+
+  result.land = await guessCountry(result.bio || '', result.fullName || '', ig || '', tt || '')
 
   return NextResponse.json(result)
 }

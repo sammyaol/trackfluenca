@@ -42,6 +42,7 @@ type Creator = {
   igGenderMale?: number; igGenderFemale?: number;
   igTopAge?: string; igAgeDistribution?: {age: string, pct: number}[];
   geschlecht?: string;
+  land?: string
   igRealFollowers?: number; igFakeFollowers?: number;
   igFollowerWachstum7d?: number; igQualityScore?: number; igPostsPerWeek?: number;
   ttImage?: string; ttVerified?: boolean; ttAvgVideoViews?: number; ttAvgVideoLikes?: number;
@@ -187,6 +188,7 @@ export default function CreatorPage() {
   const [filterStatus, setFilterStatus] = useState('')
   const [filterTier, setFilterTier] = useState('')
   const [filterGeschlecht, setFilterGeschlecht] = useState('')
+  const [filterLand, setFilterLand] = useState('')
   const [selected, setSelected] = useState<Creator | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -539,6 +541,7 @@ export default function CreatorPage() {
       && (!filterStatus || c.status === filterStatus)
       && (!filterTier || c.overallTier === filterTier)
       && (!filterGeschlecht || c.geschlecht === filterGeschlecht)
+      && (!filterLand || c.land === filterLand)
   })
 
   const fmt = (n?: number) => n && n > 0 ? n.toLocaleString('de-DE') : '—'
@@ -824,6 +827,11 @@ export default function CreatorPage() {
               className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
               <option value="">Alle Geschlechter</option>
               {['Weiblich', 'Männlich', 'Divers'].map(g => <option key={g}>{g}</option>)}
+            </select>
+            <select value={filterLand} onChange={e => setFilterLand(e.target.value)}
+              className="bg-surface-2 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-2 text-sm focus:outline-none">
+              <option value="">Alle Laender</option>
+              {Array.from(new Set(creators.map((c: any) => c.land).filter(Boolean))).sort().map((l: any) => <option key={l}>{l}</option>)}
             </select>
           </div>
 
