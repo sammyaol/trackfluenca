@@ -11,7 +11,7 @@ function getAffPct(f: number) { return f >= 1000000 ? '8%' : f >= 500000 ? '10%'
 function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005) }
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
 async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
-async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { try { const r = await fetch(url, { headers }); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} await new Promise(res => setTimeout(res, 400)) } return null }
+async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 9000); try { const r = await fetch(url, { headers, signal: ctrl.signal }); clearTimeout(to); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} finally { clearTimeout(to) } await new Promise(res => setTimeout(res, 400)) } return null }
 function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
 function rawAvg(arr: number[]) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0 }
 function num(v: any) { const n = parseInt(String(v ?? 0), 10); return Number.isFinite(n) ? n : 0 }
