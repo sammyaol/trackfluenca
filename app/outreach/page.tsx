@@ -179,7 +179,7 @@ function OutreachInner() {
       setOutreachLinks(Array.isArray(d) ? d : [])
     })
   }, [selected])
-  const shortLinkUrl = (code: string) => `https://trackfluenca.com/r/${code}`
+  const shortLinkUrl = (code: string) => `https://link.kolure.de/r/${code}`
   const createOutreachLink = async () => {
     if (!selected?.id || !newLinkUrl.trim() || creatingLink) return
     setCreatingLink(true)
