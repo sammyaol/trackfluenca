@@ -273,7 +273,8 @@ function OutreachInner() {
   const [commentSet, setCommentSet] = useState<Set<string>>(new Set())
   const [lastAt, setLastAt] = useState({} as Record<string, string>)
   const [lastMsgMap, setLastMsgMap] = useState({} as Record<string, string>)
-  const [onlyUnread, setOnlyUnread] = useState(false)
+  const [statusChip, setStatusChip] = useState<'alle' | 'ungelesen' | 'antworten' | 'versand'>('alle')
+  const [showFilterMenu, setShowFilterMenu] = useState(false)
   const [lastRealAt, setLastRealAt] = useState({} as Record<string, string>)
   const [sortMode, setSortMode] = useState<'wichtigkeit' | 'datum' | 'versand'>('wichtigkeit')
   const [personFilter, setPersonFilter] = useState<'none' | 'sammy' | 'philipp'>('none')
@@ -367,7 +368,15 @@ function OutreachInner() {
   }
   const filtered = creators.filter(c => {
     const s = search.toLowerCase()
-    return (!s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)) && (!onlyUnread || c.unread)
+    const matchesSearch = !s || (c.name || '').toLowerCase().includes(s) || (c.ig || '').toLowerCase().includes(s)
+    const matchesStatus = statusChip === 'alle' ? true
+      : statusChip === 'ungelesen' ? !!c.unread
+      : statusChip === 'antworten' ? (msgSet.has(c.id) && lrMap[c.id] === 'raus')
+      : (needsTracking(c) || needsArrivalCheck(c))
+    const matchesPerson = personFilter === 'none' ? true
+      : personFilter === 'sammy' ? commentSet.has(c.id)
+      : philippCommentSet.has(c.id)
+    return matchesSearch && matchesStatus && matchesPerson
   }).slice().sort((a:any,b:any) => {
     const ta = lastAt[a.id] ? new Date(lastAt[a.id]).getTime() : 0
     const tb = lastAt[b.id] ? new Date(lastAt[b.id]).getTime() : 0
@@ -396,38 +405,61 @@ function OutreachInner() {
 
         {/* LINKS: Chat-Liste */}
         <div className="w-80 flex-shrink-0 border-r border-hairline-soft flex flex-col">
-          <div className="p-4 border-b border-hairline-soft">
+          <div className="p-4 border-b border-hairline-soft relative">
             <h1 className="text-ink-1 font-semibold text-lg mb-3">Outreach</h1>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Suchen..."
               className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent" />
             <div className="flex gap-2 mt-2">
-              <button onClick={() => setSortMode('wichtigkeit')}
-                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'wichtigkeit' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
-                Wichtigkeit
-              </button>
-              <button onClick={() => setSortMode('datum')}
-                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'datum' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
-                Datum
-              </button>
-              <button onClick={() => setSortMode('versand')}
-                className={`flex-1 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${sortMode === 'versand' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
-                Versand
-              </button>
-            </div>
-            <div className="flex gap-2 mt-2">
-              <button onClick={() => { setPersonFilter(p => p === 'sammy' ? 'none' : 'sammy'); setSortMode('wichtigkeit') }}
-                className={`flex-1 text-[11px] font-medium rounded-apple-sm px-2 py-1 transition-colors ${personFilter === 'sammy' ? 'bg-red-500/20 text-red-400' : 'bg-surface-2 text-ink-4 hover:text-ink-2'}`}>
-                Sammy-Filter
-              </button>
-              <button onClick={() => { setPersonFilter(p => p === 'philipp' ? 'none' : 'philipp'); setSortMode('wichtigkeit') }}
-                className={`flex-1 text-[11px] font-medium rounded-apple-sm px-2 py-1 transition-colors ${personFilter === 'philipp' ? 'bg-violet-500/20 text-violet-400' : 'bg-surface-2 text-ink-4 hover:text-ink-2'}`}>
-                Philipp-Filter
+              <select value={sortMode} onChange={e => setSortMode(e.target.value as any)}
+                className="flex-1 bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-xs text-ink-2 focus:outline-none">
+                <option value="wichtigkeit">Sortierung: Wichtigkeit</option>
+                <option value="datum">Sortierung: Datum</option>
+                <option value="versand">Sortierung: Versand</option>
+              </select>
+              <button onClick={() => setShowFilterMenu(v => !v)} title="Filter"
+                className={`relative flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-apple-sm border transition-colors ${personFilter !== 'none' ? 'border-accent text-accent bg-accent/10' : 'border-hairline text-ink-3 hover:text-ink-1 bg-surface-2'}`}>
+                &#9881;&#65039;
+                {personFilter !== 'none' && <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-accent"></span>}
               </button>
             </div>
-            <button onClick={() => setOnlyUnread(v => !v)}
-              className={`w-full mt-2 flex items-center justify-center gap-1.5 text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${onlyUnread ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
-              {onlyUnread ? 'Alle anzeigen' : (creators.filter((cc: any) => cc.unread).length > 0 ? `Nur ungelesen (${creators.filter((cc: any) => cc.unread).length})` : 'Nur ungelesen')}
-            </button>
+            {showFilterMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowFilterMenu(false)}></div>
+                <div className="absolute right-4 top-[92px] z-20 w-56 bg-surface-2 border border-hairline rounded-apple-sm shadow-xl p-3 space-y-1.5">
+                  <div className="text-ink-4 text-[10px] uppercase tracking-wider mb-1">Nur zuletzt kommentiert von</div>
+                  <button onClick={() => { setPersonFilter(p => p === 'sammy' ? 'none' : 'sammy'); setSortMode('wichtigkeit'); setShowFilterMenu(false) }}
+                    className={`w-full text-left text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${personFilter === 'sammy' ? 'bg-red-500/20 text-red-400' : 'bg-surface-3 text-ink-3 hover:text-ink-1'}`}>
+                    Sammy
+                  </button>
+                  <button onClick={() => { setPersonFilter(p => p === 'philipp' ? 'none' : 'philipp'); setSortMode('wichtigkeit'); setShowFilterMenu(false) }}
+                    className={`w-full text-left text-xs font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${personFilter === 'philipp' ? 'bg-violet-500/20 text-violet-400' : 'bg-surface-3 text-ink-3 hover:text-ink-1'}`}>
+                    Philipp
+                  </button>
+                  {personFilter !== 'none' && (
+                    <button onClick={() => { setPersonFilter('none'); setShowFilterMenu(false) }}
+                      className="w-full text-center text-[11px] text-ink-4 hover:text-ink-2 pt-1">Filter zurücksetzen</button>
+                  )}
+                </div>
+              </>
+            )}
+            <div className="flex gap-1.5 mt-2 flex-wrap">
+              <button onClick={() => setStatusChip('alle')}
+                className={`text-[11px] font-medium rounded-full px-2.5 py-1 transition-colors ${statusChip === 'alle' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Alle
+              </button>
+              <button onClick={() => setStatusChip('ungelesen')}
+                className={`text-[11px] font-medium rounded-full px-2.5 py-1 transition-colors ${statusChip === 'ungelesen' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Ungelesen ({creators.filter((cc: any) => cc.unread).length})
+              </button>
+              <button onClick={() => setStatusChip('antworten')}
+                className={`text-[11px] font-medium rounded-full px-2.5 py-1 transition-colors ${statusChip === 'antworten' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Muss antworten ({creators.filter((cc: any) => msgSet.has(cc.id) && lrMap[cc.id] === 'raus').length})
+              </button>
+              <button onClick={() => setStatusChip('versand')}
+                className={`text-[11px] font-medium rounded-full px-2.5 py-1 transition-colors ${statusChip === 'versand' ? 'bg-accent text-white' : 'bg-surface-2 text-ink-3 hover:text-ink-1'}`}>
+                Versand offen ({creators.filter((cc: any) => needsTracking(cc) || needsArrivalCheck(cc)).length})
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto">
             {loading && <div className="p-4 text-ink-4 text-sm">Lädt...</div>}
@@ -624,6 +656,10 @@ function OutreachInner() {
                   {selected.ig ? (
                     <a href={"https://instagram.com/" + (selected.ig||'').replace('@','')} target="_blank" rel="noopener noreferrer"
                       className="flex-1 text-center text-[11px] bg-surface-3 hover:bg-white/[0.05] border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-2">Instagram &#8599;</a>
+                  ) : null}
+                  {selected.ig ? (
+                    <a href={"https://ig.me/m/" + (selected.ig||'').replace('@','')} target="_blank" rel="noopener noreferrer"
+                      className="flex-1 text-center text-[11px] bg-[#0A84FF]/15 hover:bg-[#0A84FF]/25 border border-[#0A84FF]/40 rounded-apple-sm px-2 py-1.5 text-[#0A84FF]">DM &#8599;</a>
                   ) : null}
                   {selected.tt ? (
                     <a href={"https://tiktok.com/@" + (selected.tt||'').replace('@','')} target="_blank" rel="noopener noreferrer"
