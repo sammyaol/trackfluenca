@@ -164,6 +164,52 @@ function OutreachInner() {
       setBestellungen(arr)
     })
   }, [selected])
+  const [outreachLinks, setOutreachLinks] = useState<any[]>([])
+  const [showLinkForm, setShowLinkForm] = useState(false)
+  const [newLinkUrl, setNewLinkUrl] = useState('')
+  const [newLinkCode, setNewLinkCode] = useState('')
+  const [creatingLink, setCreatingLink] = useState(false)
+  const [copiedLinkId, setCopiedLinkId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!selected?.id) { setOutreachLinks([]); return }
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/outreach-links?creator_id=' + selected.id, { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      setOutreachLinks(Array.isArray(d) ? d : [])
+    })
+  }, [selected])
+  const shortLinkUrl = (code: string) => `https://trackfluenca.com/r/${code}`
+  const createOutreachLink = async () => {
+    if (!selected?.id || !newLinkUrl.trim() || creatingLink) return
+    setCreatingLink(true)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/outreach-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+        body: JSON.stringify({ creator_id: selected.id, ziel_url: newLinkUrl.trim(), rabatt_code: newLinkCode.trim() || undefined })
+      })
+      const d = await res.json()
+      if (res.ok) {
+        setOutreachLinks(prev => [d, ...prev])
+        setNewLinkUrl('')
+        setNewLinkCode('')
+        setShowLinkForm(false)
+      }
+    } finally { setCreatingLink(false) }
+  }
+  const copyLink = async (l: any) => {
+    try {
+      await navigator.clipboard.writeText(shortLinkUrl(l.short_code))
+      setCopiedLinkId(l.id)
+      setTimeout(() => setCopiedLinkId(prev => prev === l.id ? null : prev), 1500)
+    } catch {}
+  }
+  const insertLinkInChat = (l: any) => {
+    setNeueNachricht(prev => (prev ? prev + '\n' : '') + shortLinkUrl(l.short_code))
+  }
   const updateCollab = async (field: string, value: any) => {
     if (!selected?.id) return
     setSelected((p: any) => ({ ...p, [field]: value }))
@@ -681,6 +727,42 @@ function OutreachInner() {
                   <input type="text" defaultValue={selected.email||''} onBlur={e => updateCollab('email', e.target.value)}
                     className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
                 </div>
+              </div>
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Outreach-Link</div>
+                {outreachLinks.length === 0 && !showLinkForm && (
+                  <div className="text-ink-4 text-xs">Noch kein Link erstellt</div>
+                )}
+                {outreachLinks.map((l:any) => (
+                  <div key={l.id} className="bg-surface-3 rounded-apple-sm p-2 space-y-1">
+                    <div className="text-ink-2 text-[11px] font-mono truncate">{shortLinkUrl(l.short_code)}</div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-ink-4 text-[10px]">{l.klicks || 0} Klicks{l.rabatt_code ? ' · ' + l.rabatt_code : ''}</span>
+                      <div className="flex gap-1">
+                        <button onClick={() => copyLink(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copiedLinkId === l.id ? '✓' : 'Kopieren'}</button>
+                        <button onClick={() => insertLinkInChat(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">In Chat</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {showLinkForm ? (
+                  <div className="space-y-1.5 pt-1">
+                    <input value={newLinkUrl} onChange={e => setNewLinkUrl(e.target.value)} placeholder="Ziel-URL (Produktseite)"
+                      className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                    <input value={newLinkCode} onChange={e => setNewLinkCode(e.target.value)} placeholder="Rabattcode (optional)"
+                      className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                    <div className="flex gap-1.5">
+                      <button onClick={createOutreachLink} disabled={creatingLink || !newLinkUrl.trim()}
+                        className={`flex-1 text-[11px] font-medium rounded-apple-sm px-2 py-1.5 transition-colors ${creatingLink || !newLinkUrl.trim() ? 'bg-accent/40 text-white' : 'bg-accent hover:bg-accent-hover text-white'}`}>
+                        {creatingLink ? '...' : 'Erstellen'}
+                      </button>
+                      <button onClick={() => { setShowLinkForm(false); setNewLinkUrl(''); setNewLinkCode('') }}
+                        className="text-[11px] px-2 py-1.5 rounded-apple-sm text-ink-3 hover:text-ink-1">Abbrechen</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => setShowLinkForm(true)} className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">+ Outreach-Link erstellen</button>
+                )}
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
                 <div className="text-ink-3 text-[10px] uppercase tracking-wider">Bestellung &amp; Tracking</div>
