@@ -128,7 +128,7 @@ function OutreachInner() {
     sb.auth.getSession().then(async ({ data }) => {
       const userId = data.session?.user?.id
       if (!userId) { setLoading(false); return }
-      const { data: rows } = await sb.from('creators').select('*').eq('user_id', userId).order('created_at', { ascending: false })
+      const { data: rows } = await sb.from('creators').select('*').eq('user_id', userId).eq('type', 'creator').order('created_at', { ascending: false })
       if (!mounted) return
       setCreators(rows || [])
       if (!appliedParamRef.current) {
@@ -536,9 +536,6 @@ function OutreachInner() {
                     <span className="truncate">{lastMsgMap[c.id] || c.ig || ""}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-1">
-                    {c.sammy_approved === 'Kann schreiben' && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">&#9989; Kann schreiben</span>
-                    )}
                     {c.sammy_approved === 'Nicht schreiben' && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">&#128683; Nicht schreiben</span>
                     )}
@@ -546,10 +543,10 @@ function OutreachInner() {
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-blue-400 bg-blue-500/10 rounded-full px-2 py-0.5">&#129309; Bereits zusammengearbeitet</span>
                     )}
                     {commentSet.has(c.id) && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">&#128172; Sammy Kommentar</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" title="Sammy Kommentar"></span>
                     )}
                     {philippCommentSet.has(c.id) && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-400 bg-violet-500/10 rounded-full px-2 py-0.5">&#128172; Philipp Kommentar</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" title="Philipp Kommentar"></span>
                     )}
                     {needsTracking(c) && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-amber-500 rounded-full px-2 py-0.5">&#128230; Trackingnummer fehlt (seit {shipDaysSince(c)}T)</span>
@@ -883,10 +880,26 @@ function OutreachInner() {
                   {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="text-ink-4 text-xs block mb-1">Fee €</label>
-                <input type="number" defaultValue={selected.fee||0} onBlur={e => updateCollab('fee', Number(e.target.value)||0)}
-                  className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Zahlung</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-ink-4 text-[10px] block mb-1">Fee €</label>
+                    <input type="number" defaultValue={selected.fee||0} onBlur={e => updateCollab('fee', Number(e.target.value)||0)}
+                      className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                  </div>
+                  <div>
+                    <label className="text-ink-4 text-[10px] block mb-1">Fällig am</label>
+                    <input type="date" defaultValue={selected.fee_faellig_am||''} onBlur={e => updateCollab('fee_faellig_am', e.target.value || null)}
+                      className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer pt-0.5">
+                  <input type="checkbox" checked={!!selected.fee_bezahlt} onChange={e => { updateCollab('fee_bezahlt', e.target.checked); updateCollab('fee_bezahlt_am', e.target.checked ? new Date().toISOString().slice(0,10) : null) }}
+                    className="w-3.5 h-3.5 accent-emerald-500" />
+                  <span className="text-ink-2 text-xs">Bezahlt</span>
+                </label>
+                <a href="/zahlungen" className="text-ink-4 text-[10px] pt-1 block hover:text-accent transition-colors">&rarr; Alle Zahlungen ansehen</a>
               </div>
               <div>
                 <label className="text-ink-4 text-xs block mb-1">Promo-Code</label>

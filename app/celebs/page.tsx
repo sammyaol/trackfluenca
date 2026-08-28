@@ -31,6 +31,9 @@ type Celeb = {
   notizen: string
   status: string
   kampagne?: string
+  fee?: number
+  fee_bezahlt?: boolean
+  fee_faellig_am?: string
   ig?: string
   ig_follower?: number
   ig_tier?: string
@@ -66,6 +69,14 @@ export default function CelebsPage() {
   const [igInput, setIgInput] = useState('')
   const [igSaving, setIgSaving] = useState(false)
   const [igError, setIgError] = useState('')
+  const [kampagnenList, setKampagnenList] = useState<string[]>([])
+
+  const [nachrichten, setNachrichten] = useState<any[]>([])
+  const [loadingChat, setLoadingChat] = useState(false)
+  const [neueNachricht, setNeueNachricht] = useState('')
+  const [chatRichtung, setChatRichtung] = useState<'raus'|'rein'>('rein')
+  const [chatKanal, setChatKanal] = useState('Instagram')
+  const [sendingChat, setSendingChat] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -76,6 +87,47 @@ export default function CelebsPage() {
     setLoading(false)
   }
   useEffect(() => { load() }, [])
+
+  useEffect(() => {
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/kampagnen', { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      if (Array.isArray(d)) setKampagnenList(d.map((k: any) => k.name))
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!selected?.id) { setNachrichten([]); return }
+    setLoadingChat(true)
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/aktivitaeten?creator_id=' + selected.id, { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      setNachrichten(Array.isArray(d) ? d.slice().reverse() : [])
+      setLoadingChat(false)
+    })
+  }, [selected?.id])
+
+  const sendeNachricht = async () => {
+    if (!neueNachricht.trim() || !selected?.id) return
+    setSendingChat(true)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const heute = new Date().toISOString().slice(0,10)
+      const res = await fetch('/api/aktivitaeten', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token },
+        body: JSON.stringify({ creator_id: selected.id, datum: heute, kanal: chatKanal, richtung: chatRichtung, notiz: neueNachricht.trim(), quelle: 'manuell' })
+      })
+      const d = await res.json()
+      if (res.ok) {
+        setNachrichten(prev => [...prev, d])
+        setNeueNachricht('')
+      }
+    } finally { setSendingChat(false) }
+  }
 
   const openAdd = () => { setForm(emptyForm); setSaveError(''); setShowModal(true) }
   const closeModal = () => { setShowModal(false); setSaveError(''); setForm(emptyForm) }
@@ -207,7 +259,7 @@ export default function CelebsPage() {
         <div className="border-b border-hairline-soft px-8 py-4 bg-surface-0/80 backdrop-blur sticky top-0 z-20 flex items-center justify-between">
           <div>
             <h1 className="text-ink-1 font-semibold text-lg">Celebs</h1>
-            <p className="text-ink-3 text-xs mt-0.5">Bekannte Personen für Gifting oder Shootings — separat von Creator, im Outreach zusammen sichtbar</p>
+            <p className="text-ink-3 text-xs mt-0.5">Bekannte Personen für Gifting oder Shootings</p>
           </div>
           <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -265,15 +317,46 @@ export default function CelebsPage() {
               </div>
 
               <div className="p-6 flex flex-col gap-4">
-                <a href={`/outreach?creator=${selected.id}`} className="w-full text-center py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors">
-                  In Outreach öffnen →
-                </a>
+                <div className="bg-surface-2 rounded-apple-sm p-4 space-y-3 border border-hairline-soft">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider">Nachrichtenverlauf</div>
+                  <div className="max-h-64 overflow-y-auto space-y-2 pr-1">
+                    {loadingChat && <div className="text-ink-4 text-xs text-center">Lädt...</div>}
+                    {!loadingChat && nachrichten.length === 0 && <div className="text-ink-4 text-xs text-center py-2">Noch keine Nachrichten</div>}
+                    {nachrichten.map((m:any) => {
+                      const raus = m.richtung === 'raus'
+                      return (
+                        <div key={m.id} className={`flex ${raus ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[85%] rounded-apple-sm px-3 py-1.5 ${raus ? 'bg-accent text-ink-1' : 'bg-surface-3 text-ink-1 border border-hairline-soft'}`}>
+                            <div className="text-xs whitespace-pre-wrap break-words">{m.notiz}</div>
+                            <div className={`text-[9px] mt-0.5 ${raus ? 'text-ink-1/60' : 'text-ink-4'}`}>{m.kanal} · {m.datum || ''}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => setChatRichtung('rein')} className={`text-[10px] px-2 py-1 rounded-apple-sm ${chatRichtung==='rein' ? 'bg-emerald-500/20 text-emerald-400' : 'text-ink-3 hover:text-ink-2'}`}>Von Celeb</button>
+                    <button onClick={() => setChatRichtung('raus')} className={`text-[10px] px-2 py-1 rounded-apple-sm ${chatRichtung==='raus' ? 'bg-accent/20 text-accent' : 'text-ink-3 hover:text-ink-2'}`}>Von mir</button>
+                    <select value={chatKanal} onChange={e => setChatKanal(e.target.value)} className="bg-surface-3 border border-hairline rounded-apple-sm px-1.5 py-1 text-[10px] text-ink-2 focus:outline-none ml-auto">
+                      <option>Instagram</option><option>Mail</option><option>Telefon</option><option>Sonstiges</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end gap-1.5">
+                    <textarea value={neueNachricht} onChange={e => setNeueNachricht(e.target.value)} rows={2} placeholder="Nachricht..."
+                      className="flex-1 bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-xs text-ink-1 focus:outline-none focus:border-accent resize-none" />
+                    <button onClick={sendeNachricht} disabled={sendingChat || !neueNachricht.trim()}
+                      className={`px-3 py-2 rounded-apple-sm text-xs text-ink-1 ${sendingChat||!neueNachricht.trim() ? 'bg-accent/40' : 'bg-accent hover:bg-accent-hover'}`}>
+                      {sendingChat ? '...' : 'Senden'}
+                    </button>
+                  </div>
+                </div>
 
                 <div className="bg-surface-2 rounded-apple-sm p-4 space-y-3 border border-hairline-soft">
-                  <div className="flex items-center justify-between">
-                    <div className="text-ink-3 text-[10px] uppercase tracking-wider">Instagram</div>
-                    {!editingIg && <button onClick={startEditIg} className="text-ink-4 hover:text-accent text-[10px] px-1.5 py-0.5 rounded hover:bg-white/[0.05] transition-colors">Bearbeiten</button>}
-                  </div>
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider">Instagram</div>
+                  {!editingIg && <div className="flex items-center justify-between">
+                    <span/>
+                    <button onClick={startEditIg} className="text-ink-4 hover:text-accent text-[10px] px-1.5 py-0.5 rounded hover:bg-white/[0.05] transition-colors">Bearbeiten</button>
+                  </div>}
                   {!editingIg ? (
                     selected.ig ? (
                       <div className="flex items-center justify-between">
@@ -321,13 +404,40 @@ export default function CelebsPage() {
                   </div>
                 </div>
 
+                <div className="bg-surface-2 rounded-apple-sm p-4 space-y-3 border border-hairline-soft">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider">Kampagne &amp; Zahlung</div>
+                  <div>
+                    <label className="text-ink-4 text-[10px] block mb-1">Kampagne</label>
+                    <select value={selected.kampagne || ''} onChange={e => updateSelected({ kampagne: e.target.value })}
+                      className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none">
+                      <option value="">—</option>
+                      {kampagnenList.map(k => <option key={k} value={k}>{k}</option>)}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-ink-4 text-[10px] block mb-1">Fee €</label>
+                      <input type="number" defaultValue={selected.fee || 0} onBlur={e => updateSelected({ fee: Number(e.target.value) || 0 })}
+                        className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                    </div>
+                    <div>
+                      <label className="text-ink-4 text-[10px] block mb-1">Fällig am</label>
+                      <input type="date" defaultValue={selected.fee_faellig_am || ''} onBlur={e => updateSelected({ fee_faellig_am: e.target.value || null })}
+                        className="w-full bg-surface-3 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none" />
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={!!selected.fee_bezahlt} onChange={e => updateSelected({ fee_bezahlt: e.target.checked, fee_bezahlt_am: e.target.checked ? new Date().toISOString().slice(0,10) : null })}
+                      className="w-3.5 h-3.5 accent-emerald-500" />
+                    <span className="text-ink-2 text-xs">Bezahlt</span>
+                  </label>
+                </div>
+
                 <div>
                   <label className="text-ink-4 text-xs block mb-1">Notizen</label>
                   <textarea defaultValue={selected.notizen || ''} onBlur={e => updateSelected({ notizen: e.target.value })} rows={4}
                     className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none resize-none" />
                 </div>
-
-                <p className="text-ink-4 text-[11px]">Kampagne &amp; Fee &amp; Nachrichtenverlauf werden im Outreach-Bereich gepflegt.</p>
 
                 <button onClick={deleteSelected} disabled={deleting}
                   className={`w-full py-2.5 rounded-apple-sm text-sm font-medium transition-colors ${confirmDelete ? 'bg-red-600 text-ink-1 hover:bg-red-500' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50 border border-red-500/20'}`}>

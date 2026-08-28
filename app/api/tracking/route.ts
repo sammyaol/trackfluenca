@@ -26,7 +26,12 @@ export async function GET(req: NextRequest) {
     
     if (!res.ok) {
       const errText = await res.text()
-      return NextResponse.json({ error: `DHL API error ${res.status}`, details: errText.slice(0, 200) }, { status: res.status })
+      let friendly = `DHL-API-Fehler (${res.status})`
+      if (res.status === 404) friendly = 'Sendung nicht gefunden – Trackingnummer prüfen (ggf. noch nicht im DHL-System erfasst)'
+      else if (res.status === 429) friendly = 'Zu viele Anfragen an die DHL-API – bitte kurz warten und erneut versuchen'
+      else if (res.status === 401 || res.status === 403) friendly = 'DHL-API-Zugriff verweigert – API-Key prüfen'
+      else if (res.status >= 500) friendly = 'DHL-API vorübergehend nicht erreichbar'
+      return NextResponse.json({ error: friendly, details: errText.slice(0, 200) }, { status: res.status })
     }
     
     const data = await res.json()
