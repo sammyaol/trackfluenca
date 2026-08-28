@@ -4,41 +4,81 @@ import { createClient } from '@supabase/supabase-js'
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY!
 const TT_HOST = 'tiktok-api23.p.rapidapi.com'
+const IG_HOST = 'flashapi1.p.rapidapi.com'
+const ALLOWED_TYPES = ['kooperation', 'kunde', 'beispiel', 'inspo']
 
 function isTikTokLink(link: string) {
   return /tiktok\.com/i.test(link || '')
 }
+function isInstagramLink(link: string) {
+  return /instagram\.com/i.test(link || '')
+}
+function igShortcode(link: string): string | null {
+  const m = link.match(/\/(?:p|reel|reels|tv)\/([A-Za-z0-9_-]+)/)
+  return m ? m[1] : null
+}
 
-// Laedt ein TikTok-Video (ohne Wasserzeichen) automatisch in die Reels-Sektion,
-// wenn ein neues Kooperations-Posting bei einem Creator hinzugefuegt wird.
+// Laedt ein TikTok- oder Instagram-Video automatisch in die Reels-Sektion.
+// Wird sowohl automatisch beim Anlegen eines Kooperations-Postings aufgerufen
+// (postLink + creatorId) als auch manuell von der Reels-Seite (Link statt Datei-Upload,
+// mit voller Kontrolle ueber Video-Typ, Kategorie und mehrere verknuepfte Creator).
 export async function POST(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '')
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { postLink, creatorId } = await req.json()
-  if (!postLink || !isTikTokLink(postLink)) {
-    return NextResponse.json({ skipped: true, reason: 'Kein TikTok-Link' }, { status: 200 })
+  const body = await req.json()
+  const postLink = (body.postLink || '').trim()
+  const creatorIds: string[] = Array.isArray(body.creatorIds)
+    ? body.creatorIds
+    : (body.creatorId ? [body.creatorId] : [])
+  const videoType = ALLOWED_TYPES.includes(body.videoType) ? body.videoType : 'kooperation'
+  const category = body.category || null
+  const titleOverride = (body.title || '').trim()
+
+  const isTT = isTikTokLink(postLink)
+  const isIG = isInstagramLink(postLink)
+  if (!isTT && !isIG) {
+    return NextResponse.json({ skipped: true, reason: 'Kein Instagram- oder TikTok-Link' }, { status: 200 })
   }
 
   try {
     // Bereits importiert? -> nur Creator verknuepfen falls noch nicht geschehen
     const { data: existing } = await supabase.from('reels').select('id, creator_ids').eq('source_link', postLink).maybeSingle()
     if (existing) {
-      if (creatorId && !(existing.creator_ids || []).includes(creatorId)) {
-        const newIds = [...(existing.creator_ids || []), creatorId]
-        await supabase.from('reels').update({ creator_ids: newIds }).eq('id', existing.id)
+      const merged = Array.from(new Set([...(existing.creator_ids || []), ...creatorIds]))
+      if (merged.length !== (existing.creator_ids || []).length) {
+        await supabase.from('reels').update({ creator_ids: merged }).eq('id', existing.id)
       }
       return NextResponse.json({ alreadyImported: true, id: existing.id })
     }
 
-    // Download-URL (ohne Wasserzeichen) von TikTok holen
-    const dlRes = await fetch(`https://${TT_HOST}/api/download/video?url=${encodeURIComponent(postLink)}`, {
-      headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': TT_HOST },
-    })
-    if (!dlRes.ok) return NextResponse.json({ error: `TikTok Download-API Fehler ${dlRes.status}` }, { status: 502 })
-    const dlJson = await dlRes.json()
-    const videoUrl = dlJson.play || dlJson.play_watermark
+    let videoUrl: string | null = null
+    let title = titleOverride
+
+    if (isTT) {
+      const dlRes = await fetch(`https://${TT_HOST}/api/download/video?url=${encodeURIComponent(postLink)}`, {
+        headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': TT_HOST },
+      })
+      if (!dlRes.ok) return NextResponse.json({ error: `TikTok Download-API Fehler ${dlRes.status}` }, { status: 502 })
+      const dlJson = await dlRes.json()
+      videoUrl = dlJson.play || dlJson.play_watermark || null
+      if (!title) title = (dlJson.title || dlJson.desc || 'TikTok-Video').toString().slice(0, 120)
+    } else {
+      const code = igShortcode(postLink)
+      if (!code) return NextResponse.json({ error: 'Instagram-Link nicht erkannt. Format: instagram.com/p/... oder /reel/...' }, { status: 400 })
+      const igRes = await fetch(`https://${IG_HOST}/ig/post_info/?shortcode=${encodeURIComponent(code)}&nocors=false`, {
+        headers: { 'x-rapidapi-key': RAPIDAPI_KEY, 'x-rapidapi-host': IG_HOST, 'Content-Type': 'application/json' },
+      })
+      if (!igRes.ok) return NextResponse.json({ error: `Instagram-API Fehler ${igRes.status}` }, { status: 502 })
+      const igJson = await igRes.json()
+      const it = igJson?.items?.[0]
+      if (!it) return NextResponse.json({ error: 'Keine Daten zum Instagram-Post gefunden' }, { status: 404 })
+      videoUrl = it.video_versions?.[0]?.url || it.video_url || it.video_dl_url || it.media?.video_url || null
+      if (!videoUrl) return NextResponse.json({ error: 'Kein Video an diesem Instagram-Link gefunden (evtl. ein reines Bild-Post)' }, { status: 400 })
+      if (!title) title = (it.caption?.text || 'Instagram-Video').toString().slice(0, 120)
+    }
+
     if (!videoUrl) return NextResponse.json({ error: 'Keine Video-URL erhalten' }, { status: 502 })
 
     // Video-Bytes laden
@@ -53,15 +93,14 @@ export async function POST(req: NextRequest) {
     const { data: urlData } = supabase.storage.from('reels').getPublicUrl(path)
 
     // In Reels-Tabelle eintragen
-    const title = (dlJson.title || dlJson.desc || 'Kooperationsvideo').toString().slice(0, 120)
     const { data, error } = await supabase.from('reels').insert([{
       user_id: user.id,
-      title,
-      category: null,
-      video_type: 'kooperation',
+      title: title || (isIG ? 'Instagram-Video' : 'TikTok-Video'),
+      category,
+      video_type: videoType,
       video_path: path,
       video_url: urlData.publicUrl,
-      creator_ids: creatorId ? [creatorId] : [],
+      creator_ids: creatorIds,
       source_link: postLink,
     }]).select().single()
 

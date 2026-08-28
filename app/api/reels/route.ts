@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     user_id: user.id,
     title: title || null,
     category: category || null,
-    video_type: ['kooperation','kunde'].includes(videoType) ? videoType : 'beispiel',
+    video_type: ['kooperation','kunde','inspo'].includes(videoType) ? videoType : 'beispiel',
     video_path: path,
     video_url: urlData.publicUrl,
     creator_ids: Array.isArray(creatorIds) ? creatorIds : [],

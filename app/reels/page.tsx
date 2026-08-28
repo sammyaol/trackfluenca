@@ -25,7 +25,7 @@ type Reel = {
   id: string
   title?: string
   category?: string
-  video_type?: 'kooperation' | 'beispiel' | 'kunde'
+  video_type?: 'kooperation' | 'beispiel' | 'kunde' | 'inspo'
   video_path: string
   video_url: string
   creator_ids: string[]
@@ -43,7 +43,21 @@ type CreatorLite = {
   ig_top_age?: string
 }
 
-const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' | 'kunde' }
+const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' | 'kunde' | 'inspo' }
+
+const videoTypeOptions: { value: 'beispiel' | 'kooperation' | 'kunde' | 'inspo'; label: string }[] = [
+  { value: 'beispiel', label: 'Beispielvideo' },
+  { value: 'kooperation', label: 'Kooperationsvideo' },
+  { value: 'kunde', label: 'Kundenvideo' },
+  { value: 'inspo', label: 'Inspo' },
+]
+
+const genderOptions = [
+  { value: '', label: 'Alle' },
+  { value: 'Weiblich', label: 'Frauen' },
+  { value: 'Männlich', label: 'Männer' },
+  { value: 'Divers', label: 'Divers' },
+]
 
 export default function ReelsPage() {
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -55,7 +69,7 @@ export default function ReelsPage() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [creatorFilter, setCreatorFilter] = useState('')
-  const [videoTypeFilter, setVideoTypeFilter] = useState<'' | 'kooperation' | 'beispiel' | 'kunde'>('')
+  const [videoTypeFilter, setVideoTypeFilter] = useState<'' | 'kooperation' | 'beispiel' | 'kunde' | 'inspo'>('')
   const [genderFilter, setGenderFilter] = useState('')
   const [ageFilter, setAgeFilter] = useState('')
 
@@ -69,6 +83,8 @@ export default function ReelsPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [uploadMode, setUploadMode] = useState<'file' | 'link'>('file')
+  const [linkInput, setLinkInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const load = async () => {
@@ -117,6 +133,8 @@ export default function ReelsPage() {
     setFiles([])
     setUploadError('')
     setCreatorSearch('')
+    setUploadMode('file')
+    setLinkInput('')
     setShowModal(true)
   }
 
@@ -126,6 +144,8 @@ export default function ReelsPage() {
     setFiles([])
     setUploadError('')
     setCreatorSearch('')
+    setUploadMode('file')
+    setLinkInput('')
     setShowModal(true)
   }
 
@@ -148,6 +168,34 @@ export default function ReelsPage() {
       if (!res.ok) { setUploadError('Speichern fehlgeschlagen'); return }
       setShowModal(false)
       load()
+      return
+    }
+
+    if (uploadMode === 'link') {
+      if (!linkInput.trim()) { setUploadError('Bitte einen Instagram- oder TikTok-Link einfügen'); return }
+      setUploading(true)
+      try {
+        const res = await fetch('/api/reels/auto-import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            postLink: linkInput.trim(),
+            creatorIds: form.creatorIds,
+            videoType: form.videoType,
+            category: form.category,
+            title: form.title,
+          }),
+        })
+        const data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || 'Import fehlgeschlagen')
+        if (data.skipped) throw new Error('Link nicht erkannt. Unterstützt: Instagram und TikTok.')
+        setShowModal(false)
+        load()
+      } catch (e: any) {
+        setUploadError(e.message || 'Import fehlgeschlagen')
+      } finally {
+        setUploading(false)
+      }
       return
     }
 
@@ -206,6 +254,21 @@ export default function ReelsPage() {
   const inputCls = "w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none focus:border-accent/50 transition-colors"
   const labelCls = "text-ink-3 text-xs block mb-1.5"
 
+  const typeBadgeCls = (t?: string) => {
+    const vt = t || 'beispiel'
+    if (vt === 'kooperation') return 'bg-emerald-500/20 text-emerald-400'
+    if (vt === 'kunde') return 'bg-sky-500/20 text-sky-400'
+    if (vt === 'inspo') return 'bg-violet-500/20 text-violet-400'
+    return 'bg-white/[0.08] text-ink-3'
+  }
+  const typeLabel = (t?: string) => {
+    const vt = t || 'beispiel'
+    if (vt === 'kooperation') return 'Kooperation'
+    if (vt === 'kunde') return 'Kunde'
+    if (vt === 'inspo') return 'Inspo'
+    return 'Beispiel'
+  }
+
   return (
     <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
@@ -238,17 +301,16 @@ export default function ReelsPage() {
             <select value={videoTypeFilter} onChange={e => setVideoTypeFilter(e.target.value as any)}
               className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
               <option value="">Alle Videotypen</option>
-              <option value="kooperation">Kooperationsvideo</option>
-              <option value="kunde">Kundenvideo</option>
-              <option value="beispiel">Beispielvideo</option>
+              {videoTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
-            <select value={genderFilter} onChange={e => setGenderFilter(e.target.value)}
-              className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
-              <option value="">Alle Geschlechter</option>
-              <option value="Weiblich">Weiblich</option>
-              <option value="Männlich">Männlich</option>
-              <option value="Divers">Divers</option>
-            </select>
+            <div className="flex items-center gap-1 bg-surface-2 border border-hairline rounded-apple-sm p-1">
+              {genderOptions.map(o => (
+                <button key={o.value} type="button" onClick={() => setGenderFilter(o.value)}
+                  className={`px-2.5 py-1 rounded-apple-sm text-xs transition-colors ${genderFilter === o.value ? 'bg-accent text-ink-1' : 'text-ink-3 hover:text-ink-1'}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
             <select value={ageFilter} onChange={e => setAgeFilter(e.target.value)}
               className="bg-surface-2 border border-hairline rounded-apple-sm px-3 py-2 text-sm text-ink-1 focus:outline-none focus:border-accent">
               <option value="">Alle Altersgruppen</option>
@@ -270,11 +332,8 @@ export default function ReelsPage() {
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
-                        (r.video_type || 'beispiel') === 'kooperation' ? 'bg-emerald-500/20 text-emerald-400' :
-                        (r.video_type || 'beispiel') === 'kunde' ? 'bg-sky-500/20 text-sky-400' :
-                        'bg-white/[0.08] text-ink-3'}`}>
-                        {(r.video_type || 'beispiel') === 'kooperation' ? 'Kooperation' : (r.video_type || 'beispiel') === 'kunde' ? 'Kunde' : 'Beispiel'}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${typeBadgeCls(r.video_type)}`}>
+                        {typeLabel(r.video_type)}
                       </span>
                     </div>
                     <div className="text-ink-1 text-sm font-medium truncate">{r.title || 'Ohne Titel'}</div>
@@ -330,49 +389,58 @@ export default function ReelsPage() {
               <div className="p-6 flex flex-col gap-4">
                 {!editingId && (
                   <div>
-                    <label className={labelCls}>Videodateien (mehrere möglich)</label>
-                    <div
-                      onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
-                      onDragLeave={() => setIsDragging(false)}
-                      onDrop={e => {
-                        e.preventDefault()
-                        setIsDragging(false)
-                        const dropped = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('video/'))
-                        if (dropped.length) setFiles(prev => [...prev, ...dropped])
-                      }}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`w-full border-2 border-dashed rounded-apple-sm px-4 py-6 text-center cursor-pointer transition-colors ${isDragging ? 'border-accent bg-accent/5' : 'border-hairline'}`}>
-                      <input ref={fileInputRef} type="file" accept="video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])])}
-                        className="hidden" />
-                      <div className="text-xs text-ink-3">Dateien hierher ziehen oder klicken zum Auswählen</div>
-                      {files.length > 0 && (
-                        <div className="mt-3 flex flex-col gap-1 text-left" onClick={e => e.stopPropagation()}>
-                          {files.map((f, i) => (
-                            <div key={i} className="flex items-center justify-between text-xs text-ink-2 bg-white/[0.05] rounded-apple-sm px-2 py-1">
-                              <span className="truncate">{f.name}</span>
-                              <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-ink-4 hover:text-red-400 ml-2 flex-shrink-0">×</button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <label className={labelCls}>Quelle</label>
+                    <div className="flex gap-2 mb-2">
+                      <button type="button" onClick={() => setUploadMode('file')}
+                        className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${uploadMode === 'file' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                        Datei hochladen
+                      </button>
+                      <button type="button" onClick={() => setUploadMode('link')}
+                        className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${uploadMode === 'link' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                        Instagram/TikTok-Link
+                      </button>
                     </div>
+                    {uploadMode === 'file' ? (
+                      <div
+                        onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={e => {
+                          e.preventDefault()
+                          setIsDragging(false)
+                          const dropped = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('video/'))
+                          if (dropped.length) setFiles(prev => [...prev, ...dropped])
+                        }}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={`w-full border-2 border-dashed rounded-apple-sm px-4 py-6 text-center cursor-pointer transition-colors ${isDragging ? 'border-accent bg-accent/5' : 'border-hairline'}`}>
+                        <input ref={fileInputRef} type="file" accept="video/*" multiple onChange={e => setFiles(prev => [...prev, ...Array.from(e.target.files || [])])}
+                          className="hidden" />
+                        <div className="text-xs text-ink-3">Dateien hierher ziehen oder klicken zum Auswählen</div>
+                        {files.length > 0 && (
+                          <div className="mt-3 flex flex-col gap-1 text-left" onClick={e => e.stopPropagation()}>
+                            {files.map((f, i) => (
+                              <div key={i} className="flex items-center justify-between text-xs text-ink-2 bg-white/[0.05] rounded-apple-sm px-2 py-1">
+                                <span className="truncate">{f.name}</span>
+                                <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-ink-4 hover:text-red-400 ml-2 flex-shrink-0">×</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <input value={linkInput} onChange={e => setLinkInput(e.target.value)} className={inputCls}
+                        placeholder="https://www.instagram.com/reel/... oder https://www.tiktok.com/@user/video/..." />
+                    )}
                   </div>
                 )}
                 <div>
                   <label className={labelCls}>Video-Typ</label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'beispiel' }))}
-                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'beispiel' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
-                      Beispielvideo
-                    </button>
-                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'kooperation' }))}
-                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'kooperation' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
-                      Kooperationsvideo
-                    </button>
-                    <button type="button" onClick={() => setForm(f => ({ ...f, videoType: 'kunde' }))}
-                      className={`flex-1 py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === 'kunde' ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
-                      Kundenvideo
-                    </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    {videoTypeOptions.map(o => (
+                      <button key={o.value} type="button" onClick={() => setForm(f => ({ ...f, videoType: o.value }))}
+                        className={`py-2 rounded-apple-sm text-xs border transition-colors ${form.videoType === o.value ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                        {o.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
                 <div>
@@ -381,7 +449,7 @@ export default function ReelsPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Kategorie / Art des Videos</label>
-                  <input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputCls} placeholder="z.B. Unboxing, Tanz, Testimonial" list="reel-categories" />
+                  <input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} className={inputCls} placeholder="z.B. Unboxing, Tanz, Testimonial, Paar" list="reel-categories" />
                   <datalist id="reel-categories">
                     {categories.map(c => <option key={c} value={c} />)}
                   </datalist>
@@ -402,7 +470,9 @@ export default function ReelsPage() {
                 {uploadError && <div className="text-red-400 text-xs">{uploadError}</div>}
                 <button onClick={save} disabled={uploading}
                   className="w-full py-2.5 rounded-apple-sm bg-accent text-ink-1 text-sm font-medium hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors disabled:opacity-50">
-                  {uploading ? (uploadProgress ? `Lade ${uploadProgress.current}/${uploadProgress.total} hoch...` : 'Wird gespeichert...') : (editingId ? 'Speichern' : `Hochladen${files.length > 1 ? ` (${files.length})` : ''}`)}
+                  {uploading
+                    ? (uploadProgress ? `Lade ${uploadProgress.current}/${uploadProgress.total} hoch...` : (uploadMode === 'link' && !editingId ? 'Lädt von Link...' : 'Wird gespeichert...'))
+                    : (editingId ? 'Speichern' : (uploadMode === 'link' ? 'Von Link laden' : `Hochladen${files.length > 1 ? ` (${files.length})` : ''}`))}
                 </button>
               </div>
             </div>
