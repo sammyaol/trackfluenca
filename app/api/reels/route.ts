@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
-  const { path, title, category, creatorIds, videoType, sourceLink } = body
+  const { path, title, category, creatorIds, videoType, sourceLink, geschlecht } = body
   if (!path) return NextResponse.json({ error: 'path fehlt' }, { status: 400 })
 
   const { data: urlData } = supabase.storage.from('reels').getPublicUrl(path)
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     video_url: urlData.publicUrl,
     creator_ids: Array.isArray(creatorIds) ? creatorIds : [],
     source_link: sourceLink || null,
+    geschlecht: geschlecht || null,
   }]).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -29,6 +29,11 @@ type Reel = {
   video_path: string
   video_url: string
   creator_ids: string[]
+  geschlecht?: string
+  source_handle?: string
+  source_platform?: string
+  source_follower?: number
+  source_image?: string
   created_at: string
 }
 
@@ -43,7 +48,7 @@ type CreatorLite = {
   ig_top_age?: string
 }
 
-const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' | 'kunde' | 'inspo' }
+const emptyForm = { title: '', category: '', creatorIds: [] as string[], videoType: 'beispiel' as 'kooperation' | 'beispiel' | 'kunde' | 'inspo', geschlecht: '' as string }
 
 const videoTypeOptions: { value: 'beispiel' | 'kooperation' | 'kunde' | 'inspo'; label: string }[] = [
   { value: 'beispiel', label: 'Beispielvideo' },
@@ -56,6 +61,13 @@ const genderOptions = [
   { value: '', label: 'Alle' },
   { value: 'Weiblich', label: 'Frauen' },
   { value: 'Männlich', label: 'Männer' },
+  { value: 'Divers', label: 'Divers' },
+]
+
+const modalGenderOptions = [
+  { value: '', label: 'Nicht angegeben' },
+  { value: 'Weiblich', label: 'Frau' },
+  { value: 'Männlich', label: 'Mann' },
   { value: 'Divers', label: 'Divers' },
 ]
 
@@ -122,7 +134,7 @@ export default function ReelsPage() {
     const matchesCreator = !creatorFilter || r.creator_ids.includes(creatorFilter)
     const matchesVideoType = !videoTypeFilter || (r.video_type || 'beispiel') === videoTypeFilter
     const linkedCreators = r.creator_ids.map(id => creatorById[id]).filter(Boolean) as CreatorLite[]
-    const matchesGender = !genderFilter || linkedCreators.some(c => c.geschlecht === genderFilter)
+    const matchesGender = !genderFilter || (r.geschlecht ? r.geschlecht === genderFilter : linkedCreators.some(c => c.geschlecht === genderFilter))
     const matchesAge = !ageFilter || linkedCreators.some(c => c.ig_top_age === ageFilter)
     return matchesSearch && matchesCategory && matchesCreator && matchesVideoType && matchesGender && matchesAge
   })
@@ -140,7 +152,7 @@ export default function ReelsPage() {
 
   const openEdit = (r: Reel) => {
     setEditingId(r.id)
-    setForm({ title: r.title || '', category: r.category || '', creatorIds: r.creator_ids || [], videoType: (r.video_type as any) || 'beispiel' })
+    setForm({ title: r.title || '', category: r.category || '', creatorIds: r.creator_ids || [], videoType: (r.video_type as any) || 'beispiel', geschlecht: r.geschlecht || '' })
     setFiles([])
     setUploadError('')
     setCreatorSearch('')
@@ -162,7 +174,7 @@ export default function ReelsPage() {
       const res = await fetch(`/api/reels/${editingId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ title: form.title, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType }),
+        body: JSON.stringify({ title: form.title, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType, geschlecht: form.geschlecht || null }),
       })
       setUploading(false)
       if (!res.ok) { setUploadError('Speichern fehlgeschlagen'); return }
@@ -184,6 +196,7 @@ export default function ReelsPage() {
             videoType: form.videoType,
             category: form.category,
             title: form.title,
+            geschlecht: form.geschlecht || null,
           }),
         })
         const data = await res.json()
@@ -224,7 +237,7 @@ export default function ReelsPage() {
         const saveRes = await fetch('/api/reels', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ path: urlData.path, title: titleForFile, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType }),
+          body: JSON.stringify({ path: urlData.path, title: titleForFile, category: form.category, creatorIds: form.creatorIds, videoType: form.videoType, geschlecht: form.geschlecht || null }),
         })
         const saveData = await saveRes.json()
         if (!saveRes.ok) throw new Error(saveData.error || 'Speichern fehlgeschlagen')
@@ -331,10 +344,15 @@ export default function ReelsPage() {
                 <video src={r.video_url} controls preload="metadata" className="w-full aspect-[9/16] bg-black object-cover" />
                 <div className="p-3 flex flex-col gap-2 flex-1">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${typeBadgeCls(r.video_type)}`}>
                         {typeLabel(r.video_type)}
                       </span>
+                      {r.geschlecht && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium bg-white/[0.06] text-ink-3">
+                          {r.geschlecht}
+                        </span>
+                      )}
                     </div>
                     <div className="text-ink-1 text-sm font-medium truncate">{r.title || 'Ohne Titel'}</div>
                     {r.category && <div className="text-ink-4 text-xs mt-0.5">{r.category}</div>}
@@ -354,6 +372,20 @@ export default function ReelsPage() {
                         )
                       })}
                     </div>
+                  )}
+                  {r.source_handle && (
+                    <a href={r.source_platform === 'tiktok' ? `https://tiktok.com/@${r.source_handle}` : `https://instagram.com/${r.source_handle}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[10px] text-ink-2 bg-white/[0.04] rounded-apple-sm px-2 py-1.5 hover:bg-white/[0.08] transition-colors">
+                      <span className="w-5 h-5 rounded-full overflow-hidden bg-white/10 flex-shrink-0 flex items-center justify-center text-[8px]">
+                        {r.source_image ? <img src={avatarSrc(r.source_image)} alt="" className="w-full h-full object-cover" /> : '@'}
+                      </span>
+                      <span className="truncate">@{r.source_handle}</span>
+                      {typeof r.source_follower === 'number' && r.source_follower > 0 && (
+                        <span className="text-ink-4 ml-auto flex-shrink-0">{r.source_follower.toLocaleString('de-DE')}</span>
+                      )}
+                      <span className="text-ink-4 flex-shrink-0">↗</span>
+                    </a>
                   )}
                   <div className="mt-auto flex items-center gap-2 pt-1">
                     <a href={r.video_url} download className="flex-1 text-center text-xs px-2 py-1.5 rounded-apple-sm bg-white/[0.05] text-ink-2 hover:text-ink-1 hover:bg-white/[0.08] transition-colors">
@@ -442,6 +474,18 @@ export default function ReelsPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Geschlecht</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {modalGenderOptions.map(o => (
+                      <button key={o.value} type="button" onClick={() => setForm(f => ({ ...f, geschlecht: o.value }))}
+                        className={`py-2 rounded-apple-sm text-xs border transition-colors ${form.geschlecht === o.value ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>
+                        {o.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-ink-4 text-[10px] mt-1">Wird für den Geschlechter-Filter genutzt, falls kein Creator verknüpft ist (z.B. bei Inspo-Videos).</p>
                 </div>
                 <div>
                   <label className={labelCls}>Titel</label>
