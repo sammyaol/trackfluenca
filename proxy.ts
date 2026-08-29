@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function proxy(req: NextRequest) {
     const isPublic = req.nextUrl.pathname.startsWith('/login') || 
                          req.nextUrl.pathname.startsWith('/api') ||
+                         req.nextUrl.pathname.startsWith('/r/') ||
                          req.nextUrl.pathname.startsWith('/_next')
 
   if (isPublic) return NextResponse.next()
