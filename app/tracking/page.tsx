@@ -44,10 +44,11 @@ export default function Tracking() {
       setLinks(linksData || [])
       const { data: klicksData } = await sb.from('outreach_link_klicks').select('created_at, device').order('created_at', { ascending: true })
       setKlicksLog(klicksData || [])
-      // Shopify UTM-Performance (Sessions, Warenkorb, Checkout, Sales) pro
-      // Creator-Link, siehe app/api/outreach-links/route.ts (utm_campaign)
-      // und die shopify-analytics-sync Edge Function, die diese Tabelle
-      // täglich aus ShopifyQL befüllt. Öffentlich lesbar, kein User-Filter nötig.
+      // Creator-Performance (Sessions, Bestellungen, Umsatz) pro Outreach-Link,
+      // siehe app/api/outreach-links/route.ts (utm_campaign) und die
+      // shopify-analytics-sync Edge Function, die diese Tabelle taeglich aus
+      // Triple Whale (Pixel, Triple-Attribution) befuellt. Oeffentlich lesbar,
+      // kein User-Filter noetig.
       const { data: campaignData } = await sb.from('shopify_campaign_stats').select('*')
       setCampaignStats(campaignData || [])
       setLoading(false)
@@ -74,12 +75,9 @@ export default function Tracking() {
     const trackedUtms = new Set(links.map(l => l.utm_campaign).filter(Boolean))
     const relevant = campaignStats.filter(c => trackedUtms.has(c.utm_campaign))
     const sessions = relevant.reduce((s, c) => s + (c.sessions || 0), 0)
-    const cart = relevant.reduce((s, c) => s + (c.sessions_with_cart_additions || 0), 0)
-    const checkoutReached = relevant.reduce((s, c) => s + (c.sessions_that_reached_checkout || 0), 0)
-    const checkoutDone = relevant.reduce((s, c) => s + (c.sessions_that_completed_checkout || 0), 0)
     const orders = relevant.reduce((s, c) => s + (c.orders_last_click || 0), 0)
     const sales = relevant.reduce((s, c) => s + (c.sales_last_click || 0), 0)
-    return { sessions, cart, checkoutReached, checkoutDone, orders, sales }
+    return { sessions, orders, sales }
   }, [links, campaignStats])
 
   const topCreators = useMemo(() => {
@@ -162,14 +160,13 @@ export default function Tracking() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-ink-1 font-medium text-sm tracking-tight">Shop-Performance</h2>
-              <p className="text-ink-4 text-xs">Letzte 90 Tage · Shopify, via UTM-Link</p>
+              <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link</p>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {[
-                { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: `${shopStats.cart} mit Warenkorb`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
-                { label: 'Checkout abgeschlossen', bg: '#30D158', value: `${shopStats.checkoutDone}`, sub: `${shopStats.checkoutReached} Checkout gestartet`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
-                { label: 'Bestellungen', bg: '#FF9F0A', value: `${shopStats.orders}`, sub: 'Last-Click attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13 5.4 5M7 13l-2.3 2.3a1 1 0 0 0 .7 1.7H17"/><circle cx="9" cy="21" r="1"/><circle cx="17" cy="21" r="1"/></svg> },
-                { label: 'Umsatz', bg: '#BF5AF2', value: fmtEUR(shopStats.sales), sub: 'Last-Click attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+                { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                { label: 'Bestellungen', bg: '#30D158', value: `${shopStats.orders}`, sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
+                { label: 'Umsatz', bg: '#BF5AF2', value: fmtEUR(shopStats.sales), sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
               ].map(m => (
                 <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                   <div className="flex items-start justify-between mb-4">
@@ -250,8 +247,6 @@ export default function Tracking() {
                       <th className="pb-2 font-medium">Rabattcode</th>
                       <th className="pb-2 font-medium text-right">Klicks</th>
                       <th className="pb-2 font-medium text-right">Sessions</th>
-                      <th className="pb-2 font-medium text-right">Warenkorb</th>
-                      <th className="pb-2 font-medium text-right">Checkout</th>
                       <th className="pb-2 font-medium text-right">Orders</th>
                       <th className="pb-2 font-medium text-right">Umsatz</th>
                       <th className="pb-2 font-medium">Erstellt</th>
@@ -271,8 +266,6 @@ export default function Tracking() {
                           <td className="py-2.5 text-ink-3">{l.rabatt_code || '—'}</td>
                           <td className="py-2.5 text-ink-1 font-semibold text-right">{l.klicks || 0}</td>
                           <td className="py-2.5 text-ink-2 text-right">{s ? s.sessions : '—'}</td>
-                          <td className="py-2.5 text-ink-2 text-right">{s ? s.sessions_with_cart_additions : '—'}</td>
-                          <td className="py-2.5 text-ink-2 text-right">{s ? s.sessions_that_completed_checkout : '—'}</td>
                           <td className="py-2.5 text-ink-2 text-right">{s ? s.orders_last_click : '—'}</td>
                           <td className="py-2.5 text-ink-1 font-semibold text-right">{s ? fmtEUR(s.sales_last_click) : '—'}</td>
                           <td className="py-2.5 text-ink-4">{new Date(l.created_at).toLocaleDateString('de-DE')}</td>
