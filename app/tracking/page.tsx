@@ -26,7 +26,7 @@ function ChartCard({ title, subtitle, children, loading, right }: any) {
   )
 }
 
-const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
+const shortLinkUrl = (code: string) => `https://kolure.de/r/${code}`
 
 export default function Tracking() {
   const [links, setLinks] = useState<any[]>([])
