@@ -179,6 +179,27 @@ function OutreachInner() {
       setOutreachLinks(Array.isArray(d) ? d : [])
     })
   }, [selected])
+  // Shopify UTM-Performance pro Creator: shopify_campaign_stats ist oeffentlich
+  // lesbar (RLS "using true"), daher direkter Supabase-Read ohne eigene
+  // API-Route - siehe app/tracking/page.tsx fuer dasselbe Muster.
+  const [campaignStats, setCampaignStats] = useState<any[]>([])
+  useEffect(() => {
+    const utms = outreachLinks.map((l: any) => l.utm_campaign).filter(Boolean)
+    if (utms.length === 0) { setCampaignStats([]); return }
+    sb.from('shopify_campaign_stats').select('*').in('utm_campaign', utms).then(({ data }: any) => {
+      setCampaignStats(data || [])
+    })
+  }, [outreachLinks])
+  const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
+  const performance = {
+    klicks: outreachLinks.reduce((s: number, l: any) => s + (l.klicks || 0), 0),
+    sessions: campaignStats.reduce((s: number, c: any) => s + (c.sessions || 0), 0),
+    cart: campaignStats.reduce((s: number, c: any) => s + (c.sessions_with_cart_additions || 0), 0),
+    checkoutReached: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_reached_checkout || 0), 0),
+    checkoutDone: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_completed_checkout || 0), 0),
+    orders: campaignStats.reduce((s: number, c: any) => s + (c.orders_last_click || 0), 0),
+    sales: campaignStats.reduce((s: number, c: any) => s + (c.sales_last_click || 0), 0),
+  }
   const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
   const createOutreachLink = async () => {
     if (!selected?.id || !newLinkUrl.trim() || creatingLink) return
@@ -759,6 +780,39 @@ function OutreachInner() {
                   </div>
                 ) : (
                   <button onClick={() => setShowLinkForm(true)} className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">+ Outreach-Link erstellen</button>
+                )}
+              </div>
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
+                {outreachLinks.length === 0 ? (
+                  <div className="text-ink-4 text-xs">Noch kein Link erstellt</div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.klicks}</div>
+                      <div className="text-ink-4 text-[10px]">Klicks</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.sessions}</div>
+                      <div className="text-ink-4 text-[10px]">Shop-Sessions</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.cart}</div>
+                      <div className="text-ink-4 text-[10px]">Warenkorb</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.checkoutDone}</div>
+                      <div className="text-ink-4 text-[10px]">Checkout</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.orders}</div>
+                      <div className="text-ink-4 text-[10px]">Bestellungen</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{fmtEUR(performance.sales)}</div>
+                      <div className="text-ink-4 text-[10px]">Umsatz</div>
+                    </div>
+                  </div>
                 )}
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
