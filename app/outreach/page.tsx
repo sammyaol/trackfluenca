@@ -191,12 +191,16 @@ function OutreachInner() {
     })
   }, [outreachLinks])
   const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
-  // Triple Whale liefert (anders als die vorherige Shopify-ShopifyQL-Sync) pro
-  // Campaign nur Sessions + Orders + Umsatz, keine Warenkorb-/Checkout-Stufen
+  // Sessions/Bestellungen/Umsatz kommen von Triple Whale (Pixel, Triple
+  // Attribution). Warenkorb/Checkout-Stufen liefert Triple Whale nicht pro
+  // Campaign, daher zusaetzlich eine ShopifyQL-Query (utm_medium='influencer')
   // - siehe shopify-analytics-sync Edge Function.
   const performance = {
     klicks: outreachLinks.reduce((s: number, l: any) => s + (l.klicks || 0), 0),
     sessions: campaignStats.reduce((s: number, c: any) => s + (c.sessions || 0), 0),
+    cart: campaignStats.reduce((s: number, c: any) => s + (c.sessions_with_cart_additions || 0), 0),
+    checkoutReached: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_reached_checkout || 0), 0),
+    checkoutDone: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_completed_checkout || 0), 0),
     orders: campaignStats.reduce((s: number, c: any) => s + (c.orders_last_click || 0), 0),
     sales: campaignStats.reduce((s: number, c: any) => s + (c.sales_last_click || 0), 0),
   }
@@ -795,6 +799,14 @@ function OutreachInner() {
                     <div className="bg-surface-3 rounded-apple-sm p-2">
                       <div className="text-ink-1 text-sm font-semibold">{performance.sessions}</div>
                       <div className="text-ink-4 text-[10px]">Shop-Sessions</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.cart}</div>
+                      <div className="text-ink-4 text-[10px]">Warenkorb</div>
+                    </div>
+                    <div className="bg-surface-3 rounded-apple-sm p-2">
+                      <div className="text-ink-1 text-sm font-semibold">{performance.checkoutDone}</div>
+                      <div className="text-ink-4 text-[10px]">Checkout</div>
                     </div>
                     <div className="bg-surface-3 rounded-apple-sm p-2">
                       <div className="text-ink-1 text-sm font-semibold">{performance.orders}</div>
