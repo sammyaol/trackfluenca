@@ -75,9 +75,12 @@ export default function Tracking() {
     const trackedUtms = new Set(links.map(l => l.utm_campaign).filter(Boolean))
     const relevant = campaignStats.filter(c => trackedUtms.has(c.utm_campaign))
     const sessions = relevant.reduce((s, c) => s + (c.sessions || 0), 0)
+    const cart = relevant.reduce((s, c) => s + (c.sessions_with_cart_additions || 0), 0)
+    const checkoutReached = relevant.reduce((s, c) => s + (c.sessions_that_reached_checkout || 0), 0)
+    const checkoutDone = relevant.reduce((s, c) => s + (c.sessions_that_completed_checkout || 0), 0)
     const orders = relevant.reduce((s, c) => s + (c.orders_last_click || 0), 0)
     const sales = relevant.reduce((s, c) => s + (c.sales_last_click || 0), 0)
-    return { sessions, orders, sales }
+    return { sessions, cart, checkoutReached, checkoutDone, orders, sales }
   }, [links, campaignStats])
 
   const topCreators = useMemo(() => {
@@ -162,9 +165,11 @@ export default function Tracking() {
               <h2 className="text-ink-1 font-medium text-sm tracking-tight">Shop-Performance</h2>
               <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link</p>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
               {[
                 { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                { label: 'Warenkorb', bg: '#FF9F0A', value: `${shopStats.cart}`, sub: 'Shopify, via UTM-Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                { label: 'Checkout', bg: '#FF453A', value: `${shopStats.checkoutDone}`, sub: `${shopStats.checkoutReached} erreicht · Shopify`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> },
                 { label: 'Bestellungen', bg: '#30D158', value: `${shopStats.orders}`, sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
                 { label: 'Umsatz', bg: '#BF5AF2', value: fmtEUR(shopStats.sales), sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
               ].map(m => (
