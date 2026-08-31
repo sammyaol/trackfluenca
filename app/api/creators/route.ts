@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const token = authHeader?.replace('Bearer ', '')
   const { data: { user } } = token ? await supabase.auth.getUser(token) : { data: { user: null } }
   if (user) body.user_id = user.id
-  body.type = body.type === 'celeb' ? 'celeb' : 'creator'
+  body.type = ['celeb', 'stylist'].includes(body.type) ? body.type : 'creator'
 
   const norm = (s: any) => (s || '').toString().trim().replace('@', '').toLowerCase()
 
@@ -47,6 +47,18 @@ export async function POST(req: NextRequest) {
         .eq('type', 'celeb')
       const dup = (existing || []).find((c: any) => (nameNorm && norm(c.name) === nameNorm) || (igNorm && norm(c.ig) === igNorm))
       if (dup) return NextResponse.json({ error: 'Diese Person ist bereits bei Celebs in der Liste.' }, { status: 409 })
+    }
+  } else if (user && body.type === 'stylist') {
+    const nameNorm = norm(body.name)
+    const igNorm = norm(body.ig)
+    if (nameNorm || igNorm) {
+      const { data: existing } = await supabase
+        .from('creators')
+        .select('id, name, ig')
+        .eq('user_id', user.id)
+        .eq('type', 'stylist')
+      const dup = (existing || []).find((c: any) => (nameNorm && norm(c.name) === nameNorm) || (igNorm && norm(c.ig) === igNorm))
+      if (dup) return NextResponse.json({ error: 'Diese Person ist bereits bei Stylisten in der Liste.' }, { status: 409 })
     }
   } else if (user) {
     const igNorm = norm(body.ig)
