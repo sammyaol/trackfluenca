@@ -33,6 +33,7 @@ export default function Tracking() {
   const [links, setLinks] = useState<any[]>([])
   const [klicksLog, setKlicksLog] = useState<any[]>([])
   const [campaignStats, setCampaignStats] = useState<any[]>([])
+  const [discountStats, setDiscountStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
 
@@ -51,6 +52,11 @@ export default function Tracking() {
       // kein User-Filter noetig.
       const { data: campaignData } = await sb.from('shopify_campaign_stats').select('*')
       setCampaignStats(campaignData || [])
+      // Rabattcode-Einloesungen je Code (nicht je Link/Campaign) - siehe
+      // shopify_discount_code_stats, befuellt von derselben Edge Function via
+      // Shopify codeDiscountNodeByCode. Oeffentlich lesbar, kein User-Filter.
+      const { data: discountData } = await sb.from('shopify_discount_code_stats').select('*')
+      setDiscountStats(discountData || [])
       setLoading(false)
     })
   }, [])
@@ -62,6 +68,14 @@ export default function Tracking() {
   }, [campaignStats])
 
   const statsFor = (l: any) => (l.utm_campaign ? campaignMap[l.utm_campaign] : null) || null
+
+  const discountMap = useMemo(() => {
+    const map: Record<string, any> = {}
+    discountStats.forEach(d => { map[(d.code || '').toLowerCase()] = d })
+    return map
+  }, [discountStats])
+
+  const discountFor = (code: string | null) => (code ? discountMap[code.toLowerCase()] : null) || null
 
   const stats = useMemo(() => {
     const totalClicks = links.reduce((s, l) => s + (l.klicks || 0), 0)
@@ -80,8 +94,12 @@ export default function Tracking() {
     const checkoutDone = relevant.reduce((s, c) => s + (c.sessions_that_completed_checkout || 0), 0)
     const orders = relevant.reduce((s, c) => s + (c.orders_last_click || 0), 0)
     const sales = relevant.reduce((s, c) => s + (c.sales_last_click || 0), 0)
-    return { sessions, cart, checkoutReached, checkoutDone, orders, sales }
-  }, [links, campaignStats])
+    const trackedCodes = new Set(links.map(l => (l.rabatt_code || '').trim().toLowerCase()).filter(Boolean))
+    const codeRedemptions = discountStats
+      .filter(d => trackedCodes.has((d.code || '').toLowerCase()))
+      .reduce((s, d) => s + (d.usage_count || 0), 0)
+    return { sessions, cart, checkoutReached, checkoutDone, orders, sales, codeRedemptions }
+  }, [links, campaignStats, discountStats])
 
   const topCreators = useMemo(() => {
     const map: Record<string, { name: string; klicks: number; links: number }> = {}
@@ -165,13 +183,14 @@ export default function Tracking() {
               <h2 className="text-ink-1 font-medium text-sm tracking-tight">Shop-Performance</h2>
               <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link</p>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
               {[
                 { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
                 { label: 'Warenkorb', bg: '#FF9F0A', value: `${shopStats.cart}`, sub: 'Shopify, via UTM-Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
                 { label: 'Checkout', bg: '#FF453A', value: `${shopStats.checkoutDone}`, sub: `${shopStats.checkoutReached} erreicht · Shopify`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> },
                 { label: 'Bestellungen', bg: '#30D158', value: `${shopStats.orders}`, sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
                 { label: 'Umsatz', bg: '#BF5AF2', value: fmtEUR(shopStats.sales), sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+                { label: 'Code eingelöst', bg: '#00C7BE', value: `${shopStats.codeRedemptions}x`, sub: 'Shopify, je Rabattcode', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.59 12.58V2h10.58l8.42 8.42a2 2 0 0 1 0 2.99Z"/><circle cx="7.5" cy="6.5" r="1.5"/></svg> },
               ].map(m => (
                 <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                   <div className="flex items-start justify-between mb-4">
@@ -250,6 +269,7 @@ export default function Tracking() {
                       <th className="pb-2 font-medium">Link</th>
                       <th className="pb-2 font-medium">Ziel</th>
                       <th className="pb-2 font-medium">Rabattcode</th>
+                      <th className="pb-2 font-medium text-right">Eingelöst</th>
                       <th className="pb-2 font-medium text-right">Klicks</th>
                       <th className="pb-2 font-medium text-right">Sessions</th>
                       <th className="pb-2 font-medium text-right">Orders</th>
@@ -269,6 +289,7 @@ export default function Tracking() {
                           <td className="py-2.5 font-mono text-ink-3">{l.short_code}</td>
                           <td className="py-2.5 text-ink-3 max-w-[180px] truncate">{l.ziel_url}</td>
                           <td className="py-2.5 text-ink-3">{l.rabatt_code || '—'}</td>
+                          <td className="py-2.5 text-ink-2 text-right">{l.rabatt_code ? (discountFor(l.rabatt_code) ? `${discountFor(l.rabatt_code).usage_count || 0}x` : '—') : '—'}</td>
                           <td className="py-2.5 text-ink-1 font-semibold text-right">{l.klicks || 0}</td>
                           <td className="py-2.5 text-ink-2 text-right">{s ? s.sessions : '—'}</td>
                           <td className="py-2.5 text-ink-2 text-right">{s ? s.orders_last_click : '—'}</td>

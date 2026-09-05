@@ -190,6 +190,20 @@ function OutreachInner() {
       setCampaignStats(data || [])
     })
   }, [outreachLinks])
+  // Rabattcode-Einloesungen: shopify_discount_code_stats ist oeffentlich lesbar
+  // (RLS "using true", wie shopify_campaign_stats), gefuellt von der
+  // shopify-analytics-sync Edge Function (codeDiscountNodeByCode je Code aus
+  // outreach_links.rabatt_code). Ein Creator kann mehrere Links/Codes haben -
+  // wir laden ALLE Codes dieses Creators, nicht nur einen.
+  const [discountStats, setDiscountStats] = useState<any[]>([])
+  useEffect(() => {
+    const codes = Array.from(new Set(outreachLinks.map((l: any) => (l.rabatt_code || '').trim()).filter(Boolean)))
+    if (codes.length === 0) { setDiscountStats([]); return }
+    sb.from('shopify_discount_code_stats').select('*').in('code', codes).then(({ data }: any) => {
+      setDiscountStats(data || [])
+    })
+  }, [outreachLinks])
+  const codeUsage = (code: string) => discountStats.find((d: any) => (d.code || '').toLowerCase() === (code || '').toLowerCase())?.usage_count ?? null
   const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
   // Sessions/Bestellungen/Umsatz kommen von Triple Whale (Pixel, Triple
   // Attribution). Warenkorb/Checkout-Stufen liefert Triple Whale nicht pro
@@ -203,6 +217,7 @@ function OutreachInner() {
     checkoutDone: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_completed_checkout || 0), 0),
     orders: campaignStats.reduce((s: number, c: any) => s + (c.orders_last_click || 0), 0),
     sales: campaignStats.reduce((s: number, c: any) => s + (c.sales_last_click || 0), 0),
+    codeRedemptions: discountStats.reduce((s: number, d: any) => s + (d.usage_count || 0), 0),
   }
   const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
   const createOutreachLink = async () => {
@@ -759,7 +774,7 @@ function OutreachInner() {
                   <div key={l.id} className="bg-surface-3 rounded-apple-sm p-2 space-y-1">
                     <div className="text-ink-2 text-[11px] font-mono truncate">{shortLinkUrl(l.short_code)}</div>
                     <div className="flex items-center justify-between gap-1">
-                      <span className="text-ink-4 text-[10px]">{l.klicks || 0} Klicks{l.rabatt_code ? ' · ' + l.rabatt_code : ''}</span>
+                      <span className="text-ink-4 text-[10px]">{l.klicks || 0} Klicks{l.rabatt_code ? ' · ' + l.rabatt_code + (codeUsage(l.rabatt_code) !== null ? ' (' + codeUsage(l.rabatt_code) + 'x eingelöst)' : '') : ''}</span>
                       <div className="flex gap-1">
                         <button onClick={() => copyLink(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copiedLinkId === l.id ? '✓' : 'Kopieren'}</button>
                         <button onClick={() => insertLinkInChat(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">In Chat</button>
@@ -816,6 +831,22 @@ function OutreachInner() {
                       <div className="text-ink-1 text-sm font-semibold">{fmtEUR(performance.sales)}</div>
                       <div className="text-ink-4 text-[10px]">Umsatz</div>
                     </div>
+                    {discountStats.length > 0 && (
+                      <div className="bg-surface-3 rounded-apple-sm p-2">
+                        <div className="text-ink-1 text-sm font-semibold">{performance.codeRedemptions}x</div>
+                        <div className="text-ink-4 text-[10px]">Code eingelöst</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {discountStats.length > 1 && (
+                  <div className="pt-1 space-y-0.5">
+                    {discountStats.map((d: any) => (
+                      <div key={d.code} className="flex items-center justify-between text-[10px] text-ink-4">
+                        <span className="font-mono">{d.code}</span>
+                        <span>{d.usage_count || 0}x eingelöst{d.usage_limit ? ' / ' + d.usage_limit : ''}</span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
