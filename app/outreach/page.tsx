@@ -182,6 +182,8 @@ function OutreachInner() {
   const [insights, setInsights] = useState<any[]>([])
   const [uploadingInsights, setUploadingInsights] = useState(false)
   const insightsInputRef = useRef<HTMLInputElement>(null)
+  const [isDraggingInsights, setIsDraggingInsights] = useState(false)
+  const [previewInsight, setPreviewInsight] = useState<any | null>(null)
   useEffect(() => {
     if (!selected?.id) { setInsights([]); return }
     sb.auth.getSession().then(async ({ data }) => {
@@ -861,9 +863,9 @@ function OutreachInner() {
                 {insights.length > 0 && (
                   <div className="grid grid-cols-3 gap-1.5">
                     {insights.map((ins: any) => (
-                      <div key={ins.id} className="relative group aspect-square">
+                      <div key={ins.id} className="relative group aspect-square cursor-pointer" onClick={() => setPreviewInsight(ins)}>
                         <img src={ins.image_url} alt="Insight" className="w-full h-full object-cover rounded-apple-sm border border-hairline" />
-                        <button onClick={() => deleteInsight(ins.id)}
+                        <button onClick={e => { e.stopPropagation(); deleteInsight(ins.id) }}
                           className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
                           &#10005;
                         </button>
@@ -871,10 +873,20 @@ function OutreachInner() {
                     ))}
                   </div>
                 )}
-                <button onClick={() => insightsInputRef.current?.click()} disabled={uploadingInsights}
-                  className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">
-                  {uploadingInsights ? 'Wird hochgeladen...' : '+ Insights hochladen'}
-                </button>
+                <div
+                  onDragOver={e => { e.preventDefault(); setIsDraggingInsights(true) }}
+                  onDragLeave={() => setIsDraggingInsights(false)}
+                  onDrop={e => {
+                    e.preventDefault()
+                    setIsDraggingInsights(false)
+                    uploadInsights(e.dataTransfer.files)
+                  }}
+                  onClick={() => insightsInputRef.current?.click()}
+                  className={`w-full border-2 border-dashed rounded-apple-sm px-3 py-3 text-center cursor-pointer transition-colors ${isDraggingInsights ? 'border-accent bg-accent/5' : 'border-hairline'}`}>
+                  <div className="text-[11px] font-medium text-ink-2">
+                    {uploadingInsights ? 'Wird hochgeladen...' : 'Bilder hierher ziehen oder klicken zum Hochladen'}
+                  </div>
+                </div>
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
                 <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
@@ -1081,6 +1093,16 @@ function OutreachInner() {
                   className="w-full bg-surface-2 border border-hairline rounded-apple-sm px-2 py-1.5 text-ink-1 text-xs focus:outline-none resize-none" />
               </div>
             </div>
+          </div>
+        )}
+
+        {previewInsight && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6" onClick={() => setPreviewInsight(null)}>
+            <img src={previewInsight.image_url} alt="Insight" className="max-w-full max-h-full object-contain rounded-apple-sm" onClick={e => e.stopPropagation()} />
+            <button onClick={() => setPreviewInsight(null)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-black/60 hover:bg-black/80 text-white text-sm">
+              &#10005;
+            </button>
           </div>
         )}
 
