@@ -179,6 +179,56 @@ function OutreachInner() {
       setOutreachLinks(Array.isArray(d) ? d : [])
     })
   }, [selected])
+  const [insights, setInsights] = useState<any[]>([])
+  const [uploadingInsights, setUploadingInsights] = useState(false)
+  const insightsInputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (!selected?.id) { setInsights([]); return }
+    sb.auth.getSession().then(async ({ data }) => {
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/creator-insights?creator_id=' + selected.id, { headers: { authorization: 'Bearer ' + token } })
+      const d = await res.json()
+      setInsights(Array.isArray(d) ? d : [])
+    })
+  }, [selected])
+  const uploadInsights = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !selected?.id) return
+    setUploadingInsights(true)
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i]
+      try {
+        const urlRes = await fetch('/api/creator-insights/upload-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ filename: f.name, creatorId: selected.id }),
+        })
+        const urlData = await urlRes.json()
+        if (!urlRes.ok) throw new Error(urlData.error || 'Upload-URL fehlgeschlagen')
+        const { error: uploadErr } = await sb.storage.from('creator-insights').uploadToSignedUrl(urlData.path, urlData.token, f)
+        if (uploadErr) throw uploadErr
+        await fetch('/api/creator-insights', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ path: urlData.path, creatorId: selected.id }),
+        })
+      } catch (e) {
+        // einzelnes Bild fehlgeschlagen, weiter mit dem naechsten
+      }
+    }
+    setUploadingInsights(false)
+    if (insightsInputRef.current) insightsInputRef.current.value = ''
+    const res = await fetch('/api/creator-insights?creator_id=' + selected.id, { headers: { authorization: 'Bearer ' + token } })
+    const d = await res.json()
+    setInsights(Array.isArray(d) ? d : [])
+  }
+  const deleteInsight = async (id: string) => {
+    const { data } = await sb.auth.getSession()
+    const token = data.session?.access_token || ''
+    await fetch('/api/creator-insights/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } })
+    setInsights(prev => prev.filter((x: any) => x.id !== id))
+  }
   // Shopify UTM-Performance pro Creator: shopify_campaign_stats ist oeffentlich
   // lesbar (RLS "using true"), daher direkter Supabase-Read ohne eigene
   // API-Route - siehe app/tracking/page.tsx fuer dasselbe Muster.
@@ -800,6 +850,31 @@ function OutreachInner() {
                 ) : (
                   <button onClick={() => setShowLinkForm(true)} className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">+ Outreach-Link erstellen</button>
                 )}
+              </div>
+              <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
+                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Insights</div>
+                <input ref={insightsInputRef} type="file" accept="image/*" multiple className="hidden"
+                  onChange={e => uploadInsights(e.target.files)} />
+                {insights.length === 0 && (
+                  <div className="text-ink-4 text-xs">Noch keine Insights hochgeladen</div>
+                )}
+                {insights.length > 0 && (
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {insights.map((ins: any) => (
+                      <div key={ins.id} className="relative group aspect-square">
+                        <img src={ins.image_url} alt="Insight" className="w-full h-full object-cover rounded-apple-sm border border-hairline" />
+                        <button onClick={() => deleteInsight(ins.id)}
+                          className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/60 text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                          &#10005;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <button onClick={() => insightsInputRef.current?.click()} disabled={uploadingInsights}
+                  className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">
+                  {uploadingInsights ? 'Wird hochgeladen...' : '+ Insights hochladen'}
+                </button>
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
                 <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
