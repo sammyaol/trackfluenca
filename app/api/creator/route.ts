@@ -8,7 +8,29 @@ const TT_H: Record<string,string> = { 'x-rapidapi-key': API_KEY, 'x-rapidapi-hos
 
 function getTier(f: number) { return f >= 1000000 ? 'Top-Tier' : f >= 500000 ? 'Macro' : f >= 50000 ? 'Mid-Tier' : f >= 10000 ? 'Micro' : 'Nano' }
 function getAffPct(f: number) { return f >= 1000000 ? '8%' : f >= 500000 ? '10%' : f >= 50000 ? '12%' : '15%' }
-function calcWert(f: number) { return f < 10000 ? Math.round(f * 0.01) : f < 50000 ? Math.round(f * 0.015) : f < 500000 ? Math.round(f * 0.01) : f < 1000000 ? Math.round(f * 0.007) : Math.round(f * 0.005) }
+// Ziel-TKP (EUR pro 1000 Views) je Groessenklasse. Kalibriert an echten
+// bezahlten Kooperationen (Cozmo, 628K TikTok-Follower/Macro-Tier, ca. 342K
+// Avg. Views/Video, real bezahlt 600 EUR/Post -> TKP ca. 1,75 EUR). Groessere
+// Reichweite = niedrigerer TKP (Mengenrabatt), kleinere Creator bekommen
+// einen hoeheren TKP, da die Fixkosten pro Kooperation kaum sinken.
+function getTkpTarget(tier: string) {
+  return tier === 'Top-Tier' ? 1.0 : tier === 'Macro' ? 1.75 : tier === 'Mid-Tier' ? 2.2 : tier === 'Micro' ? 3.0 : 4.5
+}
+// Mindestpreis pro Post, falls (fast) keine Views-Daten vorliegen, damit
+// kein unrealistisch niedriger Wert nahe 0 herauskommt.
+function getMinWert(tier: string) {
+  return tier === 'Top-Tier' ? 500 : tier === 'Macro' ? 300 : tier === 'Mid-Tier' ? 120 : tier === 'Micro' ? 60 : 30
+}
+// View-basierter Post-Wert: Ø Views * Ziel-TKP, mit Mindestpreis-Untergrenze.
+// Ersetzt die alte rein follower-basierte Berechnung, die bei Creatorn mit
+// hohen Follower- aber niedrigeren View-Zahlen stark ueberhoehte Preise
+// auswarf (siehe #52). Ohne Views-Daten (z.B. privates Profil) faellt die
+// Funktion auf eine stark abgeschwaechte Follower-Schaetzung zurueck.
+function calcWertFromViews(avgViews: number, follower: number, tier: string) {
+  const min = getMinWert(tier)
+  if (avgViews > 0) return Math.max(min, Math.round((avgViews / 1000) * getTkpTarget(tier)))
+  return Math.max(min, Math.round(follower * 0.0015))
+}
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
 async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
 async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 9000); try { const r = await fetch(url, { headers, signal: ctrl.signal }); clearTimeout(to); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} finally { clearTimeout(to) } await new Promise(res => setTimeout(res, 400)) } return null }
@@ -146,9 +168,18 @@ export async function GET(req: NextRequest) {
   const maxFollower = Math.max(result.igFollower || 0, result.ttFollower || 0)
   result.overallTier = getTier(maxFollower)
   result.gesamtReichweite = (result.igFollower || 0) + (result.ttFollower || 0)
-  const reelWert = calcWert(result.igFollower || 0)
-  const ttWert = calcWert(result.ttFollower || 0)
-  const storyWert = result.igFollower ? Math.round(result.igFollower * 0.0001 * 10) * 100 : 0
+
+  const igTier = getTier(result.igFollower || 0)
+  const ttTier = getTier(result.ttFollower || 0)
+  // Reel-/TikTok-Wert: view-basiert (Ø Views * Ziel-TKP der Groessenklasse),
+  // nicht mehr rein follower-basiert - siehe getTkpTarget()-Kommentar oben.
+  const reelWert = result.igFollower ? calcWertFromViews(result.igAvgReelViews || 0, result.igFollower, igTier) : 0
+  const ttWert = result.ttFollower ? calcWertFromViews(result.ttAvgVideoViews || 0, result.ttFollower, ttTier) : 0
+  // Story-Wert: TikTok/IG-Stories liefern keine oeffentlichen View-Zahlen,
+  // daher als Anteil (25%) vom view-basierten Reel-Wert abgeleitet statt
+  // direkt aus Followern - Stories erreichen erfahrungsgemaess deutlich
+  // weniger als ein Feed-/Reel-Post.
+  const storyWert = reelWert ? Math.round(reelWert * 0.25) : 0
   result.reelWert = reelWert
   result.ttWert = ttWert
   result.storyWert = storyWert
