@@ -914,16 +914,16 @@ export default function CreatorPage() {
                               ? <span className="w-3 h-3 border-2 border-white/20 border-t-white/80 rounded-full animate-spin inline-block"/>
                               : expandedCreator === (c as any)._id ? '▲' : '▼'}
                           </button>
-                          <div className="relative flex-shrink-0 w-12 h-9">
-                            <div className="w-9 h-9 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#FF375F] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
+                          <div className="relative flex-shrink-0 w-11 h-11">
+                            <div className="w-11 h-11 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#FF375F] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</span>
                               {(c.ttImage || c.igImage) && <img src={avatarSrc(c.ttImage || c.igImage)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e:any) => { const img = e.currentTarget as HTMLImageElement; const fb = c.ttImage ? c.igImage : null; if (fb && img.dataset.fb !== '1') { img.dataset.fb = '1'; img.src = avatarSrc(fb) as string } else { img.remove() } }} />}
                             </div>
-                            <div className="w-5 h-5 rounded-full absolute left-5 top-4 border-2 border-hairline bg-[#555] flex items-center justify-center overflow-hidden z-20">
-                              {c.tt
-                                ? <span className="text-[6px] text-ink-2 font-bold">{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,1)}</span>
-                                : <span className="text-[6px] text-ink-4">—</span>}
-                            </div>
+                            {c.tt && (
+                              <div className="w-5 h-5 rounded-full absolute -right-1 -bottom-1 border-2 border-surface-2 bg-black flex items-center justify-center overflow-hidden z-20">
+                                <svg viewBox="0 0 24 24" className="w-3 h-3" fill="#fff"><path d="M16.6 5.82s.51.5 0 0A4.278 4.278 0 0 1 15.54 3h-3.09v12.4a2.592 2.592 0 0 1-2.59 2.5c-1.42 0-2.6-1.16-2.6-2.6 0-1.72 1.66-3.01 3.37-2.48V9.66c-3.45-.46-6.47 2.22-6.47 5.64 0 3.33 2.76 5.7 5.69 5.7 3.14 0 5.69-2.55 5.69-5.7V9.01a7.35 7.35 0 0 0 4.3 1.38V7.3s-1.88.09-3.24-1.48z"/></svg>
+                              </div>
+                            )}
                           </div>
                           <div>
                             <div className="flex items-center gap-1">
