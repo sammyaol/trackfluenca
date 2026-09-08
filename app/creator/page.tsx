@@ -734,7 +734,19 @@ export default function CreatorPage() {
                             ig_er: d.igEr || c.ig_er,
                             tt_er: d.ttEr || c.tt_er,
                             tt_avg_video_views: d.ttAvgVideoViews || c.tt_avg_video_views,
+                            ig_avg_reel_views: d.igAvgReelViews || c.ig_avg_reel_views,
                             ig_avg_likes: d.igAvgLikes || c.ig_avg_likes,
+                            // Bewertung & TKP mit aktualisieren - sonst bleiben diese Felder
+                            // dauerhaft auf dem Stand von der Erst-Erfassung eingefroren,
+                            // auch wenn sich Views/Follower und damit die Preis-Schaetzung
+                            // laengst geaendert haben (siehe #52).
+                            reel_wert: d.reelWert ?? c.reel_wert,
+                            story_wert: d.storyWert ?? c.story_wert,
+                            tt_wert: d.ttWert ?? c.tt_wert,
+                            tkp_reel: d.tkpReel ?? c.tkp_reel,
+                            tkp_story: d.tkpStory ?? c.tkp_story,
+                            tkp_tt: d.tkpTT ?? c.tkp_tt,
+                            affiliate_pct: d.affiliatePct || c.affiliate_pct,
                           })
                         })
                         // Snapshot speichern
@@ -1763,19 +1775,25 @@ export default function CreatorPage() {
                     </div>
 
                     <div className="bg-surface-0 rounded-apple-sm p-4 border border-hairline-soft">
-                      <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">Bewertung & TKP</p>
+                      <p className="text-ink-4 text-[10px] font-semibold uppercase tracking-widest mb-3">
+                        Bewertung & TKP
+                        <span title="TKP = Tausender-Kontakt-Preis: der Preis pro 1.000 Views/Impressions. Der Standard-Massstab in der Influencer-Preisfindung, um Creator unabhaengig von absoluten Follower- oder View-Zahlen vergleichbar zu machen." className="ml-1.5 inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-hairline-soft text-ink-4 text-[9px] normal-case cursor-help align-middle">i</span>
+                      </p>
                       <div className="grid grid-cols-2 gap-2">
                         {[
-                          ['Story Wert', fmtEur(selected.storyWert)],
-                          ['Reel Wert', fmtEur(selected.reelWert)],
-                          ['TikTok Wert', selected.ttWert > 0 ? fmtEur(selected.ttWert) : '—'],
-                          ['Affiliate %', selected.affiliatePct],
-                          ['TKP Story', selected.tkpStory > 0 ? `${selected.tkpStory} €` : '—'],
-                          ['TKP Post', selected.tkpPost > 0 ? `${selected.tkpPost} €` : '—'],
-                          ['TKP TikTok', selected.tkpTT > 0 ? `${selected.tkpTT} €` : '—'],
-                        ].map(([l, v]) => (
+                          ['Story Wert', fmtEur(selected.storyWert), 'Geschaetzter Preis fuer eine Instagram-Story. Wird als 25% des Reel-Werts berechnet, da Stories erfahrungsgemaess deutlich weniger Reichweite als ein Feed-/Reel-Post erzielen.'],
+                          ['Reel Wert', fmtEur(selected.reelWert), 'Geschaetzter Preis fuer ein Instagram-Reel: Ø Reel-Views x Ziel-TKP der Follower-Groessenklasse (kleinere Creator = hoeherer TKP, groessere = Mengenrabatt).'],
+                          ['TikTok Wert', selected.ttWert > 0 ? fmtEur(selected.ttWert) : '—', 'Geschaetzter Preis fuer ein TikTok-Video: Ø Video-Views x Ziel-TKP der Follower-Groessenklasse. Kalibriert an echten bezahlten Kooperationen.'],
+                          ['Affiliate %', selected.affiliatePct, 'Empfohlene Affiliate-/Provisionshoehe fuer Verkaeufe ueber den Creator-Code, gestaffelt nach Follower-Groessenklasse (kleinere Creator bekommen prozentual mehr).'],
+                          ['TKP Story', selected.tkpStory > 0 ? `${selected.tkpStory} €` : '—', 'Tausender-Kontakt-Preis der Story: Story-Wert geteilt durch die angenommenen Story-Views (geschaetzt als 5% der IG-Follower), mal 1.000.'],
+                          ['TKP Post', selected.tkpPost > 0 ? `${selected.tkpPost} €` : '—', 'Tausender-Kontakt-Preis des Reels: Reel-Wert geteilt durch die Ø Reel-Views, mal 1.000. Das ist der tatsaechliche Ziel-TKP der Follower-Groessenklasse.'],
+                          ['TKP TikTok', selected.tkpTT > 0 ? `${selected.tkpTT} €` : '—', 'Tausender-Kontakt-Preis des TikTok-Videos: TikTok-Wert geteilt durch die Ø Video-Views, mal 1.000.'],
+                        ].map(([l, v, hint]) => (
                           <div key={l} className="bg-surface-2 rounded-apple-sm p-3 border border-hairline-soft">
-                            <div className="text-ink-4 text-xs mb-1">{l}</div>
+                            <div className="text-ink-4 text-xs mb-1 flex items-center gap-1">
+                              {l}
+                              <span title={hint} className="inline-flex items-center justify-center w-3 h-3 rounded-full border border-hairline-soft text-ink-4 text-[8px] cursor-help flex-shrink-0">i</span>
+                            </div>
                             <div className="text-ink-1 text-sm font-semibold">{v}</div>
                           </div>
                         ))}
