@@ -36,6 +36,11 @@ export default function Tracking() {
   const [discountStats, setDiscountStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [confirmDeleteLinkId, setConfirmDeleteLinkId] = useState<string | null>(null)
+  const [deletingLinkId, setDeletingLinkId] = useState<string | null>(null)
+  const [detailLink, setDetailLink] = useState<any | null>(null)
+  const [detailOrders, setDetailOrders] = useState<any[]>([])
+  const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
@@ -92,8 +97,8 @@ export default function Tracking() {
     const cart = relevant.reduce((s, c) => s + (c.sessions_with_cart_additions || 0), 0)
     const checkoutReached = relevant.reduce((s, c) => s + (c.sessions_that_reached_checkout || 0), 0)
     const checkoutDone = relevant.reduce((s, c) => s + (c.sessions_that_completed_checkout || 0), 0)
-    const orders = relevant.reduce((s, c) => s + (c.orders_last_click || 0), 0)
-    const sales = relevant.reduce((s, c) => s + (c.sales_last_click || 0), 0)
+    const orders = relevant.reduce((s, c) => s + (Number(c.orders_last_click) || 0), 0)
+    const sales = relevant.reduce((s, c) => s + (Number(c.sales_last_click) || 0), 0)
     const trackedCodes = new Set(links.map(l => (l.rabatt_code || '').trim().toLowerCase()).filter(Boolean))
     const codeRedemptions = discountStats
       .filter(d => trackedCodes.has((d.code || '').toLowerCase()))
@@ -153,6 +158,36 @@ export default function Tracking() {
       setCopiedId(l.id)
       setTimeout(() => setCopiedId(prev => prev === l.id ? null : prev), 1500)
     } catch {}
+  }
+
+  const openDetail = async (l: any) => {
+    setDetailLink(l)
+    setDetailOrders([])
+    if (!l.rabatt_code) return
+    setDetailLoading(true)
+    try {
+      const { data } = await sb.from('shopify_discount_code_orders').select('*').eq('code', l.rabatt_code.trim().toLowerCase()).order('order_date', { ascending: false })
+      setDetailOrders(data || [])
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const deleteOutreachLink = async (linkId: string) => {
+    if (confirmDeleteLinkId !== linkId) { setConfirmDeleteLinkId(linkId); return }
+    setDeletingLinkId(linkId)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/outreach-links/' + linkId, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })
+      if (res.ok) {
+        setLinks(prev => prev.filter((x: any) => x.id !== linkId))
+        if (detailLink?.id === linkId) setDetailLink(null)
+      }
+    } finally {
+      setDeletingLinkId(null)
+      setConfirmDeleteLinkId(null)
+    }
   }
 
   if (loading) return <LoadingScreen message="Tracking wird geladen..." />
@@ -292,22 +327,32 @@ export default function Tracking() {
                   <tbody>
                     {links.map(l => {
                       const s = statsFor(l)
+                      const dc = l.rabatt_code ? discountFor(l.rabatt_code) : null
+                      const orders = dc?.orders_count != null ? Number(dc.orders_count) : (s?.orders_last_click != null ? Number(s.orders_last_click) : null)
+                      const revenue = dc?.revenue != null ? Number(dc.revenue) : (s?.sales_last_click != null ? Number(s.sales_last_click) : null)
+                      const clickable = !!l.rabatt_code
                       return (
-                        <tr key={l.id} className="border-b border-hairline-soft/50 hover:bg-white/[0.02]">
+                        <tr key={l.id} onClick={() => clickable && openDetail(l)} className={`border-b border-hairline-soft/50 hover:bg-white/[0.02] ${clickable ? 'cursor-pointer' : ''}`}>
                           <td className="py-2.5">
-                            <Link href={`/outreach?creator=${l.creator_id}`} className="text-ink-1 hover:text-accent transition-colors">{l.creators?.name || 'Unbekannt'}</Link>
+                            <Link href={`/outreach?creator=${l.creator_id}`} onClick={e => e.stopPropagation()} className="text-ink-1 hover:text-accent transition-colors">{l.creators?.name || 'Unbekannt'}</Link>
                           </td>
                           <td className="py-2.5 font-mono text-ink-3">{l.short_code}</td>
                           <td className="py-2.5 text-ink-3 max-w-[180px] truncate">{l.ziel_url}</td>
                           <td className="py-2.5 text-ink-3">{l.rabatt_code || '—'}</td>
-                          <td className="py-2.5 text-ink-2 text-right">{l.rabatt_code ? (discountFor(l.rabatt_code) ? `${discountFor(l.rabatt_code).usage_count || 0}x` : '—') : '—'}</td>
+                          <td className="py-2.5 text-ink-2 text-right">{dc ? `${dc.usage_count || 0}x` : '—'}</td>
                           <td className="py-2.5 text-ink-1 font-semibold text-right">{l.klicks || 0}</td>
                           <td className="py-2.5 text-ink-2 text-right">{s ? s.sessions : '—'}</td>
-                          <td className="py-2.5 text-ink-2 text-right">{s ? s.orders_last_click : '—'}</td>
-                          <td className="py-2.5 text-ink-1 font-semibold text-right">{s ? fmtEUR(s.sales_last_click) : '—'}</td>
+                          <td className="py-2.5 text-ink-2 text-right">{orders != null ? orders : '—'}</td>
+                          <td className="py-2.5 text-ink-1 font-semibold text-right">{revenue != null ? fmtEUR(revenue) : '—'}</td>
                           <td className="py-2.5 text-ink-4">{new Date(l.created_at).toLocaleDateString('de-DE')}</td>
                           <td className="py-2.5 text-right">
-                            <button onClick={() => copyLink(l)} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copiedId === l.id ? '✓' : 'Kopieren'}</button>
+                            <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                              <button onClick={() => copyLink(l)} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copiedId === l.id ? '✓' : 'Kopieren'}</button>
+                              <button onClick={() => deleteOutreachLink(l.id)} disabled={deletingLinkId === l.id}
+                                className={`text-[10px] px-2 py-1 rounded transition-colors ${confirmDeleteLinkId === l.id ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>
+                                {deletingLinkId === l.id ? '...' : confirmDeleteLinkId === l.id ? 'Sicher?' : 'Löschen'}
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       )
@@ -319,6 +364,61 @@ export default function Tracking() {
           </ChartCard>
         </div>
       </main>
+
+      {detailLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setDetailLink(null)}>
+          <div className="bg-surface-1 border border-hairline rounded-apple-lg shadow-apple-lg w-full max-w-lg max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-hairline-soft flex items-start justify-between sticky top-0 bg-surface-1">
+              <div>
+                <h3 className="text-ink-1 font-semibold text-sm">{detailLink.creators?.name || 'Unbekannt'}</h3>
+                <p className="text-ink-4 text-xs mt-0.5 font-mono">{detailLink.rabatt_code}</p>
+              </div>
+              <button onClick={() => setDetailLink(null)} className="text-ink-4 hover:text-ink-1 text-lg leading-none">×</button>
+            </div>
+            <div className="p-5 space-y-4">
+              {(() => {
+                const s = statsFor(detailLink)
+                const dc = detailLink.rabatt_code ? discountFor(detailLink.rabatt_code) : null
+                const orders = dc?.orders_count != null ? Number(dc.orders_count) : (s?.orders_last_click != null ? Number(s.orders_last_click) : 0)
+                const revenue = dc?.revenue != null ? Number(dc.revenue) : (s?.sales_last_click != null ? Number(s.sales_last_click) : 0)
+                return (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-surface-2 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] mb-0.5">Klicks</div><div className="text-ink-1 font-semibold text-sm">{detailLink.klicks || 0}</div></div>
+                    <div className="bg-surface-2 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] mb-0.5">Sessions</div><div className="text-ink-1 font-semibold text-sm">{s ? s.sessions : 0}</div></div>
+                    <div className="bg-surface-2 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] mb-0.5">Orders</div><div className="text-ink-1 font-semibold text-sm">{orders}</div></div>
+                    <div className="bg-surface-2 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] mb-0.5">Umsatz</div><div className="text-ink-1 font-semibold text-sm">{fmtEUR(revenue)}</div></div>
+                  </div>
+                )
+              })()}
+              <div>
+                <div className="text-ink-3 text-xs font-medium mb-2">Bestellungen{detailOrders.length > 0 ? ` (${detailOrders.length})` : ''}</div>
+                {detailLoading ? (
+                  <div className="text-ink-4 text-xs py-4 text-center">Lädt...</div>
+                ) : !detailLink.rabatt_code ? (
+                  <div className="text-ink-4 text-xs py-4 text-center">Kein Rabattcode hinterlegt</div>
+                ) : detailOrders.length === 0 ? (
+                  <div className="text-ink-4 text-xs py-4 text-center">Keine Bestellungen gefunden</div>
+                ) : (
+                  <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                    {detailOrders.map((o: any, i: number) => (
+                      <div key={i} className={`flex items-center justify-between text-xs px-2.5 py-1.5 rounded bg-surface-2/60 ${o.cancelled ? 'opacity-50' : ''}`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-ink-2 font-mono">{o.order_name}</span>
+                          {o.cancelled && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/40 text-red-400">storniert</span>}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-ink-4">{o.order_date ? new Date(o.order_date).toLocaleDateString('de-DE') : '—'}</span>
+                          <span className="text-ink-1 font-medium">{fmtEUR(Number(o.amount))}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

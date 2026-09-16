@@ -166,6 +166,8 @@ function OutreachInner() {
   }, [selected])
   const [outreachLinks, setOutreachLinks] = useState<any[]>([])
   const [showLinkForm, setShowLinkForm] = useState(false)
+  const [confirmDeleteLinkId, setConfirmDeleteLinkId] = useState<string | null>(null)
+  const [deletingLinkId, setDeletingLinkId] = useState<string | null>(null)
   const [newLinkUrl, setNewLinkUrl] = useState('')
   const [newLinkCode, setNewLinkCode] = useState('')
   const [creatingLink, setCreatingLink] = useState(false)
@@ -281,8 +283,8 @@ function OutreachInner() {
     cart: campaignStats.reduce((s: number, c: any) => s + (c.sessions_with_cart_additions || 0), 0),
     checkoutReached: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_reached_checkout || 0), 0),
     checkoutDone: campaignStats.reduce((s: number, c: any) => s + (c.sessions_that_completed_checkout || 0), 0),
-    orders: campaignStats.reduce((s: number, c: any) => s + (c.orders_last_click || 0), 0),
-    sales: campaignStats.reduce((s: number, c: any) => s + (c.sales_last_click || 0), 0),
+    orders: campaignStats.reduce((s: number, c: any) => s + (Number(c.orders_last_click) || 0), 0),
+    sales: campaignStats.reduce((s: number, c: any) => s + (Number(c.sales_last_click) || 0), 0),
     codeRedemptions: discountStats.reduce((s: number, d: any) => s + (d.usage_count || 0), 0),
   }
   const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
@@ -305,6 +307,24 @@ function OutreachInner() {
         setShowLinkForm(false)
       }
     } finally { setCreatingLink(false) }
+  }
+  // Zwei-Klick-Bestaetigung (wie beim Celeb-Loeschen in app/celebs/page.tsx):
+  // erster Klick auf "Loeschen" bewaffnet nur den Button ("Wirklich?"), erst
+  // der zweite Klick loescht wirklich - verhindert versehentliches Loeschen.
+  const deleteOutreachLink = async (linkId: string) => {
+    if (confirmDeleteLinkId !== linkId) { setConfirmDeleteLinkId(linkId); return }
+    setDeletingLinkId(linkId)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/outreach-links/' + linkId, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })
+      if (res.ok) {
+        setOutreachLinks(prev => prev.filter((x: any) => x.id !== linkId))
+      }
+    } finally {
+      setDeletingLinkId(null)
+      setConfirmDeleteLinkId(null)
+    }
   }
   const copyLink = async (l: any) => {
     try {
@@ -844,6 +864,10 @@ function OutreachInner() {
                       <div className="flex gap-1">
                         <button onClick={() => copyLink(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copiedLinkId === l.id ? '✓' : 'Kopieren'}</button>
                         <button onClick={() => insertLinkInChat(l)} className="text-[10px] px-2 py-0.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">In Chat</button>
+                        <button onClick={() => deleteOutreachLink(l.id)} disabled={deletingLinkId === l.id}
+                          className={`text-[10px] px-2 py-0.5 rounded transition-colors ${confirmDeleteLinkId === l.id ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>
+                          {deletingLinkId === l.id ? '...' : confirmDeleteLinkId === l.id ? 'Sicher?' : 'Löschen'}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -864,7 +888,7 @@ function OutreachInner() {
                     </div>
                   </div>
                 ) : (
-                  <button onClick={() => setShowLinkForm(true)} className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">+ Outreach-Link erstellen</button>
+                  <button onClick={() => setShowLinkForm(true)} className="w-full text-[11px] font-medium text-ink-2 bg-surface-3 hover:bg-white/[0.06] border border-hairline rounded-apple-sm px-2 py-1.5 transition-colors">{outreachLinks.length > 0 ? '+ Weiteren Outreach-Link hinzufügen' : '+ Outreach-Link erstellen'}</button>
                 )}
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
@@ -948,7 +972,7 @@ function OutreachInner() {
                     {discountStats.map((d: any) => (
                       <div key={d.code} className="flex items-center justify-between text-[10px] text-ink-4">
                         <span className="font-mono">{d.code}</span>
-                        <span>{d.usage_count || 0}x eingelöst{d.usage_limit ? ' / ' + d.usage_limit : ''}{typeof d.revenue === 'number' ? ' · ' + fmtEUR(d.revenue) + ' Umsatz' : ''}</span>
+                        <span>{d.usage_count || 0}x eingelöst{d.usage_limit ? ' / ' + d.usage_limit : ''}{d.revenue != null ? ' · ' + fmtEUR(Number(d.revenue)) + ' Umsatz' : ''}</span>
                       </div>
                     ))}
                   </div>
