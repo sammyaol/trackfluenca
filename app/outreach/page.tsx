@@ -257,6 +257,20 @@ function OutreachInner() {
   }, [outreachLinks])
   const codeUsage = (code: string) => discountStats.find((d: any) => (d.code || '').toLowerCase() === (code || '').toLowerCase())?.usage_count ?? null
   const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
+  // Zeigt an, wie frisch die Shopify/Triple-Whale-Zahlen sind - die
+  // shopify-analytics-sync Edge Function laeuft seit dem Performance-Fix
+  // stuendlich statt einmal taeglich, synced_at wird jetzt bei jedem Lauf
+  // korrekt mitgeschrieben (vorher blieb es nach dem ersten Insert stehen).
+  const latestSync = campaignStats.reduce((max: string | null, c: any) => (!max || (c.synced_at && c.synced_at > max)) ? c.synced_at : max, null as string | null)
+  const syncTimeAgo = (iso: string | null) => {
+    if (!iso) return null
+    const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+    if (diffMin < 1) return 'gerade eben'
+    if (diffMin < 60) return `vor ${diffMin} Min.`
+    const diffH = Math.round(diffMin / 60)
+    if (diffH < 24) return `vor ${diffH} Std.`
+    return `vor ${Math.round(diffH / 24)} Tagen`
+  }
   // Sessions/Bestellungen/Umsatz kommen von Triple Whale (Pixel, Triple
   // Attribution). Warenkorb/Checkout-Stufen liefert Triple Whale nicht pro
   // Campaign, daher zusaetzlich eine ShopifyQL-Query (utm_medium='influencer')
@@ -890,6 +904,9 @@ function OutreachInner() {
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
                 <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
+                {latestSync && (
+                  <div className="text-ink-4 text-[10px]">Shop-Daten Stand: {syncTimeAgo(latestSync)}</div>
+                )}
                 {outreachLinks.length === 0 ? (
                   <div className="text-ink-4 text-xs">Noch kein Link erstellt</div>
                 ) : (
@@ -931,7 +948,7 @@ function OutreachInner() {
                     {discountStats.map((d: any) => (
                       <div key={d.code} className="flex items-center justify-between text-[10px] text-ink-4">
                         <span className="font-mono">{d.code}</span>
-                        <span>{d.usage_count || 0}x eingelöst{d.usage_limit ? ' / ' + d.usage_limit : ''}</span>
+                        <span>{d.usage_count || 0}x eingelöst{d.usage_limit ? ' / ' + d.usage_limit : ''}{typeof d.revenue === 'number' ? ' · ' + fmtEUR(d.revenue) + ' Umsatz' : ''}</span>
                       </div>
                     ))}
                   </div>

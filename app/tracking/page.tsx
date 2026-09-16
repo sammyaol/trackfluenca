@@ -98,7 +98,8 @@ export default function Tracking() {
     const codeRedemptions = discountStats
       .filter(d => trackedCodes.has((d.code || '').toLowerCase()))
       .reduce((s, d) => s + (d.usage_count || 0), 0)
-    return { sessions, cart, checkoutReached, checkoutDone, orders, sales, codeRedemptions }
+    const syncedAt = relevant.reduce((max: string | null, c: any) => (!max || (c.synced_at && c.synced_at > max)) ? c.synced_at : max, null as string | null)
+    return { sessions, cart, checkoutReached, checkoutDone, orders, sales, codeRedemptions, syncedAt }
   }, [links, campaignStats, discountStats])
 
   const topCreators = useMemo(() => {
@@ -135,6 +136,16 @@ export default function Tracking() {
     const total = mobile + desktop
     return { mobile, desktop, total, mobilePct: total > 0 ? Math.round(mobile / total * 100) : 0, desktopPct: total > 0 ? Math.round(desktop / total * 100) : 0 }
   }, [klicksLog])
+
+  const timeAgo = (iso: string | null) => {
+    if (!iso) return null
+    const diffMin = Math.round((Date.now() - new Date(iso).getTime()) / 60000)
+    if (diffMin < 1) return 'gerade eben'
+    if (diffMin < 60) return `vor ${diffMin} Min.`
+    const diffH = Math.round(diffMin / 60)
+    if (diffH < 24) return `vor ${diffH} Std.`
+    return `vor ${Math.round(diffH / 24)} Tagen`
+  }
 
   const copyLink = async (l: any) => {
     try {
@@ -181,7 +192,7 @@ export default function Tracking() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-ink-1 font-medium text-sm tracking-tight">Shop-Performance</h2>
-              <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link</p>
+              <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link{shopStats.syncedAt ? ` · Stand: ${timeAgo(shopStats.syncedAt)}` : ''}</p>
             </div>
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
               {[
