@@ -41,6 +41,8 @@ export default function Tracking() {
   const [detailLink, setDetailLink] = useState<any | null>(null)
   const [detailOrders, setDetailOrders] = useState<any[]>([])
   const [detailLoading, setDetailLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState<string | null>(null)
 
   useEffect(() => {
     sb.auth.getSession().then(async ({ data }) => {
@@ -65,6 +67,48 @@ export default function Tracking() {
       setLoading(false)
     })
   }, [])
+
+  // Laedt nur die Shopify-gespeisten Tabellen neu (nicht die Klick-Logs) -
+  // wird nach einem manuellen Sync-Trigger aufgerufen, damit man das
+  // Ergebnis sofort sieht statt bis zum naechsten stuendlichen Cron-Lauf
+  // warten zu muessen.
+  const refreshShopData = async () => {
+    const { data: sessionData } = await sb.auth.getSession()
+    const userId = sessionData.session?.user?.id
+    if (userId) {
+      const { data: linksData } = await sb.from('outreach_links').select('*, creators(name)').eq('user_id', userId).order('klicks', { ascending: false })
+      if (linksData) setLinks(linksData)
+    }
+    const { data: campaignData } = await sb.from('shopify_campaign_stats').select('*')
+    setCampaignStats(campaignData || [])
+    const { data: discountData } = await sb.from('shopify_discount_code_stats').select('*')
+    setDiscountStats(discountData || [])
+    if (detailLink?.rabatt_code) {
+      const { data } = await sb.from('shopify_discount_code_orders').select('*').eq('code', detailLink.rabatt_code.trim().toLowerCase()).order('order_date', { ascending: false })
+      setDetailOrders(data || [])
+    }
+  }
+
+  const syncNow = async () => {
+    if (syncing) return
+    setSyncing(true)
+    setSyncError(null)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/shopify-sync', { method: 'POST', headers: { authorization: 'Bearer ' + token } })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setSyncError(d.error || 'Sync fehlgeschlagen')
+        return
+      }
+      await refreshShopData()
+    } catch {
+      setSyncError('Sync fehlgeschlagen')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const campaignMap = useMemo(() => {
     const map: Record<string, any> = {}
@@ -227,8 +271,16 @@ export default function Tracking() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-ink-1 font-medium text-sm tracking-tight">Shop-Performance</h2>
-              <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link{shopStats.syncedAt ? ` · Stand: ${timeAgo(shopStats.syncedAt)}` : ''}</p>
+              <div className="flex items-center gap-3">
+                <p className="text-ink-4 text-xs">Letzte 90 Tage · Triple Whale, via UTM-Link{shopStats.syncedAt ? ` · Stand: ${timeAgo(shopStats.syncedAt)}` : ''}</p>
+                <button onClick={syncNow} disabled={syncing}
+                  className={`text-[11px] font-medium px-2.5 py-1 rounded-apple-sm border transition-colors flex items-center gap-1.5 ${syncing ? 'text-ink-4 border-hairline' : 'text-ink-2 border-hairline hover:bg-white/[0.06]'}`}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncing ? 'animate-spin' : ''}><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                  {syncing ? 'Aktualisiert...' : 'Aktualisieren'}
+                </button>
+              </div>
             </div>
+            {syncError && <p className="text-red-400 text-[11px] mb-2">{syncError}</p>}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
               {[
                 { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },

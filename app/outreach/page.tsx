@@ -258,6 +258,38 @@ function OutreachInner() {
     })
   }, [outreachLinks])
   const codeUsage = (code: string) => discountStats.find((d: any) => (d.code || '').toLowerCase() === (code || '').toLowerCase())?.usage_count ?? null
+
+  const [syncingShop, setSyncingShop] = useState(false)
+  const [syncShopError, setSyncShopError] = useState<string | null>(null)
+  const syncShopNow = async () => {
+    if (syncingShop) return
+    setSyncingShop(true)
+    setSyncShopError(null)
+    try {
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token || ''
+      const res = await fetch('/api/shopify-sync', { method: 'POST', headers: { authorization: 'Bearer ' + token } })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        setSyncShopError(d.error || 'Sync fehlgeschlagen')
+        return
+      }
+      const utms = outreachLinks.map((l: any) => l.utm_campaign).filter(Boolean)
+      if (utms.length > 0) {
+        const { data: cData } = await sb.from('shopify_campaign_stats').select('*').in('utm_campaign', utms)
+        setCampaignStats(cData || [])
+      }
+      const codes = Array.from(new Set(outreachLinks.map((l: any) => (l.rabatt_code || '').trim()).filter(Boolean)))
+      if (codes.length > 0) {
+        const { data: dData } = await sb.from('shopify_discount_code_stats').select('*').in('code', codes)
+        setDiscountStats(dData || [])
+      }
+    } catch {
+      setSyncShopError('Sync fehlgeschlagen')
+    } finally {
+      setSyncingShop(false)
+    }
+  }
   const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
   // Zeigt an, wie frisch die Shopify/Triple-Whale-Zahlen sind - die
   // shopify-analytics-sync Edge Function laeuft seit dem Performance-Fix
@@ -305,6 +337,22 @@ function OutreachInner() {
         setNewLinkUrl('')
         setNewLinkCode('')
         setShowLinkForm(false)
+        if (d.rabatt_code) {
+          // Neuer Rabattcode: Shopify-Sync im Hintergrund anstossen, statt bis
+          // zum naechsten stuendlichen Cron-Lauf zu warten, bis Einloesungen/
+          // Umsatz fuer den frisch eingetragenen Code auftauchen.
+          fetch('/api/shopify-sync', { method: 'POST', headers: { authorization: 'Bearer ' + token } })
+            .then(async (syncRes) => {
+              if (!syncRes.ok) return
+              const { data: dData } = await sb.from('shopify_discount_code_stats').select('*').eq('code', d.rabatt_code)
+              if (dData?.length) setDiscountStats(prev => [...prev.filter((x: any) => x.code !== d.rabatt_code), ...dData])
+              if (d.utm_campaign) {
+                const { data: cData } = await sb.from('shopify_campaign_stats').select('*').eq('utm_campaign', d.utm_campaign)
+                if (cData?.length) setCampaignStats(prev => [...prev.filter((x: any) => x.utm_campaign !== d.utm_campaign), ...cData])
+              }
+            })
+            .catch(() => {})
+        }
       }
     } finally { setCreatingLink(false) }
   }
@@ -927,7 +975,15 @@ function OutreachInner() {
                 </div>
               </div>
               <div className="bg-surface-2 rounded-apple-sm p-3 space-y-2">
-                <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-ink-3 text-[10px] uppercase tracking-wider">Performance-Übersicht</div>
+                  <button onClick={syncShopNow} disabled={syncingShop}
+                    className={`text-[10px] font-medium px-2 py-0.5 rounded-apple-sm border transition-colors flex items-center gap-1 ${syncingShop ? 'text-ink-4 border-hairline' : 'text-ink-2 border-hairline hover:bg-white/[0.06]'}`}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={syncingShop ? 'animate-spin' : ''}><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                    {syncingShop ? '...' : 'Aktualisieren'}
+                  </button>
+                </div>
+                {syncShopError && <div className="text-red-400 text-[10px]">{syncShopError}</div>}
                 {latestSync && (
                   <div className="text-ink-4 text-[10px]">Shop-Daten Stand: {syncTimeAgo(latestSync)}</div>
                 )}
