@@ -113,7 +113,7 @@ const allColumns = [
 ]
 
 const groups = ['Basis', 'Instagram', 'TikTok', 'Overall', 'Deal', 'Organisch', 'Gesamt', 'Bewertung']
-const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: '', kampagne: '', buchungstyp: '', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
+const emptyForm = { name: '', igHandle: '', ttHandle: '', status: 'Offen', prio: 'Mittel', kategorie: '', geschlecht: '', kampagne: '', buchungstyp: '', fee: '', produkt: '', promoCode: '', datum: '', notizen: '' }
 
 export default function CreatorPage() {
   const [creators, setCreators] = useState<Creator[]>([])
@@ -315,6 +315,7 @@ export default function CreatorPage() {
         overall_tier: d.overallTier || getTier(d.igFollower || 0),
         gesamt_reichweite: d.gesamtReichweite || 0,
         status: form.status, prio: form.prio, kategorie: form.kategorie,
+        geschlecht: form.geschlecht,
         mgmt: 'Nein', notizen: form.notizen,
         kampagne: form.kampagne, buchungstyp: form.buchungstyp,
         fee, produkt, gesamt: fee + produkt,
@@ -1904,6 +1905,16 @@ export default function CreatorPage() {
                     <select value={form.kategorie} onChange={e => setForm(p => ({ ...p, kategorie: e.target.value }))} className={selectCls}>
                       <option value="">— wählen —</option>
                       {['Schmuck', 'Fashion', 'Beauty', 'Lifestyle', 'Fitness', 'Travel', 'Food', 'Andere'].map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Geschlecht</label>
+                    <select value={form.geschlecht} onChange={e => setForm(p => ({ ...p, geschlecht: e.target.value }))} className={selectCls}>
+                      <option value="">— unbekannt —</option>
+                      <option value="Weiblich">Weiblich</option>
+                      <option value="Männlich">Männlich</option>
+                      <option value="Divers">Divers</option>
                     </select>
                   </div>
 
