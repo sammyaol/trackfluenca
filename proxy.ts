@@ -5,6 +5,7 @@ export async function proxy(req: NextRequest) {
                          req.nextUrl.pathname.startsWith('/api') ||
                          req.nextUrl.pathname.startsWith('/r/') ||
                          req.nextUrl.pathname.startsWith('/v/') ||
+                         req.nextUrl.pathname === '/koluere-logo.png' ||
                          req.nextUrl.pathname.startsWith('/_next')
 
   if (isPublic) return NextResponse.next()
