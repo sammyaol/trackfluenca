@@ -99,7 +99,6 @@ export function klauseln(v: Vertrag): Klausel[] {
 
   const creator = [
     `Der Creator verpflichtet sich, die vereinbarten Inhalte zu erstellen und ${v.posting_bis ? `spätestens bis zum ${fmtDatum(v.posting_bis)}` : 'innerhalb des im Instagram-Chat vereinbarten Zeitraums'} auf ${plattform} zu veröffentlichen.`,
-    `Der Creator kennzeichnet die Inhalte nach den gesetzlichen Vorgaben als Werbung (z. B. „Werbung" / „Anzeige" bzw. Paid-Partnership-Funktion) und verlinkt ${firma}, sofern so abgesprochen.`,
     `Die veröffentlichten Inhalte bleiben mindestens ${onlineTage} Tage online und werden in diesem Zeitraum nicht gelöscht oder archiviert.`,
   ]
   list.push({ titel: 'Pflichten des Creators', absaetze: creator })
