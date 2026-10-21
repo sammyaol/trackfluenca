@@ -111,80 +111,96 @@ export default function Unterschreiben() {
     }
   }
 
-  const inputCls = 'w-full border border-neutral-300 rounded-xl px-4 py-3 text-base text-neutral-900 bg-white focus:outline-none focus:border-neutral-900'
+  const serif = { fontFamily: 'Georgia, "Times New Roman", ui-serif, serif' }
+  const inputCls = 'w-full border-0 border-b border-neutral-300 bg-transparent px-0 py-2.5 text-[17px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:border-neutral-900 rounded-none'
+  const labelCls = 'text-[11px] uppercase tracking-[0.18em] text-neutral-400 block'
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-y-auto bg-neutral-50 text-neutral-900 print:static print:overflow-visible">
-      <div className="max-w-xl mx-auto px-5 py-8 pb-16">
-        {state === 'loading' && <p className="text-neutral-500 text-center py-20">Lädt…</p>}
+    <div className="fixed inset-0 z-[100] overflow-y-auto bg-white text-neutral-900 print:static print:overflow-visible">
+      <div className="max-w-[560px] mx-auto px-6 pt-10 pb-20">
+        <div className="flex justify-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/koluere-logo.png" alt="Koluré" className="h-24 w-auto select-none" draggable={false} />
+        </div>
+
+        {state === 'loading' && <p className="text-neutral-400 text-center py-16 text-sm tracking-wide">Lädt…</p>}
         {state === 'missing' && (
-          <div className="text-center py-20">
-            <h1 className="text-xl font-semibold mb-2">Link nicht gefunden</h1>
+          <div className="text-center py-16">
+            <h1 className="text-2xl mb-2" style={serif}>Link nicht gefunden</h1>
             <p className="text-neutral-500 text-sm">Dieser Link ist ungültig oder abgelaufen. Bitte melde dich bei uns.</p>
           </div>
         )}
+
         {state === 'ok' && v && (
           <>
-            <div className="mb-6">
-              <p className="text-xs uppercase tracking-widest text-neutral-400 mb-1">{v.firma_name || 'Koluré'}</p>
-              <h1 className="text-2xl font-semibold leading-tight">Kooperationsvereinbarung</h1>
-              <p className="text-neutral-500 text-sm mt-1">mit {v.creator_name}{v.creator_handle ? ` (${v.creator_handle})` : ''}</p>
+            <div className="text-center mb-10">
+              <p className={labelCls + ' mb-3'}>Kooperationsvereinbarung</p>
+              <h1 className="text-[28px] leading-tight" style={serif}>{v.creator_name}</h1>
+              {v.creator_handle && <p className="text-neutral-400 text-sm mt-1">{v.creator_handle}</p>}
+              <div className="w-10 h-px bg-neutral-900 mx-auto mt-6" />
             </div>
 
-            {cancelled && <div className="mb-5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3">Diese Vereinbarung ist nicht mehr gültig.</div>}
+            {cancelled && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">Diese Vereinbarung ist nicht mehr gültig.</div>}
 
-            <div className="bg-white rounded-2xl border border-neutral-200 p-5 space-y-5">
+            <div>
               {klauseln(v).map((k, i) => (
-                <section key={i}>
-                  <h2 className="font-semibold text-[15px] mb-1.5">§ {i + 1} {k.titel}</h2>
-                  {k.absaetze.map((a, j) => <p key={j} className="text-sm leading-relaxed text-neutral-700 mb-2 last:mb-0">{a}</p>)}
+                <section key={i} className="py-5 border-t border-neutral-200 first:border-t-0">
+                  <h2 className="text-[17px] mb-2" style={serif}>
+                    <span className="text-neutral-300 mr-2">{String(i + 1).padStart(2, '0')}</span>{k.titel}
+                  </h2>
+                  {k.absaetze.map((a, j) => <p key={j} className="text-[15px] leading-[1.7] text-neutral-600 mb-2 last:mb-0">{a}</p>)}
                 </section>
               ))}
             </div>
 
             {signed ? (
-              <div className="mt-6 bg-white rounded-2xl border border-emerald-200 p-5">
-                <div className="flex items-center gap-2 text-emerald-700 font-semibold mb-3">
-                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm">✓</span>
-                  Unterschrieben
-                </div>
-                <p className="text-sm text-neutral-600 mb-3">
-                  Danke, {v.unterschrift_name}! Die Vereinbarung wurde am {fmtZeit(v.unterschrieben_am)} unterzeichnet.
-                </p>
-                {v.unterschrift_bild && <img src={v.unterschrift_bild} alt="Unterschrift" className="h-24 border-b border-neutral-300 mb-1" />}
+              <div className="mt-8 pt-8 border-t border-neutral-900 text-center">
+                <p className={labelCls + ' mb-3'}>Unterschrieben</p>
+                <p className="text-[22px] mb-1" style={serif}>Danke, {v.unterschrift_name}.</p>
+                <p className="text-sm text-neutral-500 mb-6">Unterzeichnet am {fmtZeit(v.unterschrieben_am)}</p>
+                {v.unterschrift_bild && <img src={v.unterschrift_bild} alt="Unterschrift" className="h-24 mx-auto" />}
+                <div className="w-48 h-px bg-neutral-300 mx-auto mb-1" />
                 <p className="text-xs text-neutral-400">{v.unterschrift_name}{v.unterschrift_adresse ? ` · ${v.unterschrift_adresse}` : ''}</p>
-                <button onClick={() => window.print()} className="mt-5 w-full rounded-xl bg-neutral-900 text-white py-3 text-sm font-medium print:hidden">Als PDF speichern</button>
+                <button onClick={() => window.print()} className="mt-8 border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors px-8 py-3 text-xs uppercase tracking-[0.2em] print:hidden">Als PDF speichern</button>
               </div>
             ) : !cancelled && (
-              <div className="mt-6 bg-white rounded-2xl border border-neutral-200 p-5 space-y-4">
-                <h2 className="font-semibold">Unterschrift</h2>
+              <div className="mt-8 pt-8 border-t border-neutral-900 space-y-7">
+                <div className="text-center">
+                  <p className={labelCls + ' mb-2'}>Unterschrift</p>
+                  <p className="text-[22px]" style={serif}>Jetzt unterschreiben</p>
+                </div>
                 <div>
-                  <label className="text-xs text-neutral-500 block mb-1">Vollständiger Name *</label>
+                  <label className={labelCls}>Vollständiger Name *</label>
                   <input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className={inputCls} />
                 </div>
                 <div>
-                  <label className="text-xs text-neutral-500 block mb-1">Anschrift (optional)</label>
+                  <label className={labelCls}>Anschrift (optional)</label>
                   <input value={adresse} onChange={e => setAdresse(e.target.value)} autoComplete="street-address" placeholder="Straße, PLZ Ort" className={inputCls} />
                 </div>
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs text-neutral-500">Hier mit dem Finger unterschreiben *</label>
-                    <button type="button" onClick={clear} className="text-xs text-neutral-500 underline">Löschen</button>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelCls}>Mit dem Finger unterschreiben *</label>
+                    <button type="button" onClick={clear} className="text-xs text-neutral-400 underline underline-offset-4">Löschen</button>
                   </div>
-                  <canvas ref={canvasRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
-                    style={{ touchAction: 'none' }}
-                    className="w-full h-44 rounded-xl border-2 border-dashed border-neutral-300 bg-white cursor-crosshair" />
+                  <div className="relative">
+                    <canvas ref={canvasRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
+                      style={{ touchAction: 'none' }}
+                      className="w-full h-44 bg-neutral-50 cursor-crosshair block" />
+                    <div className="pointer-events-none absolute left-4 right-4 bottom-10 border-b border-neutral-300" />
+                    <span className="pointer-events-none absolute left-4 bottom-3 text-neutral-300 text-sm" style={serif}>×</span>
+                  </div>
                 </div>
-                <label className="flex items-start gap-3 text-sm text-neutral-700">
-                  <input type="checkbox" checked={zustimmung} onChange={e => setZustimmung(e.target.checked)} className="mt-0.5 w-5 h-5 flex-shrink-0" />
+                <label className="flex items-start gap-3 text-sm text-neutral-600 leading-relaxed">
+                  <input type="checkbox" checked={zustimmung} onChange={e => setZustimmung(e.target.checked)} className="mt-1 w-5 h-5 flex-shrink-0 accent-neutral-900" />
                   <span>Ich habe die Vereinbarung gelesen und bin einverstanden.</span>
                 </label>
                 {error && <p className="text-sm text-red-600">{error}</p>}
-                <button onClick={submit} disabled={sending} className="w-full rounded-xl bg-neutral-900 text-white py-3.5 text-base font-medium disabled:opacity-50">
+                <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-xs uppercase tracking-[0.22em] disabled:opacity-50">
                   {sending ? 'Wird gespeichert…' : 'Verbindlich unterschreiben'}
                 </button>
               </div>
             )}
+            <p className="text-center text-[11px] text-neutral-300 mt-12 tracking-wide">{v.firma_name || 'Koluré'}</p>
           </>
         )}
       </div>
