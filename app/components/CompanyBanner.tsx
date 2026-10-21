@@ -10,7 +10,7 @@ export default function CompanyBanner() {
   const path = usePathname()
   
   useEffect(() => {
-    if (path === '/login' || path === '/unternehmen') return
+    if (path === '/login' || path === '/unternehmen' || path?.startsWith('/v/')) return
     const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     sb.auth.getSession().then(async ({ data }) => {
       if (!data.session) return

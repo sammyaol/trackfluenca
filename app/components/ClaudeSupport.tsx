@@ -1,11 +1,13 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import { usePathname } from 'next/navigation'
 
 type Msg = { role: 'user' | 'assistant', content: string }
 
 export default function ClaudeSupport() {
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+  const pathname = usePathname()
   const [loggedIn, setLoggedIn] = useState(false)
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([
@@ -24,7 +26,7 @@ export default function ClaudeSupport() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, open])
 
-  if (!loggedIn) return null
+  if (!loggedIn || pathname?.startsWith('/v/')) return null
 
   const send = async () => {
     const text = input.trim()
