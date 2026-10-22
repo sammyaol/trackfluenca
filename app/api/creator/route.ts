@@ -34,8 +34,17 @@ function calcWertFromViews(avgViews: number, follower: number, tier: string) {
 function tkp(views: number, price: number) { return views > 0 ? Math.round((price / views) * 1000 * 100) / 100 : 0 }
 async function apiFetch(url: string, headers: Record<string,string>) { try { const r = await fetch(url, { headers }); return r.json() } catch { return null } }
 async function apiFetchRetry(url: string, headers: Record<string,string>, tries = 3) { for (let i = 0; i < tries; i++) { const ctrl = new AbortController(); const to = setTimeout(() => ctrl.abort(), 9000); try { const r = await fetch(url, { headers, signal: ctrl.signal }); clearTimeout(to); if (r.ok) { const t = await r.text(); if (t) return JSON.parse(t) } } catch {} finally { clearTimeout(to) } await new Promise(res => setTimeout(res, 400)) } return null }
-function avg(arr: number[]) { return arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0 }
-function rawAvg(arr: number[]) { return arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0 }
+// WICHTIG: TikTok liefert in statsV2 die Zaehler als STRINGS ("12345"). Mit
+// reduce((a, b) => a + b, 0) wird dann String-konkateniert statt addiert
+// (0 + "120" + "340" = "0120340") - daraus entstanden die absurden Engagement-
+// Raten (Millionen/Milliarden %). Deshalb alles hart in Zahlen wandeln.
+function toNum(v: any) { const n = Number(v); return Number.isFinite(n) ? n : 0 }
+function avg(arr: any[]) { return arr.length ? Math.round(arr.reduce((a: number, b: any) => a + toNum(b), 0) / arr.length) : 0 }
+function rawAvg(arr: any[]) { return arr.length ? arr.reduce((a: number, b: any) => a + toNum(b), 0) / arr.length : 0 }
+function median(arr: any[]) { const a = arr.map(toNum).sort((x, y) => x - y); if (!a.length) return 0; const m = Math.floor(a.length / 2); return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2 }
+// Engagement Rate in % - nie ueber 100 (Likes+Kommentare koennen nicht mehr
+// als 100% der Bezugsgroesse sein; alles darueber ist ein Datenfehler/Ausreisser).
+function clampEr(x: number) { return Number.isFinite(x) ? Math.min(100, Math.max(0, Math.round(x * 100) / 100)) : 0 }
 function num(v: any) { const n = parseInt(String(v ?? 0), 10); return Number.isFinite(n) ? n : 0 }
 
 async function guessCountry(bio: string, name: string, ig: string, tt: string): Promise<string> {
@@ -107,9 +116,12 @@ export async function GET(req: NextRequest) {
         result.igAvgLikes = avg(lks)
         result.igAvgComments = avg(cmts)
         result.igAvgReelViews = views.length ? avg(views) : 0
-        result.igEr = result.igFollower > 0
-          ? Math.round(((rawAvg(lks) + rawAvg(cmts)) / result.igFollower) * 100 * 100) / 100
-          : 0
+        // ER nach Followern (Median, damit einzelne virale Reels den Wert nicht
+        // sprengen). Liegt das ueber 100% (kleiner Account, viraler Reel) oder
+        // fehlen Follower, wird stattdessen auf Views bezogen.
+        const erFollower = result.igFollower > 0 ? ((median(lks) + median(cmts)) / result.igFollower) * 100 : 0
+        const erViews = views.length ? ((median(lks) + median(cmts)) / median(views)) * 100 : 0
+        result.igEr = clampEr(erFollower > 0 && erFollower <= 100 ? erFollower : erViews)
       }
     }
   }
@@ -137,9 +149,9 @@ export async function GET(req: NextRequest) {
       const videos = posts?.data?.itemList || posts?.itemList || []
 
       if (videos.length) {
-        function getViews(v: any) { return v.stats?.playCount || v.statsV2?.playCount || v.play_count || 0 }
-        function getLikes(v: any) { return v.stats?.diggCount || v.statsV2?.diggCount || v.digg_count || 0 }
-        function getComments(v: any) { return v.stats?.commentCount || v.statsV2?.commentCount || v.comment_count || 0 }
+        function getViews(v: any) { return toNum(v.stats?.playCount || v.statsV2?.playCount || v.play_count || 0) }
+        function getLikes(v: any) { return toNum(v.stats?.diggCount || v.statsV2?.diggCount || v.digg_count || 0) }
+        function getComments(v: any) { return toNum(v.stats?.commentCount || v.statsV2?.commentCount || v.comment_count || 0) }
 
         const notPinned = videos.filter((v: any) => !v.isPinnedItem && !v.is_top && !v.isPinned && !v.pinned)
         const pool = notPinned.length >= 5 ? notPinned : videos
@@ -147,8 +159,8 @@ export async function GET(req: NextRequest) {
 
         if (allViews.length) {
           const sorted = [...allViews].sort((a, b) => a - b)
-          const median = sorted[Math.floor(sorted.length / 2)]
-          const filtered = pool.filter((v: any) => { const vv = getViews(v); return vv >= median * 0.05 && vv <= median * 5 })
+          const medianViews = sorted[Math.floor(sorted.length / 2)]
+          const filtered = pool.filter((v: any) => { const vv = getViews(v); return vv >= medianViews * 0.05 && vv <= medianViews * 5 })
           const toUse = (filtered.length >= 3 ? filtered : pool).slice(0, 10)
           const views = toUse.map((v: any) => getViews(v)).filter((v: number) => v > 0)
           const lks = toUse.map((v: any) => getLikes(v))
@@ -158,7 +170,7 @@ export async function GET(req: NextRequest) {
           result.ttAvgVideoComments = avg(cmts)
           const ttRawAvgViews = rawAvg(views)
           if (result.ttFollower && ttRawAvgViews) {
-            result.ttEr = Math.round(((rawAvg(lks) + rawAvg(cmts)) / ttRawAvgViews) * 100 * 10) / 10
+            result.ttEr = clampEr(((median(lks) + median(cmts)) / (median(views) || ttRawAvgViews)) * 100)
           }
         }
       }
