@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   type PlanPost, type PlanProdukt, KAMPAGNEN, PLATTFORMEN, FORMATE, DEAL_STATUS, POST_STATUS, DEAL_LABEL, POST_LABEL,
-  ZEITRAEUME, fmtDatum, fmtKurz, fmtEur, briefingText,
+  ZEITRAEUME, zeitraumFor, fmtDatum, fmtKurz, fmtEur, briefingText,
 } from '@/lib/postingplan'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -43,6 +43,26 @@ export default function Postingplan() {
   const [newLink, setNewLink] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [confirmCreator, setConfirmCreator] = useState<string | null>(null)
+  const [customKats, setCustomKats] = useState<string[]>([])
+  useEffect(() => { try { setCustomKats(JSON.parse(localStorage.getItem('pp_kategorien') || '[]')) } catch {} }, [])
+  const kategorien = useMemo(() => Array.from(new Set([...KAMPAGNEN, ...customKats, ...posts.map(p => p.kampagne).filter(Boolean)])), [customKats, posts])
+  const addKategorie = () => {
+    const n = (window.prompt('Name der neuen Kategorie (z. B. Muttertag, Valentinstag):') || '').trim()
+    if (!n) return null
+    if (!kategorien.some(k => k.toLowerCase() === n.toLowerCase())) {
+      const next = [...customKats, n]; setCustomKats(next)
+      try { localStorage.setItem('pp_kategorien', JSON.stringify(next)) } catch {}
+    }
+    return n
+  }
+  const removeCreatorPosts = async (key: string, ids: string[]) => {
+    if (confirmCreator !== key) { setConfirmCreator(key); return }
+    const token = await getToken()
+    await Promise.all(ids.map(id => fetch('/api/postingplan/' + id, { method: 'DELETE', headers: { authorization: 'Bearer ' + token } })))
+    setPosts(prev => prev.filter(p => !ids.includes(p.id)))
+    setConfirmCreator(null)
+  }
   const [monthStart, setMonthStart] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
   const [monthCount, setMonthCount] = useState(2)
 
@@ -284,11 +304,12 @@ export default function Postingplan() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {['', ...KAMPAGNEN].map(k => (
+            {['', ...kategorien].map(k => (
               <button key={k || 'alle'} onClick={() => setKampagne(k)} className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${kampagne === k ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3 hover:text-ink-1'}`}>
-                {k || 'Alle Kampagnen'}{k && ZEITRAEUME[k] ? ` · ${ZEITRAEUME[k].label}` : ''}
+                {k || 'Alle Kategorien'}
               </button>
             ))}
+            <button onClick={() => { const n = addKategorie(); if (n) setKampagne(n) }} className="px-3 py-1.5 text-xs rounded-full border border-dashed border-hairline text-ink-3 hover:text-ink-1">+ Kategorie</button>
             <select value={dealFilter} onChange={e => setDealFilter(e.target.value)} className="ml-auto bg-surface-2 border border-hairline rounded-apple-sm px-3 py-1.5 text-ink-2 text-xs focus:outline-none">
               <option value="">Alle Deal-Status</option>
               {DEAL_STATUS.map(s => <option key={s} value={s}>{DEAL_LABEL[s]}</option>)}
@@ -305,6 +326,7 @@ export default function Postingplan() {
                       <div className="flex items-center gap-2 mb-2">
                         <h2 className="text-ink-1 font-medium text-sm">{name}</h2>
                         <span className="text-ink-4 text-xs">{list.length} Post{list.length === 1 ? '' : 's'} · {fmtEur(list.reduce((s, p) => s + (Number(p.gage) || 0), 0))}</span>
+                        <button onClick={() => removeCreatorPosts(name, list.map(p => p.id))} onBlur={() => setConfirmCreator(null)} className={`ml-auto text-[11px] px-2 py-1 rounded ${confirmCreator === name ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{confirmCreator === name ? `Wirklich alle ${list.length} Posts entfernen?` : 'Creator aus Plan entfernen'}</button>
                       </div>
                       <div className="space-y-2">{list.map(p => <PostCard key={p.id} p={p} />)}</div>
                     </div>
@@ -375,18 +397,19 @@ export default function Postingplan() {
                   <div>
                     <label className={labelCls}>Kampagne</label>
                     <select value={form.kampagne} onChange={e => setForm({ ...form, kampagne: e.target.value })} className={inputCls}>
-                      {KAMPAGNEN.map(k => <option key={k}>{k}</option>)}
+                      {kategorien.map(k => <option key={k}>{k}</option>)}
                     </select>
+                    <button type="button" onClick={() => { const n = addKategorie(); if (n && form) setForm({ ...form, kampagne: n }) }} className="text-[10px] text-accent mt-1 hover:underline">+ neue Kategorie</button>
                   </div>
                 </div>
 
                 <div>
                   <label className={labelCls}>Datum</label>
                   <input type="date" value={form.geplant_am || ''} onChange={e => setForm({ ...form, geplant_am: e.target.value })} className={inputCls} />
-                  {ZEITRAEUME[form.kampagne] && (
+                  {zeitraumFor(form.kampagne) && (
                     <div className="flex gap-1.5 mt-1.5 flex-wrap">
-                      <span className="text-ink-4 text-[10px] self-center">{form.kampagne} {ZEITRAEUME[form.kampagne].label}:</span>
-                      {(form.kampagne === 'Black Week' ? ['2026-11-23', '2026-11-25', '2026-11-27', '2026-11-30'] : ['2026-12-01', '2026-12-08', '2026-12-15', '2026-12-20']).map(d => (
+                      <span className="text-ink-4 text-[10px] self-center">{ZEITRAEUME[zeitraumFor(form.kampagne)!].label}:</span>
+                      {(zeitraumFor(form.kampagne) === 'Black Week' ? ['2026-11-23', '2026-11-25', '2026-11-27', '2026-11-30'] : ['2026-12-01', '2026-12-08', '2026-12-15', '2026-12-20']).map(d => (
                         <button key={d} type="button" onClick={() => setForm({ ...form, geplant_am: d })} className="text-[10px] px-2 py-0.5 rounded-full border border-hairline text-ink-3 hover:text-ink-1">{fmtKurz(d)}</button>
                       ))}
                     </div>

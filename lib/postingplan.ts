@@ -22,7 +22,8 @@ export type PlanPost = {
 
 export const EDITABLE = ['creator_id', 'creator_name', 'kampagne', 'geplant_am', 'plattform', 'format', 'beschreibung', 'produkte', 'gage', 'deal_status', 'post_status', 'beispiel_links', 'notizen'] as const
 
-export const KAMPAGNEN = ['Allgemein', 'Black Week', 'Weihnachten'] as const
+export const KAMPAGNEN: string[] = ['Allgemein', 'Black Week', 'Weihnachten', 'Frauen-Launch', 'Frauen-Black Week', 'Frauen-Weihnachten', 'Couple-Black Week', 'Couple-Weihnachten']
+export const zeitraumFor = (k?: string | null) => { const n = (k || '').toLowerCase(); return n.includes('black week') ? 'Black Week' : n.includes('weihnacht') ? 'Weihnachten' : null }
 export const PLATTFORMEN = ['Instagram', 'TikTok', 'Instagram & TikTok'] as const
 export const FORMATE = ['Reel', 'TikTok-Video', 'Story', 'Foto-Post', 'Karussell'] as const
 export const DEAL_STATUS = ['offen', 'angefragt', 'zugesagt', 'deal', 'abgesagt'] as const
