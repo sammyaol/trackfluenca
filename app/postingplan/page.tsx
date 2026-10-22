@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import {
   type PlanPost, type PlanProdukt, KAMPAGNEN, PLATTFORMEN, FORMATE, DEAL_STATUS, POST_STATUS, DEAL_LABEL, POST_LABEL,
-  ZEITRAEUME, zeitraumFor, fmtDatum, fmtKurz, fmtEur, briefingText,
+  ZEITRAEUME, zeitraumFor, VERSAND_STATUS, VERSAND_LABEL, versandInfo, fmtDatum, fmtKurz, fmtEur, briefingText,
 } from '@/lib/postingplan'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -25,6 +25,7 @@ const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'A
 const emptyPost = (): PlanPost => ({
   creator_id: '', creator_name: '', kampagne: 'Allgemein', geplant_am: '', plattform: 'Instagram', format: 'Reel',
   beschreibung: '', produkte: [], gage: null, deal_status: 'offen', post_status: 'geplant', beispiel_links: [], notizen: '',
+  versand_status: 'offen', versand_vorlauf_tage: 6, versendet_am: '', sendungsnummer: '',
 })
 
 export default function Postingplan() {
@@ -106,6 +107,7 @@ export default function Postingplan() {
       anzahl: aktiv.length,
       offen: aktiv.filter(p => p.deal_status === 'offen' || p.deal_status === 'angefragt').length,
       gage: aktiv.reduce((s, p) => s + (Number(p.gage) || 0), 0),
+      versandFaellig: aktiv.filter(p => { const v = versandInfo(p); return v && (v.ueberfaellig || v.dringend) }).length,
       ueberfaellig: aktiv.filter(p => p.geplant_am && p.geplant_am < t && p.post_status !== 'gepostet').length,
       next,
     }
@@ -125,6 +127,11 @@ export default function Postingplan() {
     }
     return Object.values(map).sort((a, b) => (a.next || '9999').localeCompare(b.next || '9999'))
   }, [shown])
+
+  const versandListe = useMemo(() => shown
+    .map(p => ({ p, v: versandInfo(p) }))
+    .filter(x => x.v && x.v.offen && (x.p.deal_status === 'zugesagt' || x.p.deal_status === 'deal'))
+    .sort((a, b) => a.v!.deadline.localeCompare(b.v!.deadline)), [shown])
 
   const grouped = useMemo(() => {
     const map: Record<string, any[]> = {}
@@ -151,7 +158,7 @@ export default function Postingplan() {
       const d = await res.json()
       if (!res.ok) { setError(d.error || 'Fehler beim Speichern'); return }
       await load()
-      if (weiter) setForm({ ...form, id: undefined, created_at: undefined, geplant_am: '', beschreibung: '', beispiel_links: [] })
+      if (weiter) setForm({ ...form, id: undefined, created_at: undefined, geplant_am: '', beschreibung: '', beispiel_links: [], versand_status: 'offen', versendet_am: '', sendungsnummer: '' })
       else setForm(null)
     } finally { setSaving(false) }
   }
@@ -216,6 +223,25 @@ export default function Postingplan() {
             {p.beispiel_links.map((l: string, i: number) => <a key={i} href={l} target="_blank" rel="noreferrer" className="block text-accent text-xs truncate hover:underline">▶ {l}</a>)}
           </div>
         )}
+        {(() => {
+          const v = versandInfo(p)
+          const st = p.versand_status || 'offen'
+          if (st === 'nicht_noetig') return null
+          const cls = v?.ueberfaellig ? 'border-red-500/40 bg-red-500/10 text-red-400' : v?.dringend ? 'border-amber-500/40 bg-amber-500/10 text-amber-400' : 'border-hairline-soft bg-surface-3 text-ink-3'
+          return (
+            <div className={`flex flex-wrap items-center gap-2 rounded-apple-sm border px-3 py-2 mb-2 text-xs ${cls}`}>
+              <span>📦</span>
+              <select value={st} onChange={e => patch(p.id, { versand_status: e.target.value, ...(e.target.value === 'versendet' && !p.versendet_am ? { versendet_am: todayIso() } : {}) })} className="bg-transparent border border-current/30 rounded-full px-2 py-0.5 focus:outline-none">
+                {VERSAND_STATUS.map(s => <option key={s} value={s} className="text-black">{VERSAND_LABEL[s]}</option>)}
+              </select>
+              {st === 'offen' && v && <span>{v.ueberfaellig ? `Überfällig seit ${-v.tage} Tag${v.tage === -1 ? '' : 'en'}, sofort raus!` : v.tage === 0 ? 'Muss HEUTE raus' : `Muss raus bis ${fmtKurz(v.deadline)} (in ${v.tage} Tag${v.tage === 1 ? '' : 'en'})`}</span>}
+              {st === 'versendet' && <span>seit {fmtKurz(p.versendet_am)}{p.sendungsnummer ? ` · ${p.sendungsnummer}` : ''}</span>}
+              {st === 'angekommen' && <span>✓ Schmuck ist beim Creator</span>}
+              {st === 'offen' && <button onClick={() => patch(p.id, { versand_status: 'versendet', versendet_am: todayIso() })} className="ml-auto px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-ink-1">Als versendet markieren</button>}
+              {st === 'versendet' && <button onClick={() => patch(p.id, { versand_status: 'angekommen' })} className="ml-auto px-2 py-0.5 rounded bg-white/15 hover:bg-white/25 text-ink-1">Als angekommen markieren</button>}
+            </div>
+          )
+        })()}
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <span className="text-ink-1 text-sm font-medium">{p.gage ? fmtEur(p.gage) : 'keine Gage'}</span>
           <div className="ml-auto flex flex-wrap gap-1.5">
@@ -288,17 +314,18 @@ export default function Postingplan() {
         </div>
 
         <div className="p-8 space-y-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               ['Geplante Posts', String(stats.anzahl), stats.ueberfaellig ? `${stats.ueberfaellig} überfällig` : 'ohne abgesagte'],
               ['Deal offen', String(stats.offen), 'offen oder angefragt'],
+              ['Versand fällig', String(stats.versandFaellig), 'überfällig oder in ≤ 2 Tagen'],
               ['Gage gesamt', fmtEur(stats.gage), 'alle geplanten Posts'],
               ['Nächster Post', stats.next ? fmtKurz(stats.next.geplant_am) : '—', stats.next ? stats.next.creator_name : 'nichts geplant'],
             ].map(([l, v, s]) => (
               <div key={l} className="bg-surface-2 rounded-apple-lg p-5 border border-hairline-soft">
                 <div className="text-ink-3 text-xs font-medium mb-1">{l}</div>
                 <div className="text-2xl font-semibold text-ink-1">{v}</div>
-                <div className={`text-xs mt-0.5 ${l === 'Geplante Posts' && stats.ueberfaellig ? 'text-red-400' : 'text-ink-4'}`}>{s}</div>
+                <div className={`text-xs mt-0.5 ${(l === 'Geplante Posts' && stats.ueberfaellig) || (l === 'Versand fällig' && stats.versandFaellig) ? 'text-red-400' : 'text-ink-4'}`}>{s}</div>
               </div>
             ))}
           </div>
@@ -357,7 +384,26 @@ export default function Postingplan() {
                 )}
               </div>
 
-              <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-4 xl:sticky xl:top-24">
+              <div className="space-y-4 xl:sticky xl:top-24">
+              <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-4">
+                <h2 className="text-ink-1 font-medium text-sm mb-1">Jetzt rausschicken</h2>
+                <p className="text-ink-4 text-[10px] mb-3">Nur Deals mit Status Zugesagt / Deal fix, nach Frist sortiert</p>
+                {versandListe.length === 0 ? <p className="text-ink-4 text-xs">Nichts offen. 🎉</p> : (
+                  <div className="space-y-2">
+                    {versandListe.map(({ p, v }) => (
+                      <div key={p.id} className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v!.ueberfaellig ? '#FF453A' : v!.dringend ? '#FFB340' : '#636366' }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-ink-1 text-xs font-medium truncate">{p.creator_name}</div>
+                          <div className={`text-[10px] ${v!.ueberfaellig ? 'text-red-400' : 'text-ink-4'}`}>raus bis {fmtKurz(v!.deadline)} · Post {fmtKurz(p.geplant_am)}</div>
+                        </div>
+                        <button onClick={() => patch(p.id, { versand_status: 'versendet', versendet_am: todayIso() })} className="text-[10px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Versendet</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-4">
                 <h2 className="text-ink-1 font-medium text-sm mb-3">Anstehende Creator</h2>
                 {anstehend.length === 0 ? <p className="text-ink-4 text-xs">Keine offenen Posts.</p> : (
                   <div className="space-y-2.5">
@@ -373,6 +419,7 @@ export default function Postingplan() {
                     ))}
                   </div>
                 )}
+              </div>
               </div>
             </div>
           )}
@@ -464,6 +511,20 @@ export default function Postingplan() {
                     <select value={form.deal_status} onChange={e => setForm({ ...form, deal_status: e.target.value })} className={inputCls}>{DEAL_STATUS.map(s => <option key={s} value={s}>{DEAL_LABEL[s]}</option>)}</select></div>
                   <div><label className={labelCls}>Post-Status</label>
                     <select value={form.post_status} onChange={e => setForm({ ...form, post_status: e.target.value })} className={inputCls}>{POST_STATUS.map(s => <option key={s} value={s}>{POST_LABEL[s]}</option>)}</select></div>
+                </div>
+
+                <div className="rounded-apple-sm border border-hairline-soft p-3 space-y-3">
+                  <div className="text-ink-2 text-xs font-medium">📦 Versand des Schmucks{(() => { const v = versandInfo(form); return v ? ` · muss raus bis ${fmtKurz(v.deadline)}` : '' })()}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelCls}>Status</label>
+                      <select value={form.versand_status || 'offen'} onChange={e => setForm({ ...form, versand_status: e.target.value, versendet_am: e.target.value === 'versendet' && !form.versendet_am ? todayIso() : form.versendet_am })} className={inputCls}>{VERSAND_STATUS.map(s => <option key={s} value={s}>{VERSAND_LABEL[s]}</option>)}</select></div>
+                    <div><label className={labelCls}>Vorlauf (Tage vor Post)</label>
+                      <input type="number" min={0} value={form.versand_vorlauf_tage ?? 6} onChange={e => setForm({ ...form, versand_vorlauf_tage: Number(e.target.value) })} className={inputCls} /></div>
+                    <div><label className={labelCls}>Versendet am</label>
+                      <input type="date" value={form.versendet_am || ''} onChange={e => setForm({ ...form, versendet_am: e.target.value })} className={inputCls} /></div>
+                    <div><label className={labelCls}>Sendungsnummer</label>
+                      <input value={form.sendungsnummer || ''} onChange={e => setForm({ ...form, sendungsnummer: e.target.value })} className={inputCls} /></div>
+                  </div>
                 </div>
 
                 <div>

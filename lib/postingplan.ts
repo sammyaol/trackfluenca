@@ -18,9 +18,13 @@ export type PlanPost = {
   post_status: string
   beispiel_links: string[]
   notizen?: string | null
+  versand_status?: string
+  versand_vorlauf_tage?: number
+  versendet_am?: string | null
+  sendungsnummer?: string | null
 }
 
-export const EDITABLE = ['creator_id', 'creator_name', 'kampagne', 'geplant_am', 'plattform', 'format', 'beschreibung', 'produkte', 'gage', 'deal_status', 'post_status', 'beispiel_links', 'notizen'] as const
+export const EDITABLE = ['creator_id', 'creator_name', 'kampagne', 'geplant_am', 'plattform', 'format', 'beschreibung', 'produkte', 'gage', 'deal_status', 'post_status', 'beispiel_links', 'notizen', 'versand_status', 'versand_vorlauf_tage', 'versendet_am', 'sendungsnummer'] as const
 
 export const KAMPAGNEN: string[] = ['Allgemein', 'Black Week', 'Weihnachten', 'Frauen-Launch', 'Frauen-Black Week', 'Frauen-Weihnachten', 'Couple-Black Week', 'Couple-Weihnachten']
 export const zeitraumFor = (k?: string | null) => { const n = (k || '').toLowerCase(); return n.includes('black week') ? 'Black Week' : n.includes('weihnacht') ? 'Weihnachten' : null }
@@ -47,6 +51,8 @@ export function pickEditable(body: Record<string, unknown>) {
     }
   }
   if (out.gage != null) out.gage = Number(out.gage) || 0
+  if ('versand_vorlauf_tage' in out) out.versand_vorlauf_tage = out.versand_vorlauf_tage == null ? 6 : Math.max(0, Math.round(Number(out.versand_vorlauf_tage)) || 0)
+  if ('versand_status' in out && !out.versand_status) out.versand_status = 'offen'
   return out
 }
 
@@ -67,4 +73,18 @@ export function briefingText(p: PlanPost, link?: string | null) {
   if (link) zeilen.push('', `🔗 Dein Link:\n${link}`)
   zeilen.push('', 'Sag Bescheid, wenn du Fragen hast!')
   return zeilen.join('\n')
+}
+
+export const VERSAND_STATUS = ['offen', 'versendet', 'angekommen', 'nicht_noetig'] as const
+export const VERSAND_LABEL: Record<string, string> = { offen: 'Muss noch raus', versendet: 'Unterwegs', angekommen: 'Angekommen', nicht_noetig: 'Kein Versand' }
+
+const addDays = (d: string, n: number) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}` }
+// Bis wann muss der Schmuck raus? = Postdatum minus Vorlauf (Standard 6 Tage).
+export function versandInfo(p: { geplant_am?: string | null; versand_status?: string; versand_vorlauf_tage?: number; post_status?: string; deal_status?: string }) {
+  if (!p.geplant_am) return null
+  const deadline = addDays(p.geplant_am, -(p.versand_vorlauf_tage ?? 6))
+  const heute = new Date(); const t = `${heute.getFullYear()}-${String(heute.getMonth() + 1).padStart(2, '0')}-${String(heute.getDate()).padStart(2, '0')}`
+  const tage = Math.round((new Date(deadline + 'T12:00:00').getTime() - new Date(t + 'T12:00:00').getTime()) / 86400000)
+  const offen = (p.versand_status || 'offen') === 'offen' && p.post_status !== 'gepostet' && p.deal_status !== 'abgesagt'
+  return { deadline, tage, offen, ueberfaellig: offen && tage < 0, dringend: offen && tage >= 0 && tage <= 2 }
 }
