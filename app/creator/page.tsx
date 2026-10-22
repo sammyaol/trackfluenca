@@ -253,7 +253,7 @@ export default function CreatorPage() {
   const [kampagnenList, setKampagnenList] = useState<string[]>([])
   const [saveError, setSaveError] = useState('')
   const [editingHandles, setEditingHandles] = useState(false)
-  const [handleForm, setHandleForm] = useState({ ig: '', tt: '' })
+  const [handleForm, setHandleForm] = useState({ name: '', ig: '', tt: '' })
   const [handleSaving, setHandleSaving] = useState(false)
   const [handleError, setHandleError] = useState('')
 
@@ -423,6 +423,7 @@ export default function CreatorPage() {
     const updated = { ...c, ...fields }
     setCreators(prev => prev.map(x => x === c ? { ...x, ...fields } : x))
     const body: Record<string, any> = {}
+    if ('name' in fields) body.name = fields.name
     if ('status' in fields) body.status = fields.status
     if ('prio' in fields) body.prio = fields.prio
     if ('notizen' in fields) body.notizen = fields.notizen
@@ -462,7 +463,7 @@ export default function CreatorPage() {
 
   const startEditHandles = () => {
     if (!selected) return
-    setHandleForm({ ig: selected.ig || '', tt: selected.tt || '' })
+    setHandleForm({ name: selected.name || '', ig: selected.ig || '', tt: selected.tt || '' })
     setHandleError('')
     setEditingHandles(true)
   }
@@ -473,10 +474,19 @@ export default function CreatorPage() {
     const ttRaw = handleForm.tt.trim()
     const ig = igRaw ? (igRaw.startsWith('@') ? igRaw : '@' + igRaw) : ''
     const tt = ttRaw ? (ttRaw.startsWith('@') ? ttRaw : '@' + ttRaw) : ''
+    const newName = handleForm.name.trim()
+    if (!newName) { setHandleError('Bitte einen Namen angeben'); return }
     if (!ig && !tt) { setHandleError('Bitte mindestens einen Handle angeben'); return }
     setHandleSaving(true)
     setHandleError('')
     try {
+      if (ig === (selected.ig || '') && tt === (selected.tt || '')) {
+        // nur der Name wurde geaendert: kein Neuladen der Social-Daten noetig
+        await updateCreator(selected, { name: newName })
+        setSelected(p => p ? { ...p, name: newName } : p)
+        setEditingHandles(false)
+        return
+      }
       const params = new URLSearchParams()
       if (ig) params.append('ig', ig.replace('@', ''))
       if (tt) params.append('tt', tt.replace('@', ''))
@@ -484,7 +494,7 @@ export default function CreatorPage() {
       const res = await fetch(`/api/creator?${params}`, { headers: { authorization: 'Bearer ' + token } })
       const d = await res.json()
       if (d.error) throw new Error(d.error)
-      const fields: Record<string, any> = { ig, tt }
+      const fields: Record<string, any> = { name: newName, ig, tt }
       if (d.igFollower !== undefined || d.ttFollower !== undefined) {
         fields.igFollower = d.igFollower || 0
         fields.ttFollower = d.ttFollower || 0
@@ -1075,10 +1085,11 @@ export default function CreatorPage() {
                       <select value={selected.status} onChange={e => { const v = e.target.value; setSelected(p => p ? {...p, status: v} : p); updateCreator(selected, {status: v}) }} className={`text-xs px-2 py-0.5 rounded-md border-0 cursor-pointer ${statusStyle[selected.status]} bg-transparent`}>
                         {['Offen','Kontaktiert','In Verhandlung','Deal','Abgelehnt'].map(s => <option key={s} value={s} className="bg-surface-3 text-ink-1">{s}</option>)}
                       </select>
-                      <button onClick={startEditHandles} title="IG/TT Handle bearbeiten" className="text-ink-4 hover:text-accent text-xs px-1.5 py-0.5 rounded hover:bg-white/[0.05] transition-colors">Bearbeiten</button>
+                      <button onClick={startEditHandles} title="Name und Handles bearbeiten" className="text-ink-4 hover:text-accent text-xs px-1.5 py-0.5 rounded hover:bg-white/[0.05] transition-colors">Bearbeiten</button>
                     </div>
                     {editingHandles && (
                       <div className="mt-2 flex items-center gap-2 flex-wrap">
+                        <input type="text" value={handleForm.name} onChange={e => setHandleForm(p => ({ ...p, name: e.target.value }))} placeholder="Name" className="bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-1 w-40 focus:outline-none focus:border-accent/50" />
                         <input type="text" value={handleForm.ig} onChange={e => setHandleForm(p => ({ ...p, ig: e.target.value }))} placeholder="@instagram" className="bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-1 w-32 focus:outline-none focus:border-accent/50" />
                         <input type="text" value={handleForm.tt} onChange={e => setHandleForm(p => ({ ...p, tt: e.target.value }))} placeholder="@tiktok" className="bg-surface-0 border border-hairline rounded-apple-sm px-2 py-1 text-xs text-ink-1 w-32 focus:outline-none focus:border-accent/50" />
                         <button onClick={saveHandles} disabled={handleSaving} className="px-2 py-1 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover disabled:opacity-50">{handleSaving ? '...' : 'Speichern + Daten laden'}</button>

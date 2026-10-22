@@ -27,6 +27,10 @@ export async function PATCH(req: NextRequest, ctx: Context) {
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Name im Postingplan mitziehen
+  if (typeof body.name === 'string' && body.name.trim()) {
+    await supabase.from('postingplan_posts').update({ creator_name: body.name }).eq('creator_id', id).eq('user_id', user.id)
+  }
   return NextResponse.json(data)
 }
 
