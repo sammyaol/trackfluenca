@@ -265,24 +265,30 @@ export default function Postingplan() {
     while (cells.length % 7) cells.push(null)
     const t = todayIso()
     return (
-      <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-4">
-        <h3 className="text-ink-1 font-semibold text-sm mb-3">{MONATE[m]} {y}</h3>
-        <div className="grid grid-cols-7 gap-1 text-[10px] text-ink-4 mb-1">
+      <div className="bg-white rounded-apple-lg border border-neutral-200 p-5 shadow-sm">
+        <h3 className="text-neutral-900 font-semibold text-base mb-4">{MONATE[m]} {y}</h3>
+        <div className="grid grid-cols-7 gap-2 text-xs font-medium text-neutral-500 mb-2">
           {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => <div key={d} className="text-center">{d}</div>)}
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-2">
           {cells.map((d, i) => {
-            if (!d) return <div key={i} className="min-h-[72px]" />
+            if (!d) return <div key={i} className="min-h-[150px]" />
             const dayPosts = shown.filter(p => p.geplant_am === d && p.deal_status !== 'abgesagt')
             const zeitraum = Object.entries(ZEITRAEUME).find(([, z]) => d >= z.von && d <= z.bis)?.[0]
             return (
-              <div key={i} className={`min-h-[72px] rounded-apple-sm p-1 border ${d === t ? 'border-accent' : 'border-hairline-soft'} ${zeitraum === 'Black Week' ? 'bg-white/[0.07]' : zeitraum === 'Weihnachten' ? 'bg-red-500/[0.06]' : 'bg-surface-3/40'}`}>
-                <div className="text-[10px] text-ink-4 mb-0.5">{Number(d.slice(8))}</div>
-                {dayPosts.map(p => (
-                  <button key={p.id} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
-                    title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
-                    className="w-full text-left text-[10px] leading-tight truncate rounded px-1 py-0.5 mb-0.5 text-white" style={{ background: DEAL_DOT[p.deal_status] }}>{p.creator_name}</button>
-                ))}
+              <div key={i} className={`min-h-[150px] rounded-lg p-2 border ${d === t ? 'border-2 border-blue-500' : 'border-neutral-200'} ${zeitraum === 'Black Week' ? 'bg-neutral-100' : zeitraum === 'Weihnachten' ? 'bg-red-50' : 'bg-white'}`}>
+                <div className={`text-xs font-semibold mb-1.5 ${d === t ? 'text-blue-600' : 'text-neutral-500'}`}>{Number(d.slice(8))}</div>
+                <div className="space-y-1.5">
+                  {dayPosts.map(p => (
+                    <button key={p.id} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
+                      title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
+                      className="w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition" style={{ background: DEAL_DOT[p.deal_status] }}>
+                      <div className="text-xs font-semibold leading-tight break-words">{p.creator_name}</div>
+                      <div className="text-[10px] opacity-90 leading-tight mt-0.5">{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
+                      {p.gage ? <div className="text-[10px] opacity-90 leading-tight">{fmtEur(p.gage)}</div> : null}
+                    </button>
+                  ))}
+                </div>
               </div>
             )
           })}
