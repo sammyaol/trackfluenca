@@ -265,9 +265,9 @@ export default function Postingplan() {
     while (cells.length % 7) cells.push(null)
     const t = todayIso()
     return (
-      <div className="bg-white rounded-apple-lg border border-neutral-200 p-5 shadow-sm">
+      <div className="bg-neutral-300 rounded-apple-lg border border-neutral-400/40 p-5">
         <h3 className="text-neutral-900 font-semibold text-base mb-4">{MONATE[m]} {y}</h3>
-        <div className="grid grid-cols-7 gap-2 text-xs font-medium text-neutral-500 mb-2">
+        <div className="grid grid-cols-7 gap-2 text-xs font-medium text-neutral-600 mb-2">
           {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => <div key={d} className="text-center">{d}</div>)}
         </div>
         <div className="grid grid-cols-7 gap-2">
@@ -276,8 +276,8 @@ export default function Postingplan() {
             const dayPosts = shown.filter(p => p.geplant_am === d && p.deal_status !== 'abgesagt')
             const zeitraum = Object.entries(ZEITRAEUME).find(([, z]) => d >= z.von && d <= z.bis)?.[0]
             return (
-              <div key={i} className={`min-h-[150px] rounded-lg p-2 border ${d === t ? 'border-2 border-blue-500' : 'border-neutral-200'} ${zeitraum === 'Black Week' ? 'bg-neutral-100' : zeitraum === 'Weihnachten' ? 'bg-red-50' : 'bg-white'}`}>
-                <div className={`text-xs font-semibold mb-1.5 ${d === t ? 'text-blue-600' : 'text-neutral-500'}`}>{Number(d.slice(8))}</div>
+              <div key={i} className={`min-h-[150px] rounded-lg p-2 border ${d === t ? 'border-2 border-blue-500' : 'border-neutral-400/50'} ${zeitraum === 'Black Week' ? 'bg-neutral-300' : zeitraum === 'Weihnachten' ? 'bg-red-200/70' : 'bg-neutral-200'}`}>
+                <div className={`text-xs font-semibold mb-1.5 ${d === t ? 'text-blue-700' : 'text-neutral-600'}`}>{Number(d.slice(8))}</div>
                 <div className="space-y-1.5">
                   {dayPosts.map(p => (
                     <button key={p.id} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
