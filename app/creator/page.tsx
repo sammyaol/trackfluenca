@@ -627,12 +627,12 @@ export default function CreatorPage() {
       }
       case 'igFollower': return <span className="text-ink-2 text-sm">{fmt(c.igFollower)}</span>
       case 'igTier': return c.igTier ? <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.igTier]}`}>{c.igTier}</span> : <span className="text-ink-4">{dash}</span>
-      case 'igEr': return <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span>
+      case 'igEr': return c.igEr > 0 ? <span className={`text-sm font-medium ${c.igEr >= 4 ? 'text-emerald-400' : c.igEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.igEr}%</span> : <span className="text-ink-4 text-sm cursor-help" title={erReason(c, 'ig')}>{c.igFollower > 0 ? 'k. A.' : dash}</span>
       case 'igAvgReelViews': return <span className="text-ink-2 text-sm">{fmt(c.igAvgReelViews)}</span>
       case 'igRealFollowers': return c.igRealFollowers ? <span className={`text-sm font-medium ${c.igRealFollowers >= 80 ? 'text-emerald-400' : c.igRealFollowers >= 60 ? 'text-amber-400' : 'text-red-400'}`}>{c.igRealFollowers}%</span> : <span className="text-ink-4">{dash}</span>
       case 'ttFollower': return <span className="text-ink-2 text-sm">{c.ttFollower > 0 ? fmt(c.ttFollower) : dash}</span>
       case 'ttAvgVideoViews': return <span className="text-ink-2 text-sm">{fmt(c.ttAvgVideoViews || c.ttAvgViews)}</span>
-      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-ink-4">{dash}</span>
+      case 'ttEr': return c.ttEr > 0 ? <span className={`text-sm font-medium ${c.ttEr >= 4 ? 'text-emerald-400' : c.ttEr >= 2 ? 'text-amber-400' : 'text-red-400'}`}>{c.ttEr}%</span> : <span className="text-ink-4 text-sm cursor-help" title={erReason(c, 'tt')}>{c.ttFollower > 0 ? 'k. A.' : dash}</span>
       case 'overallTier': return <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${tierStyle[c.overallTier]}`}>{c.overallTier}</span>
       case 'gesamtReichweite': return <span className="text-ink-2 text-sm">{fmt(c.gesamtReichweite)}</span>
       case 'kampagne': return (
@@ -660,6 +660,15 @@ export default function CreatorPage() {
     }
   }
 
+  // Warum steht bei der Engagement Rate nichts? Erklaerung als Tooltip statt leerem Feld/0%.
+  const erReason = (c: any, plat: 'ig' | 'tt') => {
+    const name = plat === 'ig' ? 'Instagram' : 'TikTok'
+    const handle = plat === 'ig' ? c.ig : c.tt
+    const follower = plat === 'ig' ? c.igFollower : c.ttFollower
+    if (!handle || handle === '@') return `Kein ${name}-Profil hinterlegt`
+    if (!(follower > 0)) return `${name}-Profil nicht gefunden - Handle pruefen`
+    return `${name}: noch keine Engagement Rate berechnet oder keine Beitraege abrufbar (Profil privat / keine Inhalte). Mit "Aktualisieren" neu laden.`
+  }
   const inputCls = "w-full bg-surface-0 border border-hairline rounded-apple-sm px-4 py-2.5 text-ink-1 text-sm placeholder-gray-700 focus:outline-none focus:border-accent/40"
   const selectCls = "w-full bg-surface-0 border border-hairline rounded-apple-sm px-3 py-2.5 text-ink-1 text-sm focus:outline-none focus:border-accent/40"
   const labelCls = "text-ink-3 text-xs mb-1.5 block font-medium"

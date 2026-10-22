@@ -103,7 +103,13 @@ export async function GET(req: NextRequest) {
       result.igPostCount = num(u.media_count)
 
       const reelsResp = await apiFetchRetry(`https://${IG_HOST}/ig/reels_posts_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
-      const items = reelsResp?.items || reelsResp?.data?.items || []
+      let items = reelsResp?.items || reelsResp?.data?.items || []
+      // Fallback: Accounts ohne Reels (nur Fotos/Karussells) lieferten bisher
+      // gar keine Engagement Rate. Dann die normalen Posts nehmen.
+      if (!items.length) {
+        const postsResp = await apiFetchRetry(`https://${IG_HOST}/ig/posts_username/?user=${encodeURIComponent(ig)}&nocors=false`, IG_H)
+        items = postsResp?.items || postsResp?.data?.items || postsResp?.posts || []
+      }
 
       if (items.length) {
         function getViews(it: any) { const m = it.media || it; return num(m.play_count ?? m.ig_play_count ?? m.view_count ?? m.fb_play_count ?? 0) }
@@ -174,6 +180,14 @@ export async function GET(req: NextRequest) {
           }
         }
       }
+    }
+
+    // Fallback, wenn keine Video-Stats abrufbar waren (z.B. kein secUid / leere
+    // Video-Liste): aus den Profil-Summen (Herzen gesamt / Videoanzahl) einen
+    // Durchschnitt pro Video bilden und auf Follower beziehen.
+    if (!result.ttEr && result.ttFollower > 0 && result.ttAvgLikes > 0 && result.ttVideoCount > 0) {
+      const likesPerVideo = result.ttAvgLikes / result.ttVideoCount
+      result.ttEr = clampEr((likesPerVideo / (result.ttAvgVideoViews || result.ttFollower)) * 100)
     }
   }
 
