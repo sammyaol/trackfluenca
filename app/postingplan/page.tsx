@@ -23,7 +23,7 @@ const todayIso = () => iso(new Date())
 const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
 
 const emptyPost = (): PlanPost => ({
-  creator_id: '', creator_name: '', kampagne: 'Allgemein', geplant_am: '', plattform: 'Instagram', format: 'Reel',
+  creator_id: '', creator_name: '', kampagne: 'Allgemein', geplant_am: '', geplant_uhrzeit: '', plattform: 'Instagram', format: 'Reel',
   beschreibung: '', produkte: [], gage: null, deal_status: 'offen', post_status: 'geplant', beispiel_links: [], notizen: '',
   versand_status: 'offen', versand_vorlauf_tage: 6, versendet_am: '', sendungsnummer: '',
 })
@@ -44,6 +44,8 @@ export default function Postingplan() {
   const [newLink, setNewLink] = useState('')
   const [copied, setCopied] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState<string | null>(null)
   const [confirmCreator, setConfirmCreator] = useState<string | null>(null)
   const [customKats, setCustomKats] = useState<string[]>([])
   useEffect(() => { try { setCustomKats(JSON.parse(localStorage.getItem('pp_kategorien') || '[]')) } catch {} }, [])
@@ -195,7 +197,7 @@ export default function Postingplan() {
     return (
       <div className={`rounded-apple-sm border p-4 ${late ? 'border-red-500/30 bg-red-500/[0.05]' : 'border-hairline-soft bg-surface-2'}`}>
         <div className="flex flex-wrap items-center gap-2 mb-2">
-          <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}</span>
+          <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}{p.geplant_uhrzeit ? ' · ' + p.geplant_uhrzeit : ''}</span>
           <span className="text-ink-4 text-xs">{p.format} · {p.plattform}</span>
           {p.kampagne !== 'Allgemein' && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent">{p.kampagne}</span>}
           <div className="ml-auto flex items-center gap-2">
@@ -273,17 +275,21 @@ export default function Postingplan() {
         <div className="grid grid-cols-7 gap-2">
           {cells.map((d, i) => {
             if (!d) return <div key={i} className="min-h-[150px]" />
-            const dayPosts = shown.filter(p => p.geplant_am === d && p.deal_status !== 'abgesagt')
+            const dayPosts = shown.filter(p => p.geplant_am === d && p.deal_status !== 'abgesagt').sort((a, b) => (a.geplant_uhrzeit || '99:99').localeCompare(b.geplant_uhrzeit || '99:99'))
             const zeitraum = Object.entries(ZEITRAEUME).find(([, z]) => d >= z.von && d <= z.bis)?.[0]
             return (
-              <div key={i} className={`min-h-[150px] rounded-lg p-2 border ${d === t ? 'border-2 border-blue-500' : 'border-neutral-400/50'} ${zeitraum === 'Black Week' ? 'bg-neutral-300' : zeitraum === 'Weihnachten' ? 'bg-red-200/70' : 'bg-neutral-200'}`}>
+              <div key={i}
+                onDragOver={e => { if (dragId) { e.preventDefault(); setDragOver(d) } }}
+                onDragLeave={() => setDragOver(o => o === d ? null : o)}
+                onDrop={e => { e.preventDefault(); const id = dragId; setDragId(null); setDragOver(null); if (id) { const cur = posts.find(x => x.id === id); if (cur && cur.geplant_am !== d) patch(id, { geplant_am: d }) } }}
+                className={`min-h-[150px] rounded-lg p-2 border ${dragOver === d ? 'ring-2 ring-blue-500' : ''} ${d === t ? 'border-2 border-blue-500' : 'border-neutral-400/50'} ${zeitraum === 'Black Week' ? 'bg-neutral-300' : zeitraum === 'Weihnachten' ? 'bg-red-200/70' : 'bg-neutral-200'}`}>
                 <div className={`text-xs font-semibold mb-1.5 ${d === t ? 'text-blue-700' : 'text-neutral-600'}`}>{Number(d.slice(8))}</div>
                 <div className="space-y-1.5">
                   {dayPosts.map(p => (
-                    <button key={p.id} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
+                    <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
                       title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
-                      className="w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition" style={{ background: DEAL_DOT[p.deal_status] }}>
-                      <div className="text-xs font-semibold leading-tight break-words">{p.creator_name}</div>
+                      className={`w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
+                      <div className="text-xs font-semibold leading-tight break-words">{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
                       <div className="text-[10px] opacity-90 leading-tight mt-0.5">{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
                       {p.gage ? <div className="text-[10px] opacity-90 leading-tight">{fmtEur(p.gage)}</div> : null}
                     </button>
@@ -375,6 +381,7 @@ export default function Postingplan() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 text-[11px] text-ink-3">
+                      <span className="text-ink-4">Tipp: Posts per Drag &amp; Drop auf einen anderen Tag ziehen</span>
                       {DEAL_STATUS.filter(s => s !== 'abgesagt').map(s => <span key={s} className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm" style={{ background: DEAL_DOT[s] }} />{DEAL_LABEL[s]}</span>)}
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/20" />Black Week</span>
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/30" />Weihnachten</span>
@@ -457,8 +464,11 @@ export default function Postingplan() {
                 </div>
 
                 <div>
-                  <label className={labelCls}>Datum</label>
-                  <input type="date" value={form.geplant_am || ''} onChange={e => setForm({ ...form, geplant_am: e.target.value })} className={inputCls} />
+                  <label className={labelCls}>Datum &amp; Uhrzeit</label>
+                  <div className="flex gap-2">
+                    <input type="date" value={form.geplant_am || ''} onChange={e => setForm({ ...form, geplant_am: e.target.value })} className={inputCls} />
+                    <input type="time" value={form.geplant_uhrzeit || ''} onChange={e => setForm({ ...form, geplant_uhrzeit: e.target.value })} className={inputCls + ' !w-32'} />
+                  </div>
                   {zeitraumFor(form.kampagne) && (
                     <div className="flex gap-1.5 mt-1.5 flex-wrap">
                       <span className="text-ink-4 text-[10px] self-center">{ZEITRAEUME[zeitraumFor(form.kampagne)!].label}:</span>
