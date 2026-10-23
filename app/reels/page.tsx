@@ -98,6 +98,35 @@ export default function ReelsPage() {
   const [uploadMode, setUploadMode] = useState<'file' | 'link'>('file')
   const [linkInput, setLinkInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState('')
+  const [syncDiag, setSyncDiag] = useState<string[]>([])
+
+  // Holt alle Videos mit @kolure.de bzw. #kolure von Instagram + TikTok und importiert die neuen nacheinander.
+  const syncTagged = async () => {
+    setSyncing(true); setSyncMsg('Suche nach Koluré-Videos…'); setSyncDiag([])
+    try {
+      const token = await getToken()
+      const r = await fetch('/api/reels/tagged', { headers: { Authorization: `Bearer ${token}` } })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'Suche fehlgeschlagen')
+      setSyncDiag(d.diag || [])
+      let ok = 0, fail = 0
+      for (let i = 0; i < d.neu.length; i++) {
+        setSyncMsg(`Importiere ${i + 1} von ${d.neu.length}…`)
+        const res = await fetch('/api/reels/auto-import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ postLink: d.neu[i].link, creatorIds: [], videoType: 'kunde', category: null }),
+        }).catch(() => null)
+        const j = res ? await res.json().catch(() => ({})) : {}
+        if (res?.ok && !j.error) ok++; else fail++
+      }
+      setSyncMsg(`${d.gefunden} gefunden, ${d.schonDa} schon vorhanden, ${ok} neu importiert${fail ? `, ${fail} nicht importierbar (z. B. Bild-Posts)` : ''}.`)
+      await load()
+    } catch (e: any) { setSyncMsg('Fehler: ' + (e.message || 'unbekannt')) }
+    setSyncing(false)
+  }
 
   const load = async () => {
     setLoading(true)
@@ -291,11 +320,22 @@ export default function ReelsPage() {
             <h1 className="text-ink-1 font-semibold text-lg">Reels</h1>
             <p className="text-ink-3 text-xs mt-0.5">Beispiel-Videos hochladen, ansehen und sehen wer welche Art von Content produzieren kann</p>
           </div>
+          <div className="flex items-center gap-2">
+          <button onClick={syncTagged} disabled={syncing} className="px-3 py-1.5 rounded-apple-sm border border-hairline text-ink-2 text-xs hover:text-ink-1 disabled:opacity-50 transition-colors">{syncing ? 'Läuft…' : 'Koluré-Videos aktualisieren'}</button>
           <button onClick={openAdd} className="flex items-center gap-2 px-3 py-1.5 rounded-apple-sm bg-accent text-ink-1 text-xs hover:bg-accent-hover shadow-[0_6px_20px_-4px_rgba(10,132,255,0.55)] transition-colors font-medium">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Reel hochladen
           </button>
+          </div>
         </div>
+        {(syncMsg || syncDiag.length > 0) && (
+          <div className="px-8 pt-4">
+            <div className="text-xs text-ink-2 bg-surface-2 border border-hairline-soft rounded-apple-sm p-3">
+              {syncMsg}
+              {syncDiag.length > 0 && <details className="mt-1"><summary className="cursor-pointer text-ink-4">Details</summary><ul className="mt-1 text-ink-4 space-y-0.5">{syncDiag.map((x, i) => <li key={i}>{x}</li>)}</ul></details>}
+            </div>
+          </div>
+        )}
 
         <div className="p-8 space-y-4">
           <div className="flex flex-wrap items-center gap-2">
