@@ -69,6 +69,15 @@ export default function Postingplan() {
   const [monthStart, setMonthStart] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
   const [monthCount, setMonthCount] = useState(0)
 
+  const kurz = (n: number) => n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' Mio' : n >= 1e3 ? (n >= 1e4 ? Math.round(n / 1e3) : (n / 1e3).toFixed(1).replace('.', ',')) + 'K' : String(n)
+  const folText = (id?: string | null, kompakt = false) => {
+    const c = creators.find(x => x.id === id)
+    if (!c) return ''
+    const ig = Number(c.ig_follower) || 0, tt = Number(c.tt_follower) || 0
+    const parts = [ig > 0 ? `IG ${kurz(ig)}` : '', tt > 0 ? `TT ${kurz(tt)}` : ''].filter(Boolean)
+    return parts.length ? parts.join(kompakt ? ' · ' : ' · ') : ''
+  }
+
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
 
   const load = async () => {
@@ -210,6 +219,7 @@ export default function Postingplan() {
           <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}{p.geplant_uhrzeit ? ' · ' + p.geplant_uhrzeit : ''}</span>
           {view === 'planung' && groupBy === 'datum' && <span className="text-ink-1 text-sm font-medium">{p.creator_name}</span>}
           {nr > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-ink-2">Post {nr}/{gleicheTag.length} an diesem Tag</span>}
+          {folText(p.creator_id) && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-medium">👥 {folText(p.creator_id)}</span>}
           <span className="text-ink-4 text-xs">{p.format} · {p.plattform}</span>
           {p.kampagne !== 'Allgemein' && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent">{p.kampagne}</span>}
           <div className="ml-auto flex items-center gap-2">
@@ -303,6 +313,7 @@ export default function Postingplan() {
                       className={`w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
                       <div className={`text-xs font-semibold leading-tight break-words ${p.deal_status === 'abgesagt' ? 'line-through' : ''}`}>{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
                       <div className="text-[10px] opacity-90 leading-tight mt-0.5">{(() => { const g = dayPosts.filter(x => x.creator_id === p.creator_id); return g.length > 1 ? `Post ${g.indexOf(p) + 1}/${g.length} · ` : '' })()}{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
+                      {folText(p.creator_id) ? <div className="text-[10px] opacity-90 leading-tight">👥 {folText(p.creator_id)}</div> : null}
                       {p.gage ? <div className="text-[10px] opacity-90 leading-tight">{fmtEur(p.gage)}</div> : null}
                     </button>
                   ))}
@@ -433,6 +444,7 @@ export default function Postingplan() {
                               className={`text-left rounded-md px-3 py-2 text-white cursor-grab active:cursor-grabbing hover:brightness-110 ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
                               <div className="text-xs font-semibold">{p.creator_name}</div>
                               <div className="text-[10px] opacity-90">{p.format} · {p.kampagne}</div>
+                              {folText(p.creator_id) && <div className="text-[10px] opacity-90">👥 {folText(p.creator_id)}</div>}
                             </button>
                           ))}
                         </div>
@@ -471,6 +483,7 @@ export default function Postingplan() {
                         <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: DEAL_DOT[a.deal] }} />
                         <div className="min-w-0 flex-1">
                           <div className="text-ink-1 text-xs font-medium truncate">{a.name}</div>
+                          {folText(a.id) && <div className="text-accent text-[10px]">👥 {folText(a.id)}</div>}
                           <div className="text-ink-4 text-[10px]">{a.next ? fmtKurz(a.next) : 'ohne Datum'} · {a.count} Post{a.count === 1 ? '' : 's'}{a.gage ? ' · ' + fmtEur(a.gage) : ''}</div>
                         </div>
                         <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${DEAL_CLS[a.deal]}`}>{DEAL_LABEL[a.deal]}</span>
