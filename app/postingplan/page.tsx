@@ -190,12 +190,12 @@ export default function Postingplan() {
   }
   const filteredProducts = products.filter(p => !productSearch || p.title.toLowerCase().includes(productSearch.toLowerCase()) || (p.type || '').toLowerCase().includes(productSearch.toLowerCase()))
 
-  const PostCard = ({ p }: { p: any }) => {
+  const renderPost = (p: any) => {
     const link = linkFor(p.creator_id)
     const t = todayIso()
     const late = p.geplant_am && p.geplant_am < t && p.post_status !== 'gepostet' && p.deal_status !== 'abgesagt'
     return (
-      <div className={`rounded-apple-sm border p-4 ${late ? 'border-red-500/30 bg-red-500/[0.05]' : 'border-hairline-soft bg-surface-2'}`}>
+      <div key={p.id} className={`rounded-apple-sm border p-4 ${late ? 'border-red-500/30 bg-red-500/[0.05]' : 'border-hairline-soft bg-surface-2'}`}>
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}{p.geplant_uhrzeit ? ' · ' + p.geplant_uhrzeit : ''}</span>
           <span className="text-ink-4 text-xs">{p.format} · {p.plattform}</span>
@@ -258,7 +258,7 @@ export default function Postingplan() {
     )
   }
 
-  const Month = ({ start }: { start: Date }) => {
+  const renderMonth = (start: Date) => {
     const y = start.getFullYear(), m = start.getMonth()
     const first = new Date(y, m, 1)
     const offset = (first.getDay() + 6) % 7
@@ -267,7 +267,7 @@ export default function Postingplan() {
     while (cells.length % 7) cells.push(null)
     const t = todayIso()
     return (
-      <div className="bg-neutral-300 rounded-apple-lg border border-neutral-400/40 p-5">
+      <div key={start.toISOString()} className="bg-neutral-300 rounded-apple-lg border border-neutral-400/40 p-5">
         <h3 className="text-neutral-900 font-semibold text-base mb-4">{MONATE[m]} {y}</h3>
         <div className="grid grid-cols-7 gap-2 text-xs font-medium text-neutral-600 mb-2">
           {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(d => <div key={d} className="text-center">{d}</div>)}
@@ -367,7 +367,7 @@ export default function Postingplan() {
                         <span className="text-ink-4 text-xs">{list.length} Post{list.length === 1 ? '' : 's'} · {fmtEur(list.reduce((s, p) => s + (Number(p.gage) || 0), 0))}</span>
                         <button onClick={() => removeCreatorPosts(name, list.map(p => p.id))} onBlur={() => setConfirmCreator(null)} className={`ml-auto text-[11px] px-2 py-1 rounded ${confirmCreator === name ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{confirmCreator === name ? `Wirklich alle ${list.length} Posts entfernen?` : 'Creator aus Plan entfernen'}</button>
                       </div>
-                      <div className="space-y-2">{list.map(p => <PostCard key={p.id} p={p} />)}</div>
+                      <div className="space-y-2">{list.map(p => renderPost(p))}</div>
                     </div>
                   ))
                 ) : (
@@ -386,11 +386,11 @@ export default function Postingplan() {
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/20" />Black Week</span>
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/30" />Weihnachten</span>
                     </div>
-                    {monthsToShow.map(d => <Month key={d.toISOString()} start={d} />)}
+                    {monthsToShow.map(d => renderMonth(d))}
                     {ohneDatum.length > 0 && (
                       <div>
                         <h2 className="text-ink-1 font-medium text-sm mb-2">Ohne Datum</h2>
-                        <div className="space-y-2">{ohneDatum.map(p => <PostCard key={p.id} p={p} />)}</div>
+                        <div className="space-y-2">{ohneDatum.map(p => renderPost(p))}</div>
                       </div>
                     )}
                   </>
