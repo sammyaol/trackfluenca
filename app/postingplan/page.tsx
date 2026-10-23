@@ -67,7 +67,7 @@ export default function Postingplan() {
     setConfirmCreator(null)
   }
   const [monthStart, setMonthStart] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1) })
-  const [monthCount, setMonthCount] = useState(2)
+  const [monthCount, setMonthCount] = useState(0)
 
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
 
@@ -120,9 +120,9 @@ export default function Postingplan() {
     const t = todayIso()
     const map: Record<string, { name: string; id: string; next: string | null; count: number; deal: string; gage: number }> = {}
     for (const p of shown) {
-      if (p.deal_status === 'abgesagt' || p.post_status === 'gepostet') continue
       const k = p.creator_id || p.creator_name
       const m = map[k] || (map[k] = { name: p.creator_name, id: p.creator_id, next: null, count: 0, deal: p.deal_status, gage: 0 })
+      if (p.deal_status === 'abgesagt' || p.post_status === 'gepostet') continue
       m.count++
       m.gage += Number(p.gage) || 0
       if (p.geplant_am && (!m.next || (p.geplant_am >= t && (m.next < t || p.geplant_am < m.next)) )) { m.next = p.geplant_am; m.deal = p.deal_status }
@@ -135,9 +135,17 @@ export default function Postingplan() {
     .filter(x => x.v && x.v.offen && (x.p.deal_status === 'zugesagt' || x.p.deal_status === 'deal'))
     .sort((a, b) => a.v!.deadline.localeCompare(b.v!.deadline)), [shown])
 
+  const [groupBy, setGroupBy] = useState<'datum' | 'creator'>('datum')
+  const byTime = (a: any, b: any) => (a.geplant_am || '9999').localeCompare(b.geplant_am || '9999') || (a.geplant_uhrzeit || '99:99').localeCompare(b.geplant_uhrzeit || '99:99')
+  const nachDatum = useMemo(() => {
+    const map: Record<string, any[]> = {}
+    for (const p of [...shown].sort(byTime)) { const k = p.geplant_am || ''; (map[k] = map[k] || []).push(p) }
+    return Object.entries(map).sort((a, b) => (a[0] || '9999').localeCompare(b[0] || '9999'))
+  }, [shown])
   const grouped = useMemo(() => {
     const map: Record<string, any[]> = {}
     for (const p of shown) { const k = p.creator_name || 'Unbekannt'; (map[k] = map[k] || []).push(p) }
+    Object.values(map).forEach(l => l.sort(byTime))
     return Object.entries(map).sort((a, b) => ((a[1][0]?.geplant_am || '9999').localeCompare(b[1][0]?.geplant_am || '9999')))
   }, [shown])
 
@@ -193,11 +201,15 @@ export default function Postingplan() {
   const renderPost = (p: any) => {
     const link = linkFor(p.creator_id)
     const t = todayIso()
+    const gleicheTag = p.geplant_am ? posts.filter(x => x.creator_id === p.creator_id && x.geplant_am === p.geplant_am && x.deal_status !== 'abgesagt').sort(byTime) : []
+    const nr = gleicheTag.length > 1 ? gleicheTag.findIndex(x => x.id === p.id) + 1 : 0
     const late = p.geplant_am && p.geplant_am < t && p.post_status !== 'gepostet' && p.deal_status !== 'abgesagt'
     return (
       <div key={p.id} className={`rounded-apple-sm border p-4 ${late ? 'border-red-500/30 bg-red-500/[0.05]' : 'border-hairline-soft bg-surface-2'}`}>
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}{p.geplant_uhrzeit ? ' · ' + p.geplant_uhrzeit : ''}</span>
+          {view === 'planung' && groupBy === 'datum' && <span className="text-ink-1 text-sm font-medium">{p.creator_name}</span>}
+          {nr > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-ink-2">Post {nr}/{gleicheTag.length} an diesem Tag</span>}
           <span className="text-ink-4 text-xs">{p.format} · {p.plattform}</span>
           {p.kampagne !== 'Allgemein' && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent">{p.kampagne}</span>}
           <div className="ml-auto flex items-center gap-2">
@@ -275,7 +287,7 @@ export default function Postingplan() {
         <div className="grid grid-cols-7 gap-2">
           {cells.map((d, i) => {
             if (!d) return <div key={i} className="min-h-[150px]" />
-            const dayPosts = shown.filter(p => p.geplant_am === d && p.deal_status !== 'abgesagt').sort((a, b) => (a.geplant_uhrzeit || '99:99').localeCompare(b.geplant_uhrzeit || '99:99'))
+            const dayPosts = shown.filter(p => p.geplant_am === d).sort((a, b) => (a.geplant_uhrzeit || '99:99').localeCompare(b.geplant_uhrzeit || '99:99'))
             const zeitraum = Object.entries(ZEITRAEUME).find(([, z]) => d >= z.von && d <= z.bis)?.[0]
             return (
               <div key={i}
@@ -289,8 +301,8 @@ export default function Postingplan() {
                     <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
                       title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
                       className={`w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
-                      <div className="text-xs font-semibold leading-tight break-words">{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
-                      <div className="text-[10px] opacity-90 leading-tight mt-0.5">{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
+                      <div className={`text-xs font-semibold leading-tight break-words ${p.deal_status === 'abgesagt' ? 'line-through' : ''}`}>{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
+                      <div className="text-[10px] opacity-90 leading-tight mt-0.5">{(() => { const g = dayPosts.filter(x => x.creator_id === p.creator_id); return g.length > 1 ? `Post ${g.indexOf(p) + 1}/${g.length} · ` : '' })()}{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
                       {p.gage ? <div className="text-[10px] opacity-90 leading-tight">{fmtEur(p.gage)}</div> : null}
                     </button>
                   ))}
@@ -303,7 +315,15 @@ export default function Postingplan() {
     )
   }
 
-  const monthsToShow = Array.from({ length: monthCount }, (_, i) => new Date(monthStart.getFullYear(), monthStart.getMonth() + i, 1))
+  const monthsToShow = (() => {
+    if (monthCount > 0) return Array.from({ length: monthCount }, (_, i) => new Date(monthStart.getFullYear(), monthStart.getMonth() + i, 1))
+    const dates = shown.map(p => p.geplant_am).filter(Boolean).sort() as string[]
+    const now = new Date()
+    const von = new Date(Math.min(new Date(now.getFullYear(), now.getMonth(), 1).getTime(), dates.length ? new Date(dates[0].slice(0, 7) + '-01T12:00:00').getTime() : Infinity))
+    const bisD = dates.length ? new Date(dates[dates.length - 1].slice(0, 7) + '-01T12:00:00') : von
+    const n = Math.min(12, Math.max(1, (bisD.getFullYear() - von.getFullYear()) * 12 + bisD.getMonth() - von.getMonth() + 1))
+    return Array.from({ length: n }, (_, i) => new Date(von.getFullYear(), von.getMonth() + i, 1))
+  })()
   const ohneDatum = shown.filter(p => !p.geplant_am)
 
   return (
@@ -358,7 +378,23 @@ export default function Postingplan() {
           {loading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt...</div> : (
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6 items-start">
               <div className="space-y-6 min-w-0">
-                {view === 'planung' ? (
+                {view === 'planung' && (
+                  <div className="flex items-center gap-2 text-xs text-ink-3">
+                    <span>Anzeigen nach:</span>
+                    {([['datum', 'Datum'], ['creator', 'Creator']] as const).map(([k, l]) => (
+                      <button key={k} onClick={() => setGroupBy(k)} className={`px-3 py-1 rounded-full border ${groupBy === k ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3 hover:text-ink-1'}`}>{l}</button>
+                    ))}
+                  </div>
+                )}
+                {view === 'planung' && groupBy === 'datum' ? (
+                  nachDatum.length === 0 ? <div className="text-ink-4 text-sm py-10 text-center">Noch keine Posts. Plane oben den ersten.</div> :
+                  nachDatum.map(([d, list]) => (
+                    <div key={d || 'x'}>
+                      <h2 className="text-ink-1 font-medium text-sm mb-2">{d ? fmtDatum(d) + ' · ' + fmtKurz(d).split(',')[0] : 'Ohne Datum'} <span className="text-ink-4 text-xs font-normal">{list.length} Post{list.length === 1 ? '' : 's'}</span></h2>
+                      <div className="space-y-2">{list.map(p => renderPost(p))}</div>
+                    </div>
+                  ))
+                ) : view === 'planung' ? (
                   grouped.length === 0 ? <div className="text-ink-4 text-sm py-10 text-center">Noch keine Posts. Plane oben den ersten.</div> :
                   grouped.map(([name, list]) => (
                     <div key={name}>
@@ -377,7 +413,7 @@ export default function Postingplan() {
                       <button onClick={() => { const d = new Date(); setMonthStart(new Date(d.getFullYear(), d.getMonth(), 1)) }} className="px-3 py-1.5 text-xs rounded-apple-sm border border-hairline text-ink-2">Heute</button>
                       <button onClick={() => setMonthStart(new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1))} className="px-3 py-1.5 text-xs rounded-apple-sm border border-hairline text-ink-2">→</button>
                       <div className="ml-auto flex gap-1">
-                        {[1, 2, 3].map(n => <button key={n} onClick={() => setMonthCount(n)} className={`px-3 py-1.5 text-xs rounded-apple-sm border ${monthCount === n ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>{n} Monat{n > 1 ? 'e' : ''}</button>)}
+                        {[0, 1, 2, 3].map(n => <button key={n} onClick={() => setMonthCount(n)} className={`px-3 py-1.5 text-xs rounded-apple-sm border ${monthCount === n ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3'}`}>{n === 0 ? 'Alle' : `${n} Monat${n > 1 ? 'e' : ''}`}</button>)}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-3 text-[11px] text-ink-3">
@@ -386,18 +422,28 @@ export default function Postingplan() {
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-white/20" />Black Week</span>
                       <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-red-500/30" />Weihnachten</span>
                     </div>
-                    {monthsToShow.map(d => renderMonth(d))}
                     {ohneDatum.length > 0 && (
-                      <div>
-                        <h2 className="text-ink-1 font-medium text-sm mb-2">Ohne Datum</h2>
-                        <div className="space-y-2">{ohneDatum.map(p => renderPost(p))}</div>
+                      <div className="rounded-apple-lg border border-amber-500/40 bg-amber-500/[0.06] p-4">
+                        <h2 className="text-ink-1 font-medium text-sm mb-1">Noch ohne Datum ({ohneDatum.length})</h2>
+                        <p className="text-ink-4 text-xs mb-3">Auf einen Tag im Kalender ziehen oder anklicken und Datum eintragen.</p>
+                        <div className="flex flex-wrap gap-2">
+                          {ohneDatum.map(p => (
+                            <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }}
+                              onClick={() => { setForm({ ...p, geplant_am: '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
+                              className={`text-left rounded-md px-3 py-2 text-white cursor-grab active:cursor-grabbing hover:brightness-110 ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
+                              <div className="text-xs font-semibold">{p.creator_name}</div>
+                              <div className="text-[10px] opacity-90">{p.format} · {p.kampagne}</div>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
+                    {monthsToShow.map(d => renderMonth(d))}
                   </>
                 )}
               </div>
 
-              <div className="space-y-4 xl:sticky xl:top-24">
+              <div className="space-y-4">
               <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-4">
                 <h2 className="text-ink-1 font-medium text-sm mb-1">Jetzt rausschicken</h2>
                 <p className="text-ink-4 text-[10px] mb-3">Nur Deals mit Status Zugesagt / Deal fix, nach Frist sortiert</p>
