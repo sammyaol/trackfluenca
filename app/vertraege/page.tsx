@@ -21,7 +21,7 @@ const emptyForm = () => ({
   inhalte: '', plattform: 'Instagram', anzahl_videos: '1',
   posting_bis: '', online_tage: '30',
   verguetung_art: 'produkt' as 'produkt' | 'fee' | 'beides',
-  produkte: '', produktwert: '', fee: '', versand_bis: '', zahlung_tage: '14',
+  produkte: '', fee: '', versand_bis: '', zahlung_tage: '14',
   nutzungsrechte_ads: false, zusatz: '',
 })
 
@@ -32,6 +32,7 @@ export default function Vertraege() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyForm())
   const [firma, setFirma] = useState({ firma_name: 'Koluré', firma_adresse: '' })
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [detail, setDetail] = useState<Vertrag | null>(null)
@@ -91,22 +92,39 @@ export default function Vertraege() {
         inhalte: form.inhalte, plattform: form.plattform, anzahl_videos: num(form.anzahl_videos),
         posting_bis: form.posting_bis, online_tage: num(form.online_tage),
         verguetung_art: form.verguetung_art,
-        produkte: showProdukt ? form.produkte : '', produktwert: showProdukt ? num(form.produktwert) : null,
+        produkte: showProdukt ? form.produkte : '', produktwert: null,
         fee: showFee ? num(form.fee) : null, versand_bis: showProdukt ? form.versand_bis : '',
         zahlung_tage: num(form.zahlung_tage), nutzungsrechte_ads: form.nutzungsrechte_ads, zusatz: form.zusatz,
       }
-      const res = await fetch('/api/vertraege', {
-        method: 'POST',
+      const res = await fetch(editingId ? '/api/vertraege/' + editingId : '/api/vertraege', {
+        method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + await getToken() },
         body: JSON.stringify(body),
       })
       const d = await res.json()
       if (!res.ok) { setError(d.error || 'Fehler beim Anlegen'); return }
       setShowForm(false)
+      setEditingId(null)
       setForm(emptyForm())
       await load()
       setDetail(d)
     } finally { setSaving(false) }
+  }
+
+  const startEdit = (v: Vertrag) => {
+    setForm({
+      creator_id: v.creator_id || '', creator_name: v.creator_name || '', creator_handle: v.creator_handle || '',
+      inhalte: v.inhalte || '', plattform: v.plattform || 'Instagram', anzahl_videos: String(v.anzahl_videos ?? 1),
+      posting_bis: v.posting_bis || '', online_tage: String(v.online_tage ?? 30),
+      verguetung_art: v.verguetung_art || 'produkt',
+      produkte: v.produkte || '', fee: v.fee != null ? String(v.fee) : '', versand_bis: v.versand_bis || '',
+      zahlung_tage: String(v.zahlung_tage ?? 14), nutzungsrechte_ads: !!v.nutzungsrechte_ads, zusatz: v.zusatz || '',
+    })
+    setFirma({ firma_name: v.firma_name || 'Koluré', firma_adresse: v.firma_adresse || '' })
+    setEditingId(v.id!)
+    setError('')
+    setDetail(null)
+    setShowForm(true)
   }
 
   const openDetail = async (id: string) => {
@@ -155,7 +173,7 @@ export default function Vertraege() {
             <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Verträge</h1>
             <p className="text-ink-3 text-xs mt-0.5">Kooperationsvereinbarungen per Link unterschreiben lassen</p>
           </div>
-          <button onClick={() => { setForm(emptyForm()); setError(''); setShowForm(true) }}
+          <button onClick={() => { setForm(emptyForm()); setEditingId(null); setError(''); setShowForm(true) }}
             className="bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm px-4 py-2 transition-colors">+ Neuer Vertrag</button>
         </div>
 
@@ -204,8 +222,8 @@ export default function Vertraege() {
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowForm(false)}>
             <div className="bg-surface-2 rounded-apple-lg w-full max-w-xl border border-hairline max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft">
-                <h2 className="text-ink-1 font-semibold">Neuer Vertrag</h2>
-                <button onClick={() => setShowForm(false)} className="text-ink-3 hover:text-ink-1 text-xl leading-none">×</button>
+                <h2 className="text-ink-1 font-semibold">{editingId ? 'Vertrag bearbeiten' : 'Neuer Vertrag'}</h2>
+                <button onClick={() => { setShowForm(false); setEditingId(null) }} className="text-ink-3 hover:text-ink-1 text-xl leading-none">×</button>
               </div>
               <div className="overflow-y-auto p-6 space-y-4">
                 <div>
@@ -254,8 +272,6 @@ export default function Vertraege() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2"><label className={labelCls}>Produkte</label>
                       <input value={form.produkte} onChange={e => setForm(f => ({ ...f, produkte: e.target.value }))} placeholder="z. B. 2 Armbänder (Set Gold)" className={inputCls} /></div>
-                    <div><label className={labelCls}>Warenwert (€)</label>
-                      <input type="number" min={0} value={form.produktwert} onChange={e => setForm(f => ({ ...f, produktwert: e.target.value }))} className={inputCls} /></div>
                     <div><label className={labelCls}>Versand bis</label>
                       <input type="date" value={form.versand_bis} onChange={e => setForm(f => ({ ...f, versand_bis: e.target.value }))} className={inputCls} /></div>
                   </div>
@@ -287,7 +303,7 @@ export default function Vertraege() {
 
                 {error && <p className="text-red-400 text-xs">{error}</p>}
                 <button onClick={create} disabled={saving}
-                  className="w-full bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm py-2.5 disabled:opacity-50">{saving ? 'Wird angelegt...' : 'Vertrag anlegen'}</button>
+                  className="w-full bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm py-2.5 disabled:opacity-50">{saving ? 'Wird gespeichert...' : editingId ? 'Änderungen speichern' : 'Vertrag anlegen'}</button>
               </div>
             </div>
           </div>
@@ -346,6 +362,9 @@ export default function Vertraege() {
                         <a href={url} target="_blank" rel="noreferrer" className="block text-center bg-surface-3 hover:bg-white/[0.08] border border-hairline text-ink-1 text-sm rounded-apple-sm py-2">Vertrag ansehen / als PDF speichern</a>
                       )}
 
+                      {v.status !== 'unterschrieben' && v.status !== 'storniert' && (
+                        <button onClick={() => startEdit(v)} className="w-full bg-surface-3 hover:bg-white/[0.08] border border-hairline text-ink-1 text-sm rounded-apple-sm py-2">Vertrag bearbeiten</button>
+                      )}
                       <div className="flex gap-2 pt-1">
                         {v.status === 'storniert' ? (
                           <button onClick={() => setStatus(v.id!, 'reaktivieren')} disabled={busyId === v.id} className="flex-1 border border-hairline text-ink-2 text-sm rounded-apple-sm py-2">Reaktivieren</button>

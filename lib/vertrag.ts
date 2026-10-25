@@ -106,7 +106,7 @@ export function klauseln(v: Vertrag): Klausel[] {
   const firmaPfl: string[] = []
   if (mitProdukt) {
     firmaPfl.push(
-      `${firma} sendet dem Creator ${v.produkte ? 'folgende Produkte: ' + v.produkte : 'die im Instagram-Chat vereinbarten Produkte'}${v.produktwert ? ` (Warenwert ca. ${fmtEur(v.produktwert)})` : ''}${v.versand_bis ? `, Versand spätestens bis zum ${fmtDatum(v.versand_bis)}` : ', zeitnah nach Unterschrift'}. Die Produkte gehen nach Veröffentlichung der Inhalte in das Eigentum des Creators über.`
+      `${firma} sendet dem Creator ${v.produkte ? 'folgende Produkte: ' + v.produkte : 'die im Instagram-Chat vereinbarten Produkte'}${v.versand_bis ? `, Versand spätestens bis zum ${fmtDatum(v.versand_bis)}` : ', zeitnah nach Unterschrift'}. Die Produkte gehen nach Veröffentlichung der Inhalte in das Eigentum des Creators über.`
     )
   }
   if (mitFee) {
@@ -129,7 +129,7 @@ export function klauseln(v: Vertrag): Klausel[] {
   list.push({
     titel: 'Nichterfüllung',
     absaetze: [
-      `Veröffentlicht der Creator die Inhalte nicht fristgerecht, setzt ${firma} eine Nachfrist von 7 Tagen. Erfolgt auch dann keine Veröffentlichung, entfällt ${mitFee ? 'der Anspruch auf die Vergütung' : 'jeder weitere Anspruch'}${mitProdukt ? ` und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück oder erstattet deren Warenwert` : ''}.`,
+      `Veröffentlicht der Creator die Inhalte nicht fristgerecht, setzt ${firma} eine Nachfrist von 7 Tagen. Erfolgt auch dann keine Veröffentlichung, entfällt ${mitFee ? 'der Anspruch auf die Vergütung' : 'jeder weitere Anspruch'}${mitProdukt ? ` und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück` : ''}.`,
       `Kommt ${firma} den eigenen Pflichten nicht fristgerecht nach, ist der Creator nicht zur Veröffentlichung verpflichtet, bis ${firma} nachgeholt hat.`,
     ],
   })
