@@ -114,7 +114,10 @@ export function klauseln(v: Vertrag): Klausel[] {
     list.push({ titel: 'Usage rights', absaetze: [
       `The Creator grants ${firma} a non-exclusive right, unlimited in time, to share and repost the content organically on ${firma}’s own channels (social media, website, newsletter), crediting the Creator.`,
       v.nutzungsrechte_ads ? `In addition, ${firma} may use the content for paid advertising (e.g. Meta/TikTok Ads, whitelisting).` : `Use for paid advertising is only permitted by separate arrangement.`] })
-    list.push({ titel: 'Non-performance', absaetze: [`If the Creator does not publish the content on time, ${mitFee ? 'the entitlement to the fee lapses' : 'any further entitlement lapses'}${mitProdukt ? ' and the Creator will return the products received at their own expense' : ''}.`] })
+    list.push({ titel: 'Publication Date and Non-Performance', absaetze: [
+      `(1) The publication date is agreed between the parties in writing and is binding. The Creator acknowledges that ${firma}’s campaigns are planned around this date.`,
+      `(2) Any request to postpone the publication date must be submitted in writing at least 7 days in advance. A postponement is only effective with ${firma}’s written consent. In case of unforeseeable events (e.g. illness), the Creator shall inform ${firma} immediately and agree on an alternative date.`,
+      `(3) If the Creator fails to publish on the agreed date for reasons within their control, any further entitlement lapses${mitProdukt ? ' and the Creator shall return the products received at their own expense' : ''}. ${firma} expressly reserves the right to claim compensation for any resulting damage, including lost sales.`] })
     if (v.zusatz) list.push({ titel: 'Additional agreements', absaetze: [v.zusatz] })
     list.push({ titel: 'Final provisions', absaetze: [
       'German law applies. Amendments require text form; an Instagram message is sufficient.',
@@ -137,7 +140,10 @@ export function klauseln(v: Vertrag): Klausel[] {
     list.push({ titel: 'Droits d’utilisation', absaetze: [
       `Le Créateur concède à ${firma} un droit non exclusif, sans limitation de durée, de partager et de republier les contenus de manière organique sur les canaux propres de ${firma} (réseaux sociaux, site web, newsletter), avec mention du Créateur.`,
       v.nutzungsrechte_ads ? `En outre, ${firma} peut utiliser les contenus pour de la publicité payante (p. ex. Meta/TikTok Ads, whitelisting).` : `Toute utilisation pour de la publicité payante nécessite un accord séparé.`] })
-    list.push({ titel: 'Inexécution', absaetze: [`Si le Créateur ne publie pas les contenus dans les délais, ${mitFee ? 'le droit à la rémunération s’éteint' : 'tout autre droit s’éteint'}${mitProdukt ? ' et le Créateur renvoie les produits reçus à ses propres frais' : ''}.`] })
+    list.push({ titel: 'Date de publication et inexécution', absaetze: [
+      `(1) La date de publication est convenue par écrit entre les parties et est contraignante. Le Créateur reconnaît que les campagnes de ${firma} sont planifiées en fonction de cette date.`,
+      `(2) Toute demande de report de la date de publication doit être adressée par écrit au moins 7 jours à l’avance. Un report n’est valable qu’avec l’accord écrit de ${firma}. En cas d’événement imprévisible (p. ex. maladie), le Créateur en informe immédiatement ${firma} et convient avec elle d’une autre date.`,
+      `(3) Si le Créateur ne publie pas à la date convenue pour des raisons qui lui sont imputables, tout autre droit s’éteint${mitProdukt ? ' et le Créateur renvoie les produits reçus à ses propres frais' : ''}. ${firma} se réserve expressément le droit de demander réparation du préjudice en résultant, y compris le manque à gagner.`] })
     if (v.zusatz) list.push({ titel: 'Accords complémentaires', absaetze: [v.zusatz] })
     list.push({ titel: 'Dispositions finales', absaetze: [
       'Le droit allemand est applicable. Toute modification requiert la forme écrite sous forme de texte ; un message Instagram suffit.',
@@ -160,7 +166,10 @@ export function klauseln(v: Vertrag): Klausel[] {
     list.push({ titel: 'Diritti di utilizzo', absaetze: [
       `Il Creator concede a ${firma} il diritto non esclusivo, senza limiti di tempo, di condividere e ripubblicare i contenuti in modo organico sui canali propri di ${firma} (social media, sito web, newsletter), citando il Creator.`,
       v.nutzungsrechte_ads ? `Inoltre ${firma} può utilizzare i contenuti per inserzioni pubblicitarie a pagamento (ad es. Meta/TikTok Ads, whitelisting).` : `L’utilizzo per inserzioni pubblicitarie a pagamento è consentito solo previo accordo separato.`] })
-    list.push({ titel: 'Inadempimento', absaetze: [`Se il Creator non pubblica i contenuti entro i termini, ${mitFee ? 'decade il diritto al compenso' : 'decade ogni ulteriore diritto'}${mitProdukt ? ' e il Creator restituisce i prodotti ricevuti a proprie spese' : ''}.`] })
+    list.push({ titel: 'Data di pubblicazione e inadempimento', absaetze: [
+      `(1) La data di pubblicazione è concordata per iscritto tra le parti ed è vincolante. Il Creator prende atto che le campagne di ${firma} sono pianificate in base a tale data.`,
+      `(2) Qualsiasi richiesta di rinvio della data di pubblicazione deve essere presentata per iscritto con almeno 7 giorni di anticipo. Il rinvio è efficace solo con il consenso scritto di ${firma}. In caso di eventi imprevedibili (ad es. malattia), il Creator informa immediatamente ${firma} e concorda una data alternativa.`,
+      `(3) Se il Creator non pubblica alla data concordata per motivi a lui imputabili, decade ogni ulteriore diritto${mitProdukt ? ' e il Creator restituisce i prodotti ricevuti a proprie spese' : ''}. ${firma} si riserva espressamente il diritto di chiedere il risarcimento dei danni che ne derivano, compreso il mancato guadagno.`] })
     if (v.zusatz) list.push({ titel: 'Accordi aggiuntivi', absaetze: [v.zusatz] })
     list.push({ titel: 'Disposizioni finali', absaetze: [
       'Si applica il diritto tedesco. Le modifiche richiedono la forma testuale; è sufficiente un messaggio su Instagram.',
@@ -212,9 +221,11 @@ export function klauseln(v: Vertrag): Klausel[] {
   })
 
   list.push({
-    titel: 'Nichterfüllung',
+    titel: 'Veröffentlichungstermin und Nichterfüllung',
     absaetze: [
-      `Veröffentlicht der Creator die Inhalte nicht fristgerecht, entfällt ${mitFee ? 'der Anspruch auf die Vergütung' : 'jeder weitere Anspruch'}${mitProdukt ? ` und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück` : ''}.`,
+      `(1) Der Veröffentlichungstermin wird zwischen den Parteien schriftlich vereinbart und ist verbindlich. Der Creator nimmt zur Kenntnis, dass die Kampagnen von ${firma} auf diesen Termin ausgerichtet sind.`,
+      `(2) Eine Verschiebung des Veröffentlichungstermins ist mindestens 7 Tage im Voraus schriftlich zu beantragen. Eine Verschiebung wird nur mit schriftlicher Zustimmung von ${firma} wirksam. Bei unvorhersehbaren Ereignissen (z. B. Krankheit) informiert der Creator ${firma} unverzüglich und vereinbart einen Ersatztermin.`,
+      `(3) Veröffentlicht der Creator aus von ihm zu vertretenden Gründen nicht zum vereinbarten Termin, entfällt jeder weitere Anspruch${mitProdukt ? ' und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück' : ''}. ${firma} behält sich ausdrücklich vor, Ersatz für den entstandenen Schaden, einschließlich entgangener Umsätze, zu verlangen.`,
     ],
   })
 
