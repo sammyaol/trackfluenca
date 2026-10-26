@@ -17,7 +17,7 @@ const emptyCreator = { name: '', ig_handle: '', tt_handle: '', rabatt_code: '', 
 const emptyPost = { plattform: 'Instagram', format: 'Reel', datum: '', post_link: '', fee: '', produkt: '', views: '', notizen: '' }
 
 export default function Mklusive() {
-  const [data, setData] = useState<any>({ me: null, creators: [], posts: [], orders: [], members: [] })
+  const [data, setData] = useState<any>({ me: null, creators: [], posts: [], orders: [], linkOrders: [], members: [] })
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [search, setSearch] = useState('')
@@ -64,13 +64,14 @@ export default function Mklusive() {
   const creators: any[] = data.creators
   const shown = useMemo(() => creators.filter(c => !search || (c.name + ' ' + (c.ig_handle || '') + ' ' + (c.tt_handle || '') + ' ' + (c.rabatt_code || '')).toLowerCase().includes(search.toLowerCase())), [creators, search])
   const tot = useMemo(() => {
-    const t = { posts: 0, kosten: 0, klicks: 0, bestellungen: 0, umsatz: 0 }
-    creators.forEach(c => { t.posts += c.posts; t.kosten += c.kosten; t.klicks += c.klicks; t.bestellungen += c.bestellungen; t.umsatz += c.umsatz })
+    const t = { posts: 0, kosten: 0, klicks: 0, bestellungen: 0, umsatz: 0, codeB: 0, codeU: 0, linkB: 0, linkU: 0 }
+    creators.forEach(c => { t.posts += c.posts; t.kosten += c.kosten; t.klicks += c.klicks; t.bestellungen += c.bestellungen; t.umsatz += c.umsatz; t.codeB += c.code?.bestellungen || 0; t.codeU += c.code?.umsatz || 0; t.linkB += c.via_link?.bestellungen || 0; t.linkU += c.via_link?.umsatz || 0 })
     return t
   }, [creators])
   const sel = creators.find(c => c.id === selId)
   const selPosts = (data.posts as any[]).filter(p => p.creator_id === selId)
   const selOrders = sel?.rabatt_code ? (data.orders as any[]).filter(o => o.code === sel.rabatt_code) : []
+  const selLinkOrders = sel?.link ? (data.linkOrders as any[]).filter(o => o.utm_campaign === sel.link_campaign) : []
 
   const openAdd = () => { setForm(emptyCreator); setEditId(null); setError(''); setShowForm(true) }
   const openEdit = (c: any) => { setForm({ name: c.name, ig_handle: c.ig_handle || '', tt_handle: c.tt_handle || '', rabatt_code: c.rabatt_code || '', ziel_url: '', geschlecht: c.geschlecht || '', notizen: c.notizen || '' }); setEditId(c.id); setError(''); setShowForm(true) }
@@ -145,14 +146,15 @@ export default function Mklusive() {
                   ['Creator', int(creators.length), 'text-ink-1'],
                   ['Posts', int(tot.posts), 'text-ink-1'],
                   ['Klicks', int(tot.klicks), 'text-[#64D2FF]'],
-                  ['Bestellungen', int(tot.bestellungen), 'text-ink-1'],
-                  ['Umsatz', eur(tot.umsatz), 'text-emerald-400'],
+                  ['Bestellungen', int(tot.bestellungen), 'text-ink-1', `${int(tot.codeB)} Code · ${int(tot.linkB)} Link`],
+                  ['Umsatz', eur(tot.umsatz), 'text-emerald-400', `${eur(tot.codeU)} Code · ${eur(tot.linkU)} Link`],
                   ['Kosten', eur(tot.kosten), 'text-ink-1'],
                   ['ROAS', renderRoas(tot.kosten > 0 ? tot.umsatz / tot.kosten : null), roasCls(tot.kosten > 0 ? tot.umsatz / tot.kosten : null)],
-                ] as [string, string, string][]).map(([l, v, cls]) => (
+                ] as [string, string, string, string?][]).map(([l, v, cls, sub]) => (
                   <div key={l} className="bg-surface-2 rounded-apple-lg p-4 border border-hairline-soft">
                     <div className="text-ink-3 text-[11px] font-medium uppercase tracking-wider mb-1">{l}</div>
                     <div className={`text-xl font-semibold ${cls}`}>{v}</div>
+                    {sub && <div className="text-ink-4 text-[10px] mt-0.5 truncate" title={sub}>{sub}</div>}
                   </div>
                 ))}
               </div>
@@ -186,8 +188,8 @@ export default function Mklusive() {
                         <td className="px-4 py-3 text-ink-2">{c.posts}</td>
                         <td className="px-4 py-3 text-ink-2">{eur(c.kosten)}</td>
                         <td className="px-4 py-3 text-ink-2">{int(c.klicks)}</td>
-                        <td className="px-4 py-3 text-ink-2">{int(c.bestellungen)}</td>
-                        <td className="px-4 py-3 text-emerald-400 font-medium">{eur(c.umsatz)}</td>
+                        <td className="px-4 py-3"><div className="text-ink-2">{int(c.bestellungen)}</div><div className="text-ink-4 text-[10px]">{int(c.code?.bestellungen || 0)} Code · {int(c.via_link?.bestellungen || 0)} Link</div></td>
+                        <td className="px-4 py-3"><div className="text-emerald-400 font-medium">{eur(c.umsatz)}</div><div className="text-ink-4 text-[10px]">{eur(c.code?.umsatz || 0)} Code · {eur(c.via_link?.umsatz || 0)} Link</div></td>
                         <td className={`px-4 py-3 font-semibold ${roasCls(c.roas)}`}>{renderRoas(c.roas)}</td>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                           {c.link && <button onClick={() => copy('l' + c.id, c.link.url)} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2 whitespace-nowrap">{copied === 'l' + c.id ? '✓ Kopiert' : 'Link kopieren'}</button>}
@@ -197,7 +199,7 @@ export default function Mklusive() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-ink-4 text-xs">Klicks zählt der Tracking-Link live. Bestellungen und Umsatz kommen vom Rabattcode aus Shopify (stündlicher Abgleich, oder oben auf „Aktualisieren“). Kosten = Gage + Produktwert aller Posts, ROAS = Umsatz ÷ Kosten.</p>
+              <p className="text-ink-4 text-xs">Klicks zählt der Tracking-Link live. „Code“ = Bestellungen mit dem Rabattcode (Shopify). „Link“ = Bestellungen nach Klick auf den Tracking-Link (Last Click, Triple Whale, letzte 90 Tage). Gesamt zählt Bestellungen, die über beides kamen, nur einmal. Abgleich stündlich oder über „Aktualisieren“. Kosten = Gage + Produktwert aller Posts, ROAS = Umsatz gesamt ÷ Kosten.</p>
 
               {data.me.role === 'admin' && (
                 <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft p-5 space-y-3">
@@ -271,8 +273,32 @@ export default function Mklusive() {
               </div>
               <div className="overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {[['Klicks', int(sel.klicks)], ['Besuche (90 Tage)', sel.sessions ? int(sel.sessions) : '—'], ['Bestellungen', int(sel.bestellungen)], ['Umsatz', eur(sel.umsatz)], ['Posts', int(sel.posts)], ['Kosten', eur(sel.kosten)], ['ROAS', renderRoas(sel.roas)], ['Kosten pro Bestellung', sel.cpa ? eur(sel.cpa) : '—']].map(([l, v]) => (
-                    <div key={l} className="bg-surface-3 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] uppercase tracking-wider mb-0.5">{l}</div><div className={`font-semibold ${l === 'ROAS' ? roasCls(sel.roas) : l === 'Umsatz' ? 'text-emerald-400' : 'text-ink-1'}`}>{v}</div></div>
+                  {[['Klicks auf Link', int(sel.klicks)], ['Besuche (90 Tage)', sel.sessions ? int(sel.sessions) : '—'], ['Warenkorb', sel.warenkorb != null ? int(sel.warenkorb) : '—'], ['Checkout erreicht', sel.checkout != null ? int(sel.checkout) : '—']].map(([l, v]) => (
+                    <div key={l} className="bg-surface-3 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] uppercase tracking-wider mb-0.5">{l}</div><div className="font-semibold text-ink-1">{v}</div></div>
+                  ))}
+                </div>
+
+                <div>
+                  <h3 className="text-ink-1 text-sm font-medium mb-2">Verkäufe nach Quelle</h3>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      ['Über Rabattcode', sel.rabatt_code ? `Code ${sel.rabatt_code}` : 'kein Code hinterlegt', sel.code?.bestellungen || 0, sel.code?.umsatz || 0, 'border-hairline-soft'],
+                      ['Über Tracking-Link', 'Last Click, 90 Tage', sel.via_link?.bestellungen || 0, sel.via_link?.umsatz || 0, 'border-hairline-soft'],
+                      ['Gesamt', sel.gesamt?.beide ? `${sel.gesamt.beide}× über beides, einmal gezählt` : 'ohne Doppelzählung', sel.bestellungen, sel.umsatz, 'border-emerald-500/40'],
+                    ].map(([t, sub, b, u, border]: any) => (
+                      <div key={t} className={`bg-surface-3 rounded-apple-sm p-3 border ${border}`}>
+                        <div className="text-ink-2 text-xs font-medium">{t}</div>
+                        <div className="text-ink-4 text-[10px] mb-2 truncate" title={sub}>{sub}</div>
+                        <div className="text-ink-1 font-semibold text-lg leading-tight">{int(b)} <span className="text-ink-4 text-xs font-normal">Bestellung{b === 1 ? '' : 'en'}</span></div>
+                        <div className="text-emerald-400 font-semibold">{eur(u)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[['Posts', int(sel.posts)], ['Kosten', eur(sel.kosten)], ['ROAS', renderRoas(sel.roas)], ['Kosten pro Bestellung', sel.cpa ? eur(sel.cpa) : '—']].map(([l, v]) => (
+                    <div key={l} className="bg-surface-3 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] uppercase tracking-wider mb-0.5">{l}</div><div className={`font-semibold ${l === 'ROAS' ? roasCls(sel.roas) : 'text-ink-1'}`}>{v}</div></div>
                   ))}
                 </div>
 
@@ -332,6 +358,16 @@ export default function Mklusive() {
                   ))}
                 </div>
 
+                {selLinkOrders.length > 0 && (
+                  <div className="space-y-2">
+                    <h3 className="text-ink-1 text-sm font-medium">Letzte Bestellungen über den Tracking-Link</h3>
+                    <div className="space-y-1">
+                      {selLinkOrders.slice(0, 10).map(o => (
+                        <div key={o.order_id} className="flex justify-between text-sm text-ink-2 bg-surface-3 rounded-apple-sm px-3 py-1.5"><span>{o.order_name || '#' + o.order_id} · {dat(o.order_date)}{selOrders.some(x => String(x.order_id) === String(o.order_id)) ? <span className="text-ink-4 text-xs"> · auch mit Code</span> : null}</span><span className="text-emerald-400">{eur(Number(o.revenue))}</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selOrders.length > 0 && (
                   <div className="space-y-2">
                     <h3 className="text-ink-1 text-sm font-medium">Letzte Bestellungen mit dem Code</h3>
