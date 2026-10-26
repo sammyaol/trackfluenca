@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 
@@ -32,8 +32,29 @@ const nav = [
   },
 ];
 
+const mkItem = { href: '/mklusive', label: 'Mklusive', color: '#BF5AF2', icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> };
+
 export default function Sidebar() {
   const path = usePathname();
+  const router = useRouter();
+  const [role, setRole] = useState<string | null | undefined>(undefined); // undefined = laedt, null = kein Mitglied
+  useEffect(() => {
+    try { const c = sessionStorage.getItem('mk_role'); if (c) setRole(c === 'none' ? null : c) } catch {}
+    const sbr = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    sbr.auth.getSession().then(async ({ data }) => {
+      const t = data.session?.access_token; if (!t) return;
+      const r = await fetch('/api/mklusive/me', { headers: { authorization: 'Bearer ' + t } }).then(x => x.json()).catch(() => null);
+      const v = r?.role || null; setRole(v);
+      try { sessionStorage.setItem('mk_role', v || 'none') } catch {}
+    });
+  }, []);
+  // Agentur-Zugaenge sehen nur das Mklusive-Portal
+  useEffect(() => { if (role === 'agency' && !path.startsWith('/mklusive')) router.replace('/mklusive') }, [role, path]);
+  const navShown = role === 'agency'
+    ? [{ section: 'Portal', items: [mkItem] }]
+    : role === undefined ? []
+    : role === 'admin' ? nav.map((g, i) => i === nav.length - 1 ? g : g).concat([{ section: 'Agentur', items: [mkItem] }])
+    : nav;
   const [email, setEmail] = useState('');
   const [showMenu, setShowMenu] = useState(false);
   const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
@@ -61,7 +82,7 @@ export default function Sidebar() {
         </div>
 
         <div className="px-3 py-2 flex-1 overflow-y-auto">
-          {nav.map(group => (
+          {navShown.map(group => (
             <div key={group.section} className="mb-6">
               <div className="text-ink-4 text-[10px] font-medium uppercase tracking-widest px-3 mb-2">{group.section}</div>
               {group.items.map(item => {
@@ -111,7 +132,7 @@ export default function Sidebar() {
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-0/97 backdrop-blur-sm border-t border-hairline-soft flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
-        {nav.flatMap(g => g.items).slice(0, 7).map(item => {
+        {navShown.flatMap(g => g.items).slice(0, 8).map(item => {
           const active = path === item.href;
           return (
             <Link key={item.href} href={item.href}
