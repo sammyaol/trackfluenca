@@ -2,7 +2,7 @@
 import Sidebar from '../components/Sidebar'
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { fmtDatum, fmtEur, fmtZeit, nachrichtVorlage, type Vertrag } from '@/lib/vertrag'
+import { fmtDatum, fmtEur, fmtZeit, nachrichtVorlage, SPRACHEN, type Vertrag } from '@/lib/vertrag'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
@@ -22,7 +22,7 @@ const emptyForm = () => ({
   posting_bis: '', online_tage: '30',
   verguetung_art: 'produkt' as 'produkt' | 'fee' | 'beides',
   produkte: '', fee: '', versand_bis: '', zahlung_tage: '14',
-  nutzungsrechte_ads: false, zusatz: '',
+  nutzungsrechte_ads: false, zusatz: '', sprache: 'de',
 })
 
 export default function Vertraege() {
@@ -94,7 +94,7 @@ export default function Vertraege() {
         verguetung_art: form.verguetung_art,
         produkte: showProdukt ? form.produkte : '', produktwert: null,
         fee: showFee ? num(form.fee) : null, versand_bis: showProdukt ? form.versand_bis : '',
-        zahlung_tage: num(form.zahlung_tage), nutzungsrechte_ads: form.nutzungsrechte_ads, zusatz: form.zusatz,
+        zahlung_tage: num(form.zahlung_tage), nutzungsrechte_ads: form.nutzungsrechte_ads, zusatz: form.zusatz, sprache: form.sprache,
       }
       const res = await fetch(editingId ? '/api/vertraege/' + editingId : '/api/vertraege', {
         method: editingId ? 'PATCH' : 'POST',
@@ -118,7 +118,7 @@ export default function Vertraege() {
       posting_bis: v.posting_bis || '', online_tage: String(v.online_tage ?? 30),
       verguetung_art: v.verguetung_art || 'produkt',
       produkte: v.produkte || '', fee: v.fee != null ? String(v.fee) : '', versand_bis: v.versand_bis || '',
-      zahlung_tage: String(v.zahlung_tage ?? 14), nutzungsrechte_ads: !!v.nutzungsrechte_ads, zusatz: v.zusatz || '',
+      zahlung_tage: String(v.zahlung_tage ?? 14), nutzungsrechte_ads: !!v.nutzungsrechte_ads, zusatz: v.zusatz || '', sprache: v.sprache || 'de',
     })
     setFirma({ firma_name: v.firma_name || 'Koluré', firma_adresse: v.firma_adresse || '' })
     setEditingId(v.id!)
@@ -226,6 +226,16 @@ export default function Vertraege() {
                 <button onClick={() => { setShowForm(false); setEditingId(null) }} className="text-ink-3 hover:text-ink-1 text-xl leading-none">×</button>
               </div>
               <div className="overflow-y-auto p-6 space-y-4">
+                <div>
+                  <label className={labelCls}>Sprache des Vertrags</label>
+                  <div className="flex gap-2">
+                    {SPRACHEN.map(sp => (
+                      <button key={sp.code} type="button" onClick={() => setForm(f => ({ ...f, sprache: sp.code }))}
+                        className={`flex-1 py-2 text-sm rounded-apple-sm border transition-colors ${form.sprache === sp.code ? 'bg-accent/15 border-accent text-ink-1' : 'border-hairline text-ink-3 hover:text-ink-1'}`}>{sp.label}</button>
+                    ))}
+                  </div>
+                  <p className="text-ink-4 text-[10px] mt-1">Gilt für den Vertragstext und die Unterschriftsseite des Creators. Dein „Zusatz"-Text bleibt, wie du ihn schreibst.</p>
+                </div>
                 <div>
                   <label className={labelCls}>Creator *</label>
                   <select value={form.creator_id} onChange={e => pickCreator(e.target.value)} className={inputCls}>

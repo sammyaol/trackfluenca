@@ -15,7 +15,7 @@ export const preferredRegion = ['fra1']
 type Context = { params: Promise<{ token: string }> }
 
 const PUBLIC_COLS =
-  'created_at, firma_name, firma_adresse, creator_name, creator_handle, inhalte, plattform, anzahl_videos, posting_bis, online_tage, verguetung_art, produkte, produktwert, fee, versand_bis, zahlung_tage, nutzungsrechte_ads, zusatz, status, unterschrieben_am, unterschrift_name, unterschrift_adresse, unterschrift_bild'
+  'created_at, sprache, firma_name, firma_adresse, creator_name, creator_handle, inhalte, plattform, anzahl_videos, posting_bis, online_tage, verguetung_art, produkte, produktwert, fee, versand_bis, zahlung_tage, nutzungsrechte_ads, zusatz, status, unterschrieben_am, unterschrift_name, unterschrift_adresse, unterschrift_bild'
 
 const validToken = (t: string) => /^[A-Za-z0-9]{16,40}$/.test(t)
 

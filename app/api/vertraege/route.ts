@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   const creatorId = searchParams.get('creator_id')
   let q = supabase
     .from('vertraege')
-    .select('id, created_at, token, creator_id, creator_name, creator_handle, plattform, anzahl_videos, posting_bis, verguetung_art, produkte, produktwert, fee, versand_bis, status, angesehen_am, unterschrieben_am, unterschrift_name')
+    .select('id, created_at, token, sprache, creator_id, creator_name, creator_handle, plattform, anzahl_videos, posting_bis, verguetung_art, produkte, produktwert, fee, versand_bis, status, angesehen_am, unterschrieben_am, unterschrift_name')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
   if (creatorId) q = q.eq('creator_id', creatorId)

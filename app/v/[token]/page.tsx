@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { klauseln, fmtZeit, type Vertrag } from '@/lib/vertrag'
+import { klauseln, fmtZeit, langOf, SPRACHEN, UI, type Vertrag } from '@/lib/vertrag'
 
 // Oeffentliche Unterschriftsseite fuer Creator (kein Login). Hell + mobil,
 // bewusst unabhaengig vom dunklen App-Theme.
@@ -31,6 +31,9 @@ export default function Unterschreiben() {
       .catch(() => setState('missing'))
   }, [token])
 
+  const L = langOf(v)
+  const t = UI[L]
+  const loc = SPRACHEN.find(x => x.code === L)!.locale
   const signed = v?.status === 'unterschrieben'
   const cancelled = v?.status === 'storniert'
 
@@ -91,9 +94,9 @@ export default function Unterschreiben() {
 
   const submit = async () => {
     setError('')
-    if (name.trim().length < 3) { setError('Bitte gib deinen vollständigen Namen ein.'); return }
-    if (!zustimmung) { setError('Bitte bestätige, dass du die Vereinbarung gelesen hast.'); return }
-    if (!hasSig) { setError('Bitte unterschreibe im Feld.'); return }
+    if (name.trim().length < 3) { setError(t.errName); return }
+    if (!zustimmung) { setError(t.errAgree); return }
+    if (!hasSig) { setError(t.errSig); return }
     setSending(true)
     try {
       const res = await fetch('/api/sign/' + token, {
@@ -102,10 +105,10 @@ export default function Unterschreiben() {
         body: JSON.stringify({ name: name.trim(), adresse: adresse.trim(), zustimmung, unterschrift: canvasRef.current!.toDataURL('image/png') }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setError(d.error || 'Speichern fehlgeschlagen.'); return }
+      if (!res.ok) { setError(d.error || t.errSave); return }
       setV(d)
     } catch {
-      setError('Keine Verbindung. Bitte nochmal versuchen.')
+      setError(t.errNet)
     } finally {
       setSending(false)
     }
@@ -123,24 +126,24 @@ export default function Unterschreiben() {
           <img src="/koluere-logo.png" alt="Koluré" className="h-24 w-auto select-none" draggable={false} />
         </div>
 
-        {state === 'loading' && <p className="text-neutral-400 text-center py-16 text-sm tracking-wide">Lädt…</p>}
+        {state === 'loading' && <p className="text-neutral-400 text-center py-16 text-sm tracking-wide">{t.loading}</p>}
         {state === 'missing' && (
           <div className="text-center py-16">
-            <h1 className="text-2xl mb-2" style={serif}>Link nicht gefunden</h1>
-            <p className="text-neutral-500 text-sm">Dieser Link ist ungültig oder abgelaufen. Bitte melde dich bei uns.</p>
+            <h1 className="text-2xl mb-2" style={serif}>{t.notFound}</h1>
+            <p className="text-neutral-500 text-sm">{t.notFoundText}</p>
           </div>
         )}
 
         {state === 'ok' && v && (
           <>
             <div className="text-center mb-10">
-              <p className={labelCls + ' mb-3'}>Kooperationsvereinbarung</p>
+              <p className={labelCls + ' mb-3'}>{t.title}</p>
               <h1 className="text-[28px] leading-tight" style={serif}>{v.creator_name}</h1>
               {v.creator_handle && <p className="text-neutral-400 text-sm mt-1">{v.creator_handle}</p>}
               <div className="w-10 h-px bg-neutral-900 mx-auto mt-6" />
             </div>
 
-            {cancelled && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">Diese Vereinbarung ist nicht mehr gültig.</div>}
+            {cancelled && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">{t.cancelled}</div>}
 
             <div>
               {klauseln(v).map((k, i) => (
@@ -155,32 +158,32 @@ export default function Unterschreiben() {
 
             {signed ? (
               <div className="mt-8 pt-8 border-t border-neutral-900 text-center">
-                <p className={labelCls + ' mb-3'}>Unterschrieben</p>
-                <p className="text-[22px] mb-1" style={serif}>Danke, {v.unterschrift_name}.</p>
-                <p className="text-sm text-neutral-500 mb-6">Unterzeichnet am {fmtZeit(v.unterschrieben_am)}</p>
+                <p className={labelCls + ' mb-3'}>{t.signed}</p>
+                <p className="text-[22px] mb-1" style={serif}>{t.thanks}, {v.unterschrift_name}.</p>
+                <p className="text-sm text-neutral-500 mb-6">{t.signedAt} {fmtZeit(v.unterschrieben_am, loc)}</p>
                 {v.unterschrift_bild && <img src={v.unterschrift_bild} alt="Unterschrift" className="h-24 mx-auto" />}
                 <div className="w-48 h-px bg-neutral-300 mx-auto mb-1" />
                 <p className="text-xs text-neutral-400">{v.unterschrift_name}{v.unterschrift_adresse ? ` · ${v.unterschrift_adresse}` : ''}</p>
-                <button onClick={() => window.print()} className="mt-8 border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors px-8 py-3 text-xs uppercase tracking-[0.2em] print:hidden">Als PDF speichern</button>
+                <button onClick={() => window.print()} className="mt-8 border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors px-8 py-3 text-xs uppercase tracking-[0.2em] print:hidden">{t.pdf}</button>
               </div>
             ) : !cancelled && (
               <div className="mt-8 pt-8 border-t border-neutral-900 space-y-7">
                 <div className="text-center">
-                  <p className={labelCls + ' mb-2'}>Unterschrift</p>
-                  <p className="text-[22px]" style={serif}>Jetzt unterschreiben</p>
+                  <p className={labelCls + ' mb-2'}>{t.signature}</p>
+                  <p className="text-[22px]" style={serif}>{t.signNow}</p>
                 </div>
                 <div>
-                  <label className={labelCls}>Vollständiger Name *</label>
+                  <label className={labelCls}>{t.fullName}</label>
                   <input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Anschrift (optional)</label>
-                  <input value={adresse} onChange={e => setAdresse(e.target.value)} autoComplete="street-address" placeholder="Straße, PLZ Ort" className={inputCls} />
+                  <label className={labelCls}>{t.address}</label>
+                  <input value={adresse} onChange={e => setAdresse(e.target.value)} autoComplete="street-address" placeholder={t.addressPh} className={inputCls} />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className={labelCls}>Mit dem Finger unterschreiben *</label>
-                    <button type="button" onClick={clear} className="text-xs text-neutral-400 underline underline-offset-4">Löschen</button>
+                    <label className={labelCls}>{t.signHere}</label>
+                    <button type="button" onClick={clear} className="text-xs text-neutral-400 underline underline-offset-4">{t.clear}</button>
                   </div>
                   <div className="relative">
                     <canvas ref={canvasRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
@@ -192,11 +195,11 @@ export default function Unterschreiben() {
                 </div>
                 <label className="flex items-start gap-3 text-sm text-neutral-600 leading-relaxed">
                   <input type="checkbox" checked={zustimmung} onChange={e => setZustimmung(e.target.checked)} className="mt-1 w-5 h-5 flex-shrink-0 accent-neutral-900" />
-                  <span>Ich habe die Vereinbarung gelesen und bin einverstanden.</span>
+                  <span>{t.agree}</span>
                 </label>
                 {error && <p className="text-sm text-red-600">{error}</p>}
                 <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-xs uppercase tracking-[0.22em] disabled:opacity-50">
-                  {sending ? 'Wird gespeichert…' : 'Verbindlich unterschreiben'}
+                  {sending ? t.sending : t.submit}
                 </button>
               </div>
             )}
