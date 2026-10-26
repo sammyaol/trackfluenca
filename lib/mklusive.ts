@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 export const AGENCY = 'mklusive'
-export const LINK_BASE = (process.env.LINK_BASE_URL || 'https://kolure.trackfluenca.com/r/')
+export const LINK_BASE = (process.env.LINK_BASE_URL || 'https://link.kolure.de/r/')
 export const SHOP_URL = 'https://kolure.de'
 
 // Nur freigeschaltete Mitglieder (Tabelle agency_members) duerfen das Portal nutzen.

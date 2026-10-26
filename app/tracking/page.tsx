@@ -26,7 +26,7 @@ function ChartCard({ title, subtitle, children, loading, right }: any) {
   )
 }
 
-const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
+const shortLinkUrl = (code: string) => `https://link.kolure.de/r/${code}`
 const fmtEUR = (n: number) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n || 0)
 
 export default function Tracking() {

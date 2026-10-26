@@ -319,7 +319,7 @@ function OutreachInner() {
     sales: campaignStats.reduce((s: number, c: any) => s + (Number(c.sales_last_click) || 0), 0),
     codeRedemptions: discountStats.reduce((s: number, d: any) => s + (d.usage_count || 0), 0),
   }
-  const shortLinkUrl = (code: string) => `https://kolure.trackfluenca.com/r/${code}`
+  const shortLinkUrl = (code: string) => `https://link.kolure.de/r/${code}`
   const createOutreachLink = async () => {
     if (!selected?.id || !newLinkUrl.trim() || creatingLink) return
     setCreatingLink(true)

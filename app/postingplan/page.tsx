@@ -105,7 +105,7 @@ export default function Postingplan() {
   // Tracking-Link je Creator: erster Outreach-Link (automatisch, kein Extra-Aufwand)
   const linkFor = (creatorId?: string | null) => {
     const l = links.find(x => x.creator_id === creatorId)
-    return l ? `https://kolure.trackfluenca.com/r/${l.short_code}` : null
+    return l ? `https://link.kolure.de/r/${l.short_code}` : null
   }
 
   const shown = useMemo(() => posts.filter(p => (!kampagne || p.kampagne === kampagne) && (!dealFilter || p.deal_status === dealFilter)), [posts, kampagne, dealFilter])
