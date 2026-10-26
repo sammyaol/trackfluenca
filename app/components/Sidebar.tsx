@@ -52,8 +52,7 @@ export default function Sidebar() {
   useEffect(() => { if (role === 'agency' && !path.startsWith('/mklusive')) router.replace('/mklusive') }, [role, path]);
   const navShown = role === 'agency'
     ? [{ section: 'Portal', items: [mkItem] }]
-    : role === undefined ? []
-    : role === 'admin' ? nav.map((g, i) => i === nav.length - 1 ? g : g).concat([{ section: 'Agentur', items: [mkItem] }])
+    : role === 'admin' ? nav.concat([{ section: 'Agentur', items: [mkItem] }])
     : nav;
   const [email, setEmail] = useState('');
   const [showMenu, setShowMenu] = useState(false);

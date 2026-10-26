@@ -7,6 +7,10 @@ const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.en
 const eur = (n: number) => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const int = (n: number) => (n || 0).toLocaleString('de-DE')
 const dat = (d?: string | null) => d ? new Date(d.length === 10 ? d + 'T12:00:00' : d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
+const COLORS = ['#BF5AF2', '#0A84FF', '#30D158', '#FF9F0A', '#FF375F', '#64D2FF', '#5E5CE6', '#00C7BE']
+const colorFor = (id: string) => COLORS[(id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
+const initials = (n: string) => (n || '?').split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase()
+const roasCls = (r: number | null) => r == null ? 'text-ink-4' : r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : 'text-red-400'
 const PLATTFORMEN = ['Instagram', 'TikTok', 'Instagram & TikTok']
 const FORMATE = ['Reel', 'TikTok-Video', 'Story', 'Foto-Post', 'Karussell']
 const emptyCreator = { name: '', ig_handle: '', tt_handle: '', rabatt_code: '', ziel_url: '', geschlecht: '', notizen: '' }
@@ -110,8 +114,11 @@ export default function Mklusive() {
       <main className="flex-1 md:ml-60 min-h-screen pb-20 md:pb-0">
         <div className="border-b border-hairline-soft px-8 py-5 flex items-center justify-between bg-surface-0/80 backdrop-blur-xl sticky top-0 z-20">
           <div>
-            <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Mklusive Portal</h1>
-            <p className="text-ink-3 text-xs mt-0.5">Eigene Creator, Rabattcodes, Tracking-Links, Posts und Performance</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Mklusive</h1>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#BF5AF2]/15 text-[#BF5AF2] font-medium">Agentur-Portal</span>
+            </div>
+            <p className="text-ink-3 text-xs mt-0.5">Creator, Rabattcodes, Tracking-Links, Posts und Performance für Koluré</p>
           </div>
           {data.me?.role && (
             <div className="flex items-center gap-2">
@@ -130,10 +137,18 @@ export default function Mklusive() {
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
-                {[['Creator', int(creators.length)], ['Posts', int(tot.posts)], ['Klicks', int(tot.klicks)], ['Bestellungen', int(tot.bestellungen)], ['Umsatz', eur(tot.umsatz)], ['Kosten', eur(tot.kosten)], ['ROAS', renderRoas(tot.kosten > 0 ? tot.umsatz / tot.kosten : null)]].map(([l, v]) => (
+                {([
+                  ['Creator', int(creators.length), 'text-ink-1'],
+                  ['Posts', int(tot.posts), 'text-ink-1'],
+                  ['Klicks', int(tot.klicks), 'text-[#64D2FF]'],
+                  ['Bestellungen', int(tot.bestellungen), 'text-ink-1'],
+                  ['Umsatz', eur(tot.umsatz), 'text-emerald-400'],
+                  ['Kosten', eur(tot.kosten), 'text-ink-1'],
+                  ['ROAS', renderRoas(tot.kosten > 0 ? tot.umsatz / tot.kosten : null), roasCls(tot.kosten > 0 ? tot.umsatz / tot.kosten : null)],
+                ] as [string, string, string][]).map(([l, v, cls]) => (
                   <div key={l} className="bg-surface-2 rounded-apple-lg p-4 border border-hairline-soft">
-                    <div className="text-ink-3 text-xs font-medium mb-1">{l}</div>
-                    <div className="text-xl font-semibold text-ink-1">{v}</div>
+                    <div className="text-ink-3 text-[11px] font-medium uppercase tracking-wider mb-1">{l}</div>
+                    <div className={`text-xl font-semibold ${cls}`}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -148,17 +163,28 @@ export default function Mklusive() {
                     </tr>
                   </thead>
                   <tbody>
-                    {shown.length === 0 && <tr><td colSpan={9} className="text-center text-ink-4 py-10">Noch keine Creator. Füge oben den ersten hinzu.</td></tr>}
+                    {shown.length === 0 && (
+                      <tr><td colSpan={9} className="text-center py-14">
+                        <div className="w-12 h-12 rounded-full bg-[#BF5AF2]/15 text-[#BF5AF2] flex items-center justify-center mx-auto mb-3 text-xl">+</div>
+                        <div className="text-ink-2 text-sm font-medium">{search ? 'Nichts gefunden' : 'Noch keine Creator'}</div>
+                        <div className="text-ink-4 text-xs mt-1">{search ? 'Anderen Suchbegriff probieren.' : 'Mit „Creator hinzufügen“ den ersten anlegen. Tracking-Link gibt es automatisch dazu.'}</div>
+                      </td></tr>
+                    )}
                     {shown.map(c => (
                       <tr key={c.id} onClick={() => { setSelId(c.id); setShowPost(false) }} className="border-b border-hairline-soft last:border-0 hover:bg-white/[0.03] cursor-pointer">
-                        <td className="px-4 py-3"><div className="text-ink-1 font-medium">{c.name}</div><div className="text-ink-4 text-xs">{[c.ig_handle, c.tt_handle].filter(Boolean).join(' · ')}</div></td>
-                        <td className="px-4 py-3 text-ink-2">{c.rabatt_code || <span className="text-ink-4">—</span>}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0" style={{ background: colorFor(c.id) }}>{initials(c.name)}</span>
+                            <div><div className="text-ink-1 font-medium">{c.name}</div><div className="text-ink-4 text-xs">{[c.ig_handle, c.tt_handle].filter(Boolean).join(' · ') || '—'}</div></div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">{c.rabatt_code ? <span className="font-mono text-xs px-2 py-1 rounded bg-white/[0.06] text-ink-1">{c.rabatt_code}</span> : <span className="text-ink-4">—</span>}</td>
                         <td className="px-4 py-3 text-ink-2">{c.posts}</td>
                         <td className="px-4 py-3 text-ink-2">{eur(c.kosten)}</td>
                         <td className="px-4 py-3 text-ink-2">{int(c.klicks)}</td>
                         <td className="px-4 py-3 text-ink-2">{int(c.bestellungen)}</td>
                         <td className="px-4 py-3 text-emerald-400 font-medium">{eur(c.umsatz)}</td>
-                        <td className="px-4 py-3 text-ink-1">{renderRoas(c.roas)}</td>
+                        <td className={`px-4 py-3 font-semibold ${roasCls(c.roas)}`}>{renderRoas(c.roas)}</td>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                           {c.link && <button onClick={() => copy('l' + c.id, c.link.url)} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2 whitespace-nowrap">{copied === 'l' + c.id ? '✓ Kopiert' : 'Link kopieren'}</button>}
                         </td>
@@ -226,9 +252,12 @@ export default function Mklusive() {
           <div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelId(null)}>
             <div className="bg-surface-2 rounded-apple-lg w-full max-w-3xl border border-hairline max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="flex items-start justify-between px-6 py-4 border-b border-hairline-soft">
-                <div>
-                  <h2 className="text-ink-1 font-semibold text-lg">{sel.name}</h2>
-                  <p className="text-ink-4 text-xs mt-0.5">{[sel.ig_handle, sel.tt_handle].filter(Boolean).join(' · ') || 'Keine Handles'}{sel.rabatt_code ? ` · Code ${sel.rabatt_code}` : ''}</p>
+                <div className="flex items-center gap-3">
+                  <span className="w-11 h-11 rounded-full flex items-center justify-center text-white text-sm font-semibold flex-shrink-0" style={{ background: colorFor(sel.id) }}>{initials(sel.name)}</span>
+                  <div>
+                    <h2 className="text-ink-1 font-semibold text-lg leading-tight">{sel.name}</h2>
+                    <p className="text-ink-4 text-xs mt-0.5">{[sel.ig_handle, sel.tt_handle].filter(Boolean).join(' · ') || 'Keine Handles'}{sel.rabatt_code ? <> · Code <span className="font-mono text-ink-2">{sel.rabatt_code}</span></> : ''}</p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => openEdit(sel)} className="text-xs px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-ink-2">Bearbeiten</button>
@@ -239,7 +268,7 @@ export default function Mklusive() {
               <div className="overflow-y-auto p-6 space-y-6">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[['Klicks', int(sel.klicks)], ['Besuche (90 Tage)', sel.sessions ? int(sel.sessions) : '—'], ['Bestellungen', int(sel.bestellungen)], ['Umsatz', eur(sel.umsatz)], ['Posts', int(sel.posts)], ['Kosten', eur(sel.kosten)], ['ROAS', renderRoas(sel.roas)], ['Kosten pro Bestellung', sel.cpa ? eur(sel.cpa) : '—']].map(([l, v]) => (
-                    <div key={l} className="bg-surface-3 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] mb-0.5">{l}</div><div className="text-ink-1 font-semibold">{v}</div></div>
+                    <div key={l} className="bg-surface-3 rounded-apple-sm p-3"><div className="text-ink-4 text-[10px] uppercase tracking-wider mb-0.5">{l}</div><div className={`font-semibold ${l === 'ROAS' ? roasCls(sel.roas) : l === 'Umsatz' ? 'text-emerald-400' : 'text-ink-1'}`}>{v}</div></div>
                   ))}
                 </div>
 
