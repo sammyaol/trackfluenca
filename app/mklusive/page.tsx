@@ -47,6 +47,10 @@ export default function Mklusive() {
     setLoading(false)
   }
   useEffect(() => { load() }, [])
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { if (showForm) setShowForm(false); else if (showPost) setShowPost(false); else setSelId(null) } }
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
+  }, [showForm, showPost])
 
   const sync = async () => {
     setSyncing(true)
