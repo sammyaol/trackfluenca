@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { klauseln, fmtZeit, langOf, SPRACHEN, UI, type Vertrag } from '@/lib/vertrag'
+import { klauselnFuer, fmtZeit, langOf, SPRACHEN, UI, type Vertrag } from '@/lib/vertrag'
 
 // Oeffentliche Unterschriftsseite fuer Creator (kein Login). Hell + mobil,
 // bewusst unabhaengig vom dunklen App-Theme.
@@ -146,7 +146,7 @@ export default function Unterschreiben() {
             {cancelled && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">{t.cancelled}</div>}
 
             <div>
-              {klauseln(v).map((k, i) => (
+              {klauselnFuer(v).map((k, i) => (
                 <section key={i} className="py-5 border-t border-neutral-200 first:border-t-0">
                   <h2 className="text-[17px] mb-2" style={serif}>
                     <span className="text-neutral-300 mr-2">{String(i + 1).padStart(2, '0')}</span>{k.titel}

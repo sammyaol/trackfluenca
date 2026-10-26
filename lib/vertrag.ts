@@ -36,6 +36,7 @@ export type Vertrag = {
   nutzungsrechte_ads?: boolean | null
   zusatz?: string | null
   sprache?: Sprache | string | null
+  klauseln_custom?: Klausel[] | null
   status?: 'offen' | 'angesehen' | 'unterschrieben' | 'storniert'
   angesehen_am?: string | null
   unterschrieben_am?: string | null
@@ -49,15 +50,25 @@ export const EDITABLE_FIELDS = [
   'creator_id', 'firma_name', 'firma_adresse', 'creator_name', 'creator_handle',
   'inhalte', 'plattform', 'anzahl_videos', 'posting_bis', 'online_tage',
   'verguetung_art', 'produkte', 'produktwert', 'fee', 'versand_bis',
-  'zahlung_tage', 'nutzungsrechte_ads', 'zusatz', 'sprache',
+  'zahlung_tage', 'nutzungsrechte_ads', 'zusatz', 'sprache', 'klauseln_custom',
 ] as const
+
+// Eigener Vertragstext: nur {titel, absaetze[]} mit Laengenlimits zulassen.
+export function cleanKlauseln(v: unknown): Klausel[] | null {
+  if (!Array.isArray(v)) return null
+  const out = v.slice(0, 40).map((k: any) => ({
+    titel: String(k?.titel ?? '').slice(0, 200),
+    absaetze: (Array.isArray(k?.absaetze) ? k.absaetze : []).slice(0, 40).map((a: unknown) => String(a ?? '').slice(0, 4000)).filter((a: string) => a.trim() !== ''),
+  })).filter(k => k.titel.trim() !== '' || k.absaetze.length > 0)
+  return out.length ? out : null
+}
 
 export function pickEditable(body: Record<string, unknown>) {
   const out: Record<string, unknown> = {}
   for (const k of EDITABLE_FIELDS) {
     if (k in body) {
       const v = body[k]
-      out[k] = v === '' ? null : v
+      out[k] = k === 'klauseln_custom' ? cleanKlauseln(v) : (v === '' ? null : v)
     }
   }
   return out
@@ -257,4 +268,9 @@ export function nachrichtVorlage(v: Vertrag, link: string) {
   if (L === 'fr') return `Hey ${vorname || 'toi'} ! 💛 Comme convenu dans le chat, voici notre court accord de collaboration avec tout ce dont nous avons parlé. Merci de le lire et de le signer directement sur ton téléphone, ça ne prend qu’une minute :\n\n${link}\n\nMerci, nous sommes ravis de collaborer avec toi ! ✨`
   if (L === 'it') return `Ciao ${vorname || ''}! 💛 Come concordato in chat, ecco il nostro breve accordo di collaborazione con tutto quello di cui abbiamo parlato. Leggilo e firmalo direttamente dal telefono, ci vuole solo un minuto:\n\n${link}\n\nGrazie, non vediamo l’ora di collaborare con te! ✨`
   return `Hey ${vorname || 'du'}! 💛 Wie im Chat besprochen hier einmal unsere kurze Kooperationsvereinbarung mit allem, was wir abgesprochen haben. Bitte einmal durchlesen und direkt am Handy unterschreiben, dauert nur eine Minute:\n\n${link}\n\nDanke dir, wir freuen uns mega auf die Zusammenarbeit! ✨`
+}
+
+// Eigener Text hat Vorrang vor dem automatisch erzeugten.
+export function klauselnFuer(v: Vertrag): Klausel[] {
+  return Array.isArray(v.klauseln_custom) && v.klauseln_custom.length ? v.klauseln_custom : klauseln(v)
 }

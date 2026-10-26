@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { klauseln } from '@/lib/vertrag'
 
 // Oeffentliche Route fuer Creator (kein Login). Zugriff nur ueber den
 // zufaelligen Token im Link. Interne Felder (user_id, creator_id, IP etc.)
@@ -15,7 +16,7 @@ export const preferredRegion = ['fra1']
 type Context = { params: Promise<{ token: string }> }
 
 const PUBLIC_COLS =
-  'created_at, sprache, firma_name, firma_adresse, creator_name, creator_handle, inhalte, plattform, anzahl_videos, posting_bis, online_tage, verguetung_art, produkte, produktwert, fee, versand_bis, zahlung_tage, nutzungsrechte_ads, zusatz, status, unterschrieben_am, unterschrift_name, unterschrift_adresse, unterschrift_bild'
+  'created_at, sprache, klauseln_custom, firma_name, firma_adresse, creator_name, creator_handle, inhalte, plattform, anzahl_videos, posting_bis, online_tage, verguetung_art, produkte, produktwert, fee, versand_bis, zahlung_tage, nutzungsrechte_ads, zusatz, status, unterschrieben_am, unterschrift_name, unterschrift_adresse, unterschrift_bild'
 
 const validToken = (t: string) => /^[A-Za-z0-9]{16,40}$/.test(t)
 
@@ -52,7 +53,7 @@ export async function POST(req: NextRequest, ctx: Context) {
     return NextResponse.json({ error: 'Bitte unterschreibe im Feld.' }, { status: 400 })
   }
 
-  const { data: v } = await supabase.from('vertraege').select('id, status').eq('token', token).maybeSingle()
+  const { data: v } = await supabase.from('vertraege').select('*').eq('token', token).maybeSingle()
   if (!v) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
   if (v.status === 'unterschrieben') return NextResponse.json({ error: 'Diese Vereinbarung wurde bereits unterschrieben.' }, { status: 409 })
   if (v.status === 'storniert') return NextResponse.json({ error: 'Diese Vereinbarung ist nicht mehr gültig.' }, { status: 410 })
@@ -64,6 +65,8 @@ export async function POST(req: NextRequest, ctx: Context) {
     .from('vertraege')
     .update({
       status: 'unterschrieben',
+      // Text zum Zeitpunkt der Unterschrift einfrieren, damit spaetere Aenderungen am Standardtext ihn nicht veraendern
+      klauseln_custom: Array.isArray(v.klauseln_custom) && v.klauseln_custom.length ? v.klauseln_custom : klauseln(v as any),
       unterschrieben_am: new Date().toISOString(),
       unterschrift_name: name,
       unterschrift_adresse: adresse || null,

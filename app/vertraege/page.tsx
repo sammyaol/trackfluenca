@@ -2,7 +2,7 @@
 import Sidebar from '../components/Sidebar'
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
-import { fmtDatum, fmtEur, fmtZeit, nachrichtVorlage, SPRACHEN, type Vertrag } from '@/lib/vertrag'
+import { fmtDatum, fmtEur, fmtZeit, nachrichtVorlage, SPRACHEN, klauselnFuer, type Klausel, type Vertrag } from '@/lib/vertrag'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
@@ -33,6 +33,10 @@ export default function Vertraege() {
   const [form, setForm] = useState(emptyForm())
   const [firma, setFirma] = useState({ firma_name: 'Koluré', firma_adresse: '' })
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [textEdit, setTextEdit] = useState<{ id: string; klauseln: Klausel[]; custom: boolean } | null>(null)
+  const [textConfirm, setTextConfirm] = useState<string | null>(null)
+  const [textSaving, setTextSaving] = useState(false)
+  const [textError, setTextError] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [detail, setDetail] = useState<Vertrag | null>(null)
@@ -110,6 +114,29 @@ export default function Vertraege() {
       setDetail(d)
     } finally { setSaving(false) }
   }
+
+  const openTextEdit = (v: Vertrag) => {
+    setTextEdit({ id: v.id!, klauseln: JSON.parse(JSON.stringify(klauselnFuer(v))), custom: !!(v.klauseln_custom && v.klauseln_custom.length) })
+    setTextConfirm(null); setTextError(''); setDetail(null)
+  }
+  const saveText = async (reset = false) => {
+    if (!textEdit) return
+    setTextSaving(true); setTextError('')
+    try {
+      const res = await fetch('/api/vertraege/' + textEdit.id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + await getToken() },
+        body: JSON.stringify({ klauseln_custom: reset ? null : textEdit.klauseln }),
+      })
+      const d = await res.json()
+      if (!res.ok) { setTextError(d.error || 'Fehler beim Speichern'); return }
+      setTextEdit(null)
+      await load()
+      setDetail(d)
+    } finally { setTextSaving(false) }
+  }
+  const upKl = (fn: (k: Klausel[]) => Klausel[]) => setTextEdit(t => t ? { ...t, klauseln: fn(t.klauseln) } : t)
+  const twoClick = (key: string, action: () => void) => { if (textConfirm === key) { setTextConfirm(null); action() } else setTextConfirm(key) }
 
   const startEdit = (v: Vertrag) => {
     setForm({
@@ -311,9 +338,53 @@ export default function Vertraege() {
                   </div>
                 </div>
 
+                {editingId && list.find(x => x.id === editingId)?.klauseln_custom?.length ? <p className="text-amber-400 text-xs">Dieser Vertrag hat einen eigenen Text. Änderungen an diesen Feldern wirken sich nicht mehr darauf aus. Passe den Text dann unter „Vertragstext bearbeiten“ an oder setze ihn dort auf den Standardtext zurück.</p> : null}
                 {error && <p className="text-red-400 text-xs">{error}</p>}
                 <button onClick={create} disabled={saving}
                   className="w-full bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm py-2.5 disabled:opacity-50">{saving ? 'Wird gespeichert...' : editingId ? 'Änderungen speichern' : 'Vertrag anlegen'}</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {textEdit && (
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-surface-2 rounded-apple-lg w-full max-w-3xl border border-hairline max-h-[92vh] flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft">
+                <div>
+                  <h2 className="text-ink-1 font-semibold">Vertragstext bearbeiten</h2>
+                  <p className="text-ink-4 text-xs mt-0.5">Alles ist änderbar: Titel, Absätze, ganze Paragraphen. Der Creator sieht genau diesen Text. Nach der Unterschrift ist er gesperrt.</p>
+                </div>
+                <button onClick={() => setTextEdit(null)} className="text-ink-3 hover:text-ink-1 text-xl leading-none">×</button>
+              </div>
+              <div className="overflow-y-auto p-6 space-y-5">
+                {textEdit.klauseln.map((k, i) => (
+                  <div key={i} className="border border-hairline-soft rounded-apple-sm p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-ink-4 text-sm w-6">{String(i + 1).padStart(2, '0')}</span>
+                      <input value={k.titel} onChange={e => upKl(l => l.map((x, j) => j === i ? { ...x, titel: e.target.value } : x))} placeholder="Titel des Paragraphen" className={inputCls + ' font-medium'} />
+                      <button disabled={i === 0} onClick={() => upKl(l => { const c = [...l]; [c[i - 1], c[i]] = [c[i], c[i - 1]]; return c })} className="px-2 text-ink-3 hover:text-ink-1 disabled:opacity-30" title="Nach oben">↑</button>
+                      <button disabled={i === textEdit.klauseln.length - 1} onClick={() => upKl(l => { const c = [...l]; [c[i + 1], c[i]] = [c[i], c[i + 1]]; return c })} className="px-2 text-ink-3 hover:text-ink-1 disabled:opacity-30" title="Nach unten">↓</button>
+                      <button onClick={() => twoClick('k' + i, () => upKl(l => l.filter((_, j) => j !== i)))} className={`text-[11px] px-2 py-1 rounded whitespace-nowrap ${textConfirm === 'k' + i ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{textConfirm === 'k' + i ? 'Sicher?' : 'Paragraph löschen'}</button>
+                    </div>
+                    {k.absaetze.map((a, j) => (
+                      <div key={j} className="flex items-start gap-2">
+                        <textarea value={a} rows={Math.max(2, Math.ceil(a.length / 90))} onChange={e => upKl(l => l.map((x, jj) => jj === i ? { ...x, absaetze: x.absaetze.map((y, m) => m === j ? e.target.value : y) } : x))} className={inputCls + ' resize-y'} />
+                        <button onClick={() => twoClick('a' + i + '-' + j, () => upKl(l => l.map((x, jj) => jj === i ? { ...x, absaetze: x.absaetze.filter((_, m) => m !== j) } : x)))} className={`text-[11px] px-2 py-1 rounded whitespace-nowrap mt-1 ${textConfirm === 'a' + i + '-' + j ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{textConfirm === 'a' + i + '-' + j ? 'Sicher?' : 'Absatz löschen'}</button>
+                      </div>
+                    ))}
+                    <button onClick={() => upKl(l => l.map((x, jj) => jj === i ? { ...x, absaetze: [...x.absaetze, ''] } : x))} className="text-accent text-xs hover:underline">+ Absatz hinzufügen</button>
+                  </div>
+                ))}
+                <button onClick={() => upKl(l => [...l, { titel: '', absaetze: [''] }])} className="w-full border border-dashed border-hairline text-ink-3 hover:text-ink-1 text-sm rounded-apple-sm py-2">+ Neuen Paragraphen hinzufügen</button>
+              </div>
+              <div className="px-6 py-4 border-t border-hairline-soft space-y-2">
+                {textError && <p className="text-red-400 text-xs">{textError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => saveText(false)} disabled={textSaving} className="flex-1 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm py-2.5 disabled:opacity-50">{textSaving ? 'Speichert…' : 'Text speichern'}</button>
+                  {textEdit.custom && <button onClick={() => twoClick('reset', () => saveText(true))} className={`text-sm rounded-apple-sm px-4 ${textConfirm === 'reset' ? 'bg-red-600 text-white' : 'border border-hairline text-ink-2'}`}>{textConfirm === 'reset' ? 'Eigenen Text wirklich verwerfen?' : 'Auf Standardtext zurücksetzen'}</button>}
+                  <button onClick={() => setTextEdit(null)} className="border border-hairline text-ink-2 text-sm rounded-apple-sm px-4">Abbrechen</button>
+                </div>
               </div>
             </div>
           </div>
@@ -373,7 +444,10 @@ export default function Vertraege() {
                       )}
 
                       {v.status !== 'unterschrieben' && v.status !== 'storniert' && (
-                        <button onClick={() => startEdit(v)} className="w-full bg-surface-3 hover:bg-white/[0.08] border border-hairline text-ink-1 text-sm rounded-apple-sm py-2">Vertrag bearbeiten</button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => startEdit(v)} className="bg-surface-3 hover:bg-white/[0.08] border border-hairline text-ink-1 text-sm rounded-apple-sm py-2">Angaben bearbeiten</button>
+                          <button onClick={() => openTextEdit(v)} className="bg-surface-3 hover:bg-white/[0.08] border border-hairline text-ink-1 text-sm rounded-apple-sm py-2">Vertragstext bearbeiten{v.klauseln_custom?.length ? ' ✎' : ''}</button>
+                        </div>
                       )}
                       <div className="flex gap-2 pt-1">
                         {v.status === 'storniert' ? (
