@@ -129,8 +129,7 @@ export function klauseln(v: Vertrag): Klausel[] {
   list.push({
     titel: 'Nichterfüllung',
     absaetze: [
-      `Veröffentlicht der Creator die Inhalte nicht fristgerecht, setzt ${firma} eine Nachfrist von 7 Tagen. Erfolgt auch dann keine Veröffentlichung, entfällt ${mitFee ? 'der Anspruch auf die Vergütung' : 'jeder weitere Anspruch'}${mitProdukt ? ` und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück` : ''}.`,
-      `Kommt ${firma} den eigenen Pflichten nicht fristgerecht nach, ist der Creator nicht zur Veröffentlichung verpflichtet, bis ${firma} nachgeholt hat.`,
+      `Veröffentlicht der Creator die Inhalte nicht fristgerecht, entfällt ${mitFee ? 'der Anspruch auf die Vergütung' : 'jeder weitere Anspruch'}${mitProdukt ? ` und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück` : ''}.`,
     ],
   })
 
