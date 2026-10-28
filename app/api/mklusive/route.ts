@@ -38,7 +38,9 @@ export async function GET(req: NextRequest) {
     // Gesamt = beide zusammen, Bestellungen die ueber Link UND Code kamen nur einmal.
     const codeOrders = (orders.data || []).filter(o => l?.rabatt_code && o.code === l.rabatt_code && !o.cancelled)
     const lnkOrders = (linkOrders.data || []).filter(o => l?.utm_campaign && o.utm_campaign === l.utm_campaign)
-    const code = { bestellungen: Number(st?.orders_count) || codeOrders.length, umsatz: Number(st?.revenue) || codeOrders.reduce((s, o) => s + (Number(o.amount) || 0), 0) }
+    // Code-Verkaeufe aus der gesammelten Bestell-Tabelle (waechst mit jedem Sync, kein 60-Tage-Limit),
+    // nicht aus der Shopify-Statistik, die nur die letzten 60 Tage abdeckt.
+    const code = { bestellungen: codeOrders.length, umsatz: codeOrders.reduce((s, o) => s + (Number(o.amount) || 0), 0), einloesungen_shopify: st?.usage_count != null ? Number(st.usage_count) : null }
     const viaLink = { bestellungen: Number(cp?.orders_last_click) || lnkOrders.length, umsatz: Number(cp?.sales_last_click) || lnkOrders.reduce((s, o) => s + (Number(o.revenue) || 0), 0) }
     const codeIds = new Set(codeOrders.map(o => String(o.order_id || '')).filter(Boolean))
     const nurLink = lnkOrders.filter(o => !codeIds.has(String(o.order_id)))

@@ -23,11 +23,15 @@ async function lookup(code: string): Promise<Link | null> {
   const hit = cache.get(code)
   if (hit && Date.now() - hit.at < TTL) return hit.link
   let link: Link | null = null
-  try {
-    const r = await fetch(`${SB_URL}/rest/v1/outreach_links?select=id,ziel_url,utm_source,utm_medium,utm_campaign,rabatt_code&short_code=eq.${encodeURIComponent(code)}&limit=1`, { headers: H, cache: 'no-store' })
-    if (r.ok) { const rows = (await r.json()) as Link[]; link = rows[0] || null }
-  } catch {}
-  cache.set(code, { at: Date.now(), link })
+  let ok = false
+  for (let i = 0; i < 2 && !ok; i++) {
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/outreach_links?select=id,ziel_url,utm_source,utm_medium,utm_campaign,rabatt_code&short_code=eq.${encodeURIComponent(code)}&limit=1`, { headers: H, cache: 'no-store', signal: AbortSignal.timeout(2500) })
+      if (r.ok) { const rows = (await r.json()) as Link[]; link = rows[0] || null; ok = true }
+    } catch {}
+  }
+  // Nur erfolgreiche Antworten cachen; bei DB-Problemen beim naechsten Klick erneut versuchen
+  if (ok) cache.set(code, { at: Date.now(), link })
   return link
 }
 

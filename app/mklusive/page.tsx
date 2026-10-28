@@ -282,7 +282,7 @@ export default function Mklusive() {
                   <h3 className="text-ink-1 text-sm font-medium mb-2">Verkäufe nach Quelle</h3>
                   <div className="grid grid-cols-3 gap-3">
                     {[
-                      ['Über Rabattcode', sel.rabatt_code ? `Code ${sel.rabatt_code}` : 'kein Code hinterlegt', sel.code?.bestellungen || 0, sel.code?.umsatz || 0, 'border-hairline-soft'],
+                      ['Über Rabattcode', sel.rabatt_code ? `Code ${sel.rabatt_code}${sel.code?.einloesungen_shopify != null ? ` · ${int(sel.code.einloesungen_shopify)} Einlösungen laut Shopify gesamt` : ''}` : 'kein Code hinterlegt', sel.code?.bestellungen || 0, sel.code?.umsatz || 0, 'border-hairline-soft'],
                       ['Über Tracking-Link', 'Last Click, 90 Tage', sel.via_link?.bestellungen || 0, sel.via_link?.umsatz || 0, 'border-hairline-soft'],
                       ['Gesamt', sel.gesamt?.beide ? `${sel.gesamt.beide}× über beides, einmal gezählt` : 'ohne Doppelzählung', sel.bestellungen, sel.umsatz, 'border-emerald-500/40'],
                     ].map(([t, sub, b, u, border]: any) => (
