@@ -27,24 +27,19 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      const { error, data } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { name },
-          emailRedirectTo: window.location.origin + '/dashboard'
-        }
-      })
+      const res = await fetch('/api/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, name }) })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setError(d.error || 'Registrierung fehlgeschlagen')
+        setLoading(false)
+        return
+      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setError(error.message === 'User already registered' ? 'Diese E-Mail ist bereits registriert' : error.message)
+        setError('Account angelegt, Anmeldung fehlgeschlagen: ' + error.message)
         setLoading(false)
       } else {
-        if (data.session) {
-          window.location.href = '/dashboard'
-        } else {
-          setSuccess('Bestätigungs-E-Mail gesendet! Bitte E-Mail prüfen.')
-          setLoading(false)
-        }
+        window.location.href = '/dashboard'
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
