@@ -689,7 +689,7 @@ function OutreachInner() {
               return (
               <button key={c.id} onClick={() => { setSelected(c); if (c.unread) markRead(c.id) }}
                 className={`w-full flex items-center gap-3 px-4 py-3 border-b border-hairline-soft text-left hover:bg-white/[0.03] transition-colors ${selected?.id === c.id ? 'bg-white/[0.05]' : ''} ${shipUrgent ? 'bg-amber-500/[0.06] border-l-2 border-l-amber-500' : ''}`}>
-                <div className="w-10 h-10 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#5ee3a3] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden flex-shrink-0">
                   {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -733,7 +733,7 @@ function OutreachInner() {
                     ) : (msgSet.has(c.id) && lrMap[c.id] === 'raus' ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-300 bg-amber-500/15 rounded-full px-2 py-0.5">&#8987; Antwort ausstehend</span>
                     ) : (!msgSet.has(c.id) && c.sammy_approved !== 'Nicht schreiben' && c.sammy_approved !== 'Bereits zusammengearbeitet' ? (
-                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#0A84FF] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-white bg-gradient-to-r from-[#8fc7ff] to-[#0066DD] rounded-full px-2.5 py-1 shadow-[0_2px_10px_rgba(10,132,255,0.45)]">&#9993;&#65039; Bitte anschreiben</span>
                     ) : null))}
                   </div>
                 </div>
@@ -751,7 +751,7 @@ function OutreachInner() {
           ) : (
             <>
               <div className="p-4 border-b border-hairline-soft flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-[#30D158] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden">
+                <div className="w-9 h-9 rounded-full bg-[#5ee3a3] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden">
                   {(selected.tt_image || selected.ig_image) ? <img src={avatarSrc(selected.tt_image || selected.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(selected.tt_image ? selected.ig_image : null)} /> : initials(selected.name)}
                 </div>
                 <div>
@@ -876,7 +876,7 @@ function OutreachInner() {
                   ) : null}
                   {selected.ig ? (
                     <a href={"https://ig.me/m/" + (selected.ig||'').replace('@','')} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 text-center text-[11px] bg-[#0A84FF]/15 hover:bg-[#0A84FF]/25 border border-[#0A84FF]/40 rounded-apple-sm px-2 py-1.5 text-[#0A84FF]">DM &#8599;</a>
+                      className="flex-1 text-center text-[11px] bg-[#8fc7ff]/15 hover:bg-[#8fc7ff]/25 border border-[#8fc7ff]/40 rounded-apple-sm px-2 py-1.5 text-[#8fc7ff]">DM &#8599;</a>
                   ) : null}
                   {selected.tt ? (
                     <a href={"https://tiktok.com/@" + (selected.tt||'').replace('@','')} target="_blank" rel="noopener noreferrer"

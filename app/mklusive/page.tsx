@@ -7,7 +7,7 @@ const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.en
 const eur = (n: number) => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const int = (n: number) => (n || 0).toLocaleString('de-DE')
 const dat = (d?: string | null) => d ? new Date(d.length === 10 ? d + 'T12:00:00' : d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
-const COLORS = ['#BF5AF2', '#0A84FF', '#30D158', '#FF9F0A', '#FF375F', '#64D2FF', '#5E5CE6', '#00C7BE']
+const COLORS = ['#c9b8ff', '#8fc7ff', '#5ee3a3', '#f2b35a', '#ff7a8a', '#8fd6e8', '#9d9bf0', '#4fc3b8']
 const colorFor = (id: string) => COLORS[(id || '').split('').reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length]
 const initials = (n: string) => (n || '?').split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase()
 const roasCls = (r: number | null) => r == null ? 'text-ink-4' : r >= 3 ? 'text-emerald-400' : r >= 1 ? 'text-amber-400' : 'text-red-400'
@@ -121,7 +121,7 @@ export default function Mklusive() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Mklusive</h1>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#BF5AF2]/15 text-[#BF5AF2] font-medium">Agentur-Portal</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#c9b8ff]/15 text-[#c9b8ff] font-medium">Agentur-Portal</span>
             </div>
             <p className="text-ink-3 text-xs mt-0.5">Creator, Rabattcodes, Tracking-Links, Posts und Performance für Koluré</p>
           </div>
@@ -145,7 +145,7 @@ export default function Mklusive() {
                 {([
                   ['Creator', int(creators.length), 'text-ink-1'],
                   ['Posts', int(tot.posts), 'text-ink-1'],
-                  ['Klicks', int(tot.klicks), 'text-[#64D2FF]'],
+                  ['Klicks', int(tot.klicks), 'text-[#8fd6e8]'],
                   ['Bestellungen', int(tot.bestellungen), 'text-ink-1', `${int(tot.codeB)} Code · ${int(tot.linkB)} Link`],
                   ['Umsatz', eur(tot.umsatz), 'text-emerald-400', `${eur(tot.codeU)} Code · ${eur(tot.linkU)} Link`],
                   ['Kosten', eur(tot.kosten), 'text-ink-1'],
@@ -171,7 +171,7 @@ export default function Mklusive() {
                   <tbody>
                     {shown.length === 0 && (
                       <tr><td colSpan={9} className="text-center py-14">
-                        <div className="w-12 h-12 rounded-full bg-[#BF5AF2]/15 text-[#BF5AF2] flex items-center justify-center mx-auto mb-3 text-xl">+</div>
+                        <div className="w-12 h-12 rounded-full bg-[#c9b8ff]/15 text-[#c9b8ff] flex items-center justify-center mx-auto mb-3 text-xl">+</div>
                         <div className="text-ink-2 text-sm font-medium">{search ? 'Nichts gefunden' : 'Noch keine Creator'}</div>
                         <div className="text-ink-4 text-xs mt-1">{search ? 'Anderen Suchbegriff probieren.' : 'Mit „Creator hinzufügen“ den ersten anlegen. Tracking-Link gibt es automatisch dazu.'}</div>
                       </td></tr>

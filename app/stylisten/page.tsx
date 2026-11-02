@@ -277,7 +277,7 @@ export default function StylistenPage() {
             {!loading && filtered.map(c => (
               <button key={c.id} onClick={() => { setSelected(c); setConfirmDelete(false); setEditingIg(false) }}
                 className="w-full flex items-center gap-4 px-6 py-4 border-b border-hairline-soft last:border-b-0 text-left hover:bg-white/[0.03] transition-colors">
-                <div className="w-10 h-10 rounded-full bg-[#00C7BE]/20 flex items-center justify-center text-[#00C7BE] text-sm font-semibold flex-shrink-0 overflow-hidden">
+                <div className="w-10 h-10 rounded-full bg-[#4fc3b8]/20 flex items-center justify-center text-[#4fc3b8] text-sm font-semibold flex-shrink-0 overflow-hidden">
                   {(c.tt_image || c.ig_image) ? <img src={avatarSrc(c.tt_image || c.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} /> : initials(c.name)}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -299,7 +299,7 @@ export default function StylistenPage() {
             <div className="w-full max-w-md bg-surface-0 border-l border-hairline h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-5 border-b border-hairline-soft sticky top-0 bg-surface-0 z-10">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-[#00C7BE]/20 flex items-center justify-center text-[#00C7BE] font-semibold text-lg overflow-hidden">
+                  <div className="w-12 h-12 rounded-full bg-[#4fc3b8]/20 flex items-center justify-center text-[#4fc3b8] font-semibold text-lg overflow-hidden">
                     {(selected.tt_image || selected.ig_image) ? <img src={avatarSrc(selected.tt_image || selected.ig_image)} alt="" className="w-full h-full object-cover" onError={avatarOnError(selected.tt_image ? selected.ig_image : null)} /> : initials(selected.name)}
                   </div>
                   <div>

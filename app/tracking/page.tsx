@@ -252,10 +252,10 @@ export default function Tracking() {
         <div className="p-8 space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Gesamt-Klicks', bg: '#30D158', value: `${stats.totalClicks}`, sub: `${stats.totalLinks} aktive Links`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9a3 3 0 1 1 6 0c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg> },
-              { label: 'Ø Klicks / Link', bg: '#0A84FF', value: `${stats.avgClicks}`, sub: 'pro erstelltem Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-              { label: 'Top Link', bg: '#FF9F0A', value: stats.topLink ? `${stats.topLink.klicks || 0}` : '—', sub: stats.topLink ? (stats.topLink.creators?.name || 'Unbekannt') : 'Noch keine Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6l-6.3 4.4L8 13.8 2 9.4h7.6z"/></svg> },
-              { label: 'Mobile-Anteil', bg: '#BF5AF2', value: `${deviceSplit.mobilePct}%`, sub: `${deviceSplit.total} erfasste Klicks`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
+              { label: 'Gesamt-Klicks', bg: '#5ee3a3', value: `${stats.totalClicks}`, sub: `${stats.totalLinks} aktive Links`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 9a3 3 0 1 1 6 0c0 2-3 3-3 3"/><path d="M12 17h.01"/><circle cx="12" cy="12" r="10"/></svg> },
+              { label: 'Ø Klicks / Link', bg: '#8fc7ff', value: `${stats.avgClicks}`, sub: 'pro erstelltem Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+              { label: 'Top Link', bg: '#f2b35a', value: stats.topLink ? `${stats.topLink.klicks || 0}` : '—', sub: stats.topLink ? (stats.topLink.creators?.name || 'Unbekannt') : 'Noch keine Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6l-6.3 4.4L8 13.8 2 9.4h7.6z"/></svg> },
+              { label: 'Mobile-Anteil', bg: '#c9b8ff', value: `${deviceSplit.mobilePct}%`, sub: `${deviceSplit.total} erfasste Klicks`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> },
             ].map(m => (
               <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                 <div className="flex items-start justify-between mb-4">
@@ -283,12 +283,12 @@ export default function Tracking() {
             {syncError && <p className="text-red-400 text-[11px] mb-2">{syncError}</p>}
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
               {[
-                { label: 'Shop-Sessions', bg: '#0A84FF', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
-                { label: 'Warenkorb', bg: '#FF9F0A', value: `${shopStats.cart}`, sub: 'Shopify, via UTM-Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
-                { label: 'Checkout', bg: '#FF453A', value: `${shopStats.checkoutDone}`, sub: `${shopStats.checkoutReached} erreicht · Shopify`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> },
-                { label: 'Bestellungen', bg: '#30D158', value: `${shopStats.orders}`, sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
-                { label: 'Umsatz', bg: '#BF5AF2', value: fmtEUR(shopStats.sales), sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-                { label: 'Code eingelöst', bg: '#00C7BE', value: `${shopStats.codeRedemptions}x`, sub: 'Shopify, je Rabattcode', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.59 12.58V2h10.58l8.42 8.42a2 2 0 0 1 0 2.99Z"/><circle cx="7.5" cy="6.5" r="1.5"/></svg> },
+                { label: 'Shop-Sessions', bg: '#8fc7ff', value: `${shopStats.sessions}`, sub: 'über getaggte Links', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                { label: 'Warenkorb', bg: '#f2b35a', value: `${shopStats.cart}`, sub: 'Shopify, via UTM-Link', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                { label: 'Checkout', bg: '#ff7a8a', value: `${shopStats.checkoutDone}`, sub: `${shopStats.checkoutReached} erreicht · Shopify`, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg> },
+                { label: 'Bestellungen', bg: '#5ee3a3', value: `${shopStats.orders}`, sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg> },
+                { label: 'Umsatz', bg: '#c9b8ff', value: fmtEUR(shopStats.sales), sub: 'Triple-Whale-attribuiert', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+                { label: 'Code eingelöst', bg: '#4fc3b8', value: `${shopStats.codeRedemptions}x`, sub: 'Shopify, je Rabattcode', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2.59 12.58V2h10.58l8.42 8.42a2 2 0 0 1 0 2.99Z"/><circle cx="7.5" cy="6.5" r="1.5"/></svg> },
               ].map(m => (
                 <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                   <div className="flex items-start justify-between mb-4">
@@ -309,8 +309,8 @@ export default function Tracking() {
                   <svg viewBox="0 0 600 160" preserveAspectRatio="none" className="w-full h-full">
                     <defs>
                       <linearGradient id="gradientKlicks" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0A84FF" stopOpacity="0.3"/>
-                        <stop offset="100%" stopColor="#0A84FF" stopOpacity="0"/>
+                        <stop offset="0%" stopColor="#8fc7ff" stopOpacity="0.3"/>
+                        <stop offset="100%" stopColor="#8fc7ff" stopOpacity="0"/>
                       </linearGradient>
                     </defs>
                     {klickVerlauf.map((d, i) => {
@@ -319,7 +319,7 @@ export default function Tracking() {
                       const y = 160 - (d.value / maxKlick) * 140
                       const nx = ((i + 1) / (klickVerlauf.length - 1)) * 600
                       const ny = 160 - (klickVerlauf[i + 1].value / maxKlick) * 140
-                      return <line key={i} x1={x} y1={y} x2={nx} y2={ny} stroke="#0A84FF" strokeWidth="2"/>
+                      return <line key={i} x1={x} y1={y} x2={nx} y2={ny} stroke="#8fc7ff" strokeWidth="2"/>
                     })}
                     <path d={`M 0 160 ${klickVerlauf.map((d, i) => {
                       const x = (i / (klickVerlauf.length - 1)) * 600

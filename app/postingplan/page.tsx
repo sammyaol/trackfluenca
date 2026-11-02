@@ -481,7 +481,7 @@ export default function Postingplan() {
                   <div className="space-y-2">
                     {versandListe.map(({ p, v }) => (
                       <div key={p.id} className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v!.ueberfaellig ? '#FF453A' : v!.dringend ? '#FFB340' : '#636366' }} />
+                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: v!.ueberfaellig ? '#ff7a8a' : v!.dringend ? '#f2b35a' : '#6b6f7c' }} />
                         <div className="min-w-0 flex-1">
                           <div className="text-ink-1 text-xs font-medium truncate">{p.creator_name}</div>
                           <div className={`text-[10px] ${v!.ueberfaellig ? 'text-red-400' : 'text-ink-4'}`}>raus bis {fmtKurz(v!.deadline)} · Post {fmtKurz(p.geplant_am)}</div>

@@ -84,7 +84,7 @@ export default function Zahlungen() {
           title={done ? 'Als offen markieren' : 'Als bezahlt markieren'}>
           {busyId === c.id ? <span className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin"/> : '✓'}
         </button>
-        <div className="w-8 h-8 rounded-full bg-[#30D158]/20 flex items-center justify-center text-[#30D158] text-xs font-bold overflow-hidden flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[#5ee3a3]/20 flex items-center justify-center text-[#5ee3a3] text-xs font-bold overflow-hidden flex-shrink-0">
           {c.ig_image || c.tt_image ? <img src={c.tt_image || c.ig_image} alt="" className="w-full h-full object-cover" /> : initials(c.name)}
         </div>
         <div className="min-w-0 flex-1">

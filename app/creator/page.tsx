@@ -838,7 +838,7 @@ export default function CreatorPage() {
         <div className="p-6">
           {tableLoading && (
             <div className="flex items-center justify-center py-20 gap-3">
-              <div className="w-5 h-5 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
+              <div className="w-5 h-5 border-2 border-white/20 border-t-[#8fc7ff] rounded-full animate-spin"/>
               <span className="text-ink-3 text-sm">Creator werden geladen...</span>
             </div>
           )}
@@ -935,7 +935,7 @@ export default function CreatorPage() {
                               : expandedCreator === (c as any)._id ? '▲' : '▼'}
                           </button>
                           <div className="relative flex-shrink-0 w-11 h-11">
-                            <div className="w-11 h-11 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#FF375F] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
+                            <div className="w-11 h-11 rounded-full absolute left-0 top-0 border-2 border-hairline bg-[#ff7a8a] flex items-center justify-center text-ink-1 text-sm font-bold overflow-hidden z-10">
                               <span>{c.name.split(' ').map((n:string)=>n[0]).join('').slice(0,2).toUpperCase()}</span>
                               {(c.ttImage || c.igImage) && <img src={avatarSrc(c.ttImage || c.igImage)} alt="" className="absolute inset-0 w-full h-full object-cover" onError={(e:any) => { const img = e.currentTarget as HTMLImageElement; const fb = c.ttImage ? c.igImage : null; if (fb && img.dataset.fb !== '1') { img.dataset.fb = '1'; img.src = avatarSrc(fb) as string } else { img.remove() } }} />}
                             </div>
@@ -1018,7 +1018,7 @@ export default function CreatorPage() {
                                     }} className="text-ink-3 hover:text-ink-1 text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors">Bearbeiten</button>
                                     {p.post_link && (
                                       <button onClick={(e:any) => { e.stopPropagation(); refreshPosting(p) }} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
+                                        {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#8fc7ff] rounded-full animate-spin"/> : '↻'}
                                       </button>
                                     )}
                                     <button onClick={async e => {
@@ -1060,7 +1060,7 @@ export default function CreatorPage() {
                   {(selected.ttImage || selected.igImage) ? (
                     <img src={avatarSrc(selected.ttImage || selected.igImage)} alt={selected.name} className="w-14 h-14 rounded-full object-cover border-2 border-white/10" onError={avatarOnError(selected.ttImage ? selected.igImage : null)} />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-[#FF375F]/20 flex items-center justify-center text-[#FF375F] font-semibold text-xl">
+                    <div className="w-14 h-14 rounded-full bg-[#ff7a8a]/20 flex items-center justify-center text-[#ff7a8a] font-semibold text-xl">
                       {selected.name.split(' ').map(n => n[0]).join('')}
                     </div>
                   )}
@@ -1248,7 +1248,7 @@ export default function CreatorPage() {
 
                 {detailTab === 'overview' && snapshotLoading && (
                   <div className="flex items-center gap-2 py-4 justify-center">
-                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#0A84FF] rounded-full animate-spin"/>
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-[#8fc7ff] rounded-full animate-spin"/>
                     <span className="text-ink-3 text-xs">Verlauf wird geladen...</span>
                   </div>
                 )}
@@ -1332,7 +1332,7 @@ export default function CreatorPage() {
                       <div className="flex items-center gap-1">
                         {[7,15,30].map((d:number) => (
                           <button key={d} onClick={() => setViewsDays(d)}
-                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${viewsDays===d ? 'bg-[#F59E0B] text-black' : 'text-ink-3 hover:text-ink-2'}`}>
+                            className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${viewsDays===d ? 'bg-[#f2b35a] text-black' : 'text-ink-3 hover:text-ink-2'}`}>
                             {d}T
                           </button>
                         ))}
@@ -1364,13 +1364,13 @@ export default function CreatorPage() {
                           }}
                           onMouseLeave={()=>setViewsHover(null)}>
                           <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                            <polyline points={pts} fill="none" stroke="#F59E0B" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
+                            <polyline points={pts} fill="none" stroke="#f2b35a" strokeWidth="2" vectorEffect="non-scaling-stroke"/>
                           </svg>
                           {viewsHover && (
                             <div className="absolute top-0 pointer-events-none z-10" style={{left:`${Math.min(viewsHover.pct,70)}%`}}>
                               <div className="bg-surface-3 border border-white/10 rounded-apple-sm px-2 py-1.5 shadow-xl">
                                 <div className="text-ink-2 text-[10px] mb-1">{viewsHover.date}</div>
-                                <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#F59E0B] rounded-full inline-block"/>⌀ {viewsHover.views.toLocaleString('de-DE')}</div>
+                                <div className="flex items-center gap-1 text-[10px]"><span className="w-1.5 h-1.5 bg-[#f2b35a] rounded-full inline-block"/>⌀ {viewsHover.views.toLocaleString('de-DE')}</div>
                               </div>
                             </div>
                           )}
@@ -1551,7 +1551,7 @@ export default function CreatorPage() {
                             {p.ges_roas > 0 && <span className={`text-xs font-bold ${p.ges_roas>=3?'text-emerald-400':p.ges_roas>=1?'text-amber-400':'text-red-400'}`}>{p.ges_roas}x</span>}
                             {p.post_link && (
                               <button onClick={() => refreshPosting(p)} disabled={refreshingPosting===p.id} title="Zahlen aktualisieren" className="text-ink-3 hover:text-accent text-xs px-2 py-1 rounded hover:bg-white/[0.06] transition-colors flex items-center gap-1">
-                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#0A84FF] rounded-full animate-spin"/> : '↻'}
+                                {refreshingPosting===p.id ? <span className="w-3 h-3 border-2 border-accent/30 border-t-[#8fc7ff] rounded-full animate-spin"/> : '↻'}
                               </button>
                             )}
                             <button onClick={async () => {

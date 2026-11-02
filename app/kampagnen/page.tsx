@@ -228,7 +228,7 @@ export default function Kampagnen() {
                         {(c.tt_image || c.ig_image) ? (
                           <img src={avatarSrc(c.tt_image || c.ig_image)} className="w-6 h-6 rounded-full object-cover" onError={avatarOnError(c.tt_image ? c.ig_image : null)} />
                         ) : (
-                          <div className="w-6 h-6 rounded-full bg-[#FF9F0A]/20 flex items-center justify-center text-xs text-[#FF9F0A]">{c.name?.[0]?.toUpperCase()}</div>
+                          <div className="w-6 h-6 rounded-full bg-[#f2b35a]/20 flex items-center justify-center text-xs text-[#f2b35a]">{c.name?.[0]?.toUpperCase()}</div>
                         )}
                         <span className="text-ink-1 text-xs flex-1">{c.name}</span>
                         <span className="text-ink-4 text-[10px]">Outreach &rarr;</span>

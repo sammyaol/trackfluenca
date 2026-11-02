@@ -192,7 +192,7 @@ export default function Dashboard() {
     return status.map(s => ({
       label: s,
       count: bestellungen.filter(b => b.status === s).length,
-      color: s === 'Angekommen' ? '#10b981' : s === 'Versendet' ? '#f59e0b' : '#6b7280'
+      color: s === 'Angekommen' ? '#5ee3a3' : s === 'Versendet' ? '#f2b35a' : '#6b7280'
     }))
   }, [bestellungen])
 
@@ -257,10 +257,10 @@ export default function Dashboard() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Gesamt Umsatz', bg: '#30D158', value: `${stats.gesU.toLocaleString('de-DE')} €`, sub: `${stats.totalOrgBest} Bestellungen`, color: 'text-emerald-400', change: monthCompare.umsatzChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
-              { label: 'Gesamt ROAS', bg: '#0A84FF', value: stats.gesROAS > 0 ? `${stats.gesROAS}x` : '—', sub: `Org. ${stats.orgROAS > 0 ? stats.orgROAS + 'x' : '—'}`, color: roasColor(stats.gesROAS), icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
-              { label: 'Creator', bg: '#FF375F', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-ink-1', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
-              { label: 'Aktive Deals', bg: '#FF9F0A', value: `${dealsCount}`, sub: `${inVerhandlung} in Verhandlung`, color: 'text-amber-400', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> },
+              { label: 'Gesamt Umsatz', bg: '#5ee3a3', value: `${stats.gesU.toLocaleString('de-DE')} €`, sub: `${stats.totalOrgBest} Bestellungen`, color: 'text-emerald-400', change: monthCompare.umsatzChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> },
+              { label: 'Gesamt ROAS', bg: '#8fc7ff', value: stats.gesROAS > 0 ? `${stats.gesROAS}x` : '—', sub: `Org. ${stats.orgROAS > 0 ? stats.orgROAS + 'x' : '—'}`, color: roasColor(stats.gesROAS), icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+              { label: 'Creator', bg: '#ff7a8a', value: `${creators.length}`, sub: monthCompare.thisCreators > 0 ? `+${monthCompare.thisCreators} diesen Monat` : 'Keine neuen', color: 'text-ink-1', change: monthCompare.creatorChange, icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
+              { label: 'Aktive Deals', bg: '#f2b35a', value: `${dealsCount}`, sub: `${inVerhandlung} in Verhandlung`, color: 'text-amber-400', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/></svg> },
             ].map(m => (
               <div key={m.label} className="bg-surface-2/70 backdrop-blur-xl rounded-apple-lg p-5 border border-hairline hover:border-white/[0.12] transition-colors duration-200 ease-apple shadow-apple-sm">
                 <div className="flex items-start justify-between mb-4">
@@ -286,8 +286,8 @@ export default function Dashboard() {
                 <svg viewBox="0 0 600 160" preserveAspectRatio="none" className="w-full h-full">
                   <defs>
                     <linearGradient id="gradient1" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#10b981" stopOpacity="0.3"/>
-                      <stop offset="100%" stopColor="#10b981" stopOpacity="0"/>
+                      <stop offset="0%" stopColor="#5ee3a3" stopOpacity="0.3"/>
+                      <stop offset="100%" stopColor="#5ee3a3" stopOpacity="0"/>
                     </linearGradient>
                   </defs>
                   {umsatzVerlauf.map((d, i) => {
@@ -295,7 +295,7 @@ export default function Dashboard() {
                     const y = 160 - (d.value / maxUmsatz) * 140
                     const nx = i < umsatzVerlauf.length - 1 ? ((i + 1) / (umsatzVerlauf.length - 1)) * 600 : x
                     const ny = i < umsatzVerlauf.length - 1 ? 160 - (umsatzVerlauf[i + 1].value / maxUmsatz) * 140 : y
-                    return <line key={i} x1={x} y1={y} x2={nx} y2={ny} stroke="#10b981" strokeWidth="2"/>
+                    return <line key={i} x1={x} y1={y} x2={nx} y2={ny} stroke="#5ee3a3" strokeWidth="2"/>
                   })}
                   <path d={`M 0 160 ${umsatzVerlauf.map((d, i) => {
                     const x = (i / (umsatzVerlauf.length - 1)) * 600
@@ -357,8 +357,8 @@ export default function Dashboard() {
                           const ttY2 = 130 - ((followerVerlauf.days[i + 1].tt - followerVerlauf.ttMin) / ttRange) * 110
                           return (
                             <g key={i}>
-                              <line x1={x1} y1={igY1} x2={x2} y2={igY2} stroke="#ec4899" strokeWidth="2"/>
-                              <line x1={x1} y1={ttY1} x2={x2} y2={ttY2} stroke="#22d3ee" strokeWidth="2" strokeDasharray="3,3"/>
+                              <line x1={x1} y1={igY1} x2={x2} y2={igY2} stroke="#ff9fc0" strokeWidth="2"/>
+                              <line x1={x1} y1={ttY1} x2={x2} y2={ttY2} stroke="#8fd6e8" strokeWidth="2" strokeDasharray="3,3"/>
                             </g>
                           )
                         })
