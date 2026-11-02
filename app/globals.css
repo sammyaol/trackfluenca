@@ -43,6 +43,36 @@
 }
 
 @theme inline {
+  /* Tailwind-Farbnamen auf die gedaempfte Apple-Palette legen: alle text-/bg-/border-Utilities folgen automatisch */
+  --color-red-300: #ffa3ae;
+  --color-red-400: #ff7a8a;
+  --color-red-500: #ff6b7d;
+  --color-red-600: #e2556a;
+  --color-red-800: #6b2a35;
+  --color-red-900: #4a1f27;
+  --color-red-950: #33171d;
+  --color-emerald-400: #5ee3a3;
+  --color-emerald-500: #4fd396;
+  --color-emerald-600: #3fbf85;
+  --color-emerald-800: #1f5a40;
+  --color-emerald-950: #15382b;
+  --color-green-400: #5ee3a3;
+  --color-amber-300: #f7c784;
+  --color-amber-400: #f2b35a;
+  --color-amber-500: #e8a645;
+  --color-amber-800: #6a4a1f;
+  --color-amber-950: #3d2c14;
+  --color-blue-400: #8fc7ff;
+  --color-blue-500: #6fb4ff;
+  --color-blue-700: #3a7fc4;
+  --color-blue-800: #244766;
+  --color-blue-950: #182c3f;
+  --color-sky-400: #8fc7ff;
+  --color-purple-400: #c9b8ff;
+  --color-purple-500: #b9a4ff;
+  --color-purple-800: #4a3f7a;
+  --color-pink-400: #ff9fc0;
+  --color-pink-500: #ff86ad;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
@@ -145,4 +175,74 @@ body {
 
 a, button {
   transition-timing-function: var(--ease-apple);
+}
+
+
+/* ---------- Apple-Feel fuer die ganze App (nur Optik, keine Funktion) ---------- */
+
+/* Sidebar als Glas-Material, Inhalt faehrt darunter durch */
+.sidebar-glass {
+  background: rgba(12, 14, 19, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: inset -0.5px 0 0 rgba(255, 255, 255, 0.07);
+}
+/* Navigationspunkte: Icon hebt sich beim Hover wie ein App-Icon, Zeile bekommt weiche Flaeche */
+.nav-item { transition: background-color 180ms var(--ease-apple), color 180ms var(--ease-apple), transform 120ms var(--ease-apple); }
+.nav-item:hover { background: rgba(255, 255, 255, 0.045); }
+.nav-item.is-active { background: rgba(255, 255, 255, 0.075); box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06); }
+.nav-item:active { transform: scale(0.98); }
+.nav-icon { box-shadow: 0 1px 2px rgba(0,0,0,.35), inset 0 0.5px 0 rgba(255,255,255,.25); transition: transform 220ms cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 220ms var(--ease-apple); }
+.nav-item:hover .nav-icon { transform: scale(1.12) translateY(-0.5px); box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 0.5px 0 rgba(255,255,255,.3); }
+.nav-item.is-active .nav-icon { transform: scale(1.04); }
+.nav-dot { box-shadow: 0 0 0 3px var(--color-accent-soft); }
+
+/* Buttons: sofortiges Feedback beim Druecken, nicht erst beim Loslassen */
+button, [role="button"], a.press { transition: transform 120ms cubic-bezier(0.2, 0.9, 0.25, 1.1), background-color 160ms var(--ease-apple), color 160ms var(--ease-apple), border-color 160ms var(--ease-apple), opacity 160ms var(--ease-apple); }
+button:active:not(:disabled) { transform: scale(0.96); }
+button:disabled { cursor: not-allowed; }
+
+/* Eingabefelder: ruhiger Rahmen, goldener Fokusring */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea {
+  transition: border-color 160ms var(--ease-apple), box-shadow 160ms var(--ease-apple), background-color 160ms var(--ease-apple);
+}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: rgba(230, 194, 122, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(230, 194, 122, 0.18);
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-accent); }
+
+/* Dialoge: entstehen leicht vergroessert aus der Mitte, Hintergrund blendet weich ab */
+@keyframes apple-pop { from { opacity: 0; transform: scale(0.96) translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes apple-fade { from { opacity: 0; } to { opacity: 1; } }
+.fixed.inset-0 { animation: apple-fade 160ms var(--ease-apple) both; }
+.fixed.inset-0 > div { animation: apple-pop 260ms cubic-bezier(0.2, 0.9, 0.25, 1.05) both; }
+
+/* Tabellen und Listen: Zeile hebt sich beim Hover sanft */
+tbody tr { transition: background-color 140ms var(--ease-apple); }
+tbody tr:hover { background: rgba(255, 255, 255, 0.035); }
+
+/* Karten: feiner Rand, beim Hover minimal heller (nur interaktive Karten) */
+.bg-surface-2 { transition: border-color 160ms var(--ease-apple), background-color 160ms var(--ease-apple); }
+.bg-surface-2.cursor-pointer:hover, [onclick].bg-surface-2:hover { border-color: rgba(255, 255, 255, 0.12); }
+
+/* Sticky Kopfzeilen bekommen das Glas-Material statt einer harten Linie */
+.sticky.top-0.backdrop-blur-xl, .sticky.top-0.backdrop-blur {
+  background: rgba(12, 14, 19, 0.62) !important;
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom-color: transparent !important;
+  box-shadow: inset 0 -0.5px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* Typografie: Ueberschriften enger, Zahlen tabellarisch */
+h1, h2, .tracking-tight { letter-spacing: -0.02em; }
+.tabular-nums, td, .text-2xl, .text-xl { font-variant-numeric: tabular-nums; }
+
+/* Statusbadges leicht abgerundeter, Chips mit Innenkante */
+.rounded-full.border { box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.06); }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-icon, .nav-item, button, .fixed.inset-0, .fixed.inset-0 > div { animation: none !important; transition: none !important; transform: none !important; }
 }

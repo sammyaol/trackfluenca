@@ -63,7 +63,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-60 flex-col bg-surface-0/98 backdrop-blur-sm border-r border-hairline-soft fixed h-full z-30">
+      <aside className="hidden md:flex w-60 flex-col sidebar-glass fixed h-full z-30">
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="w-8 h-8 rounded-apple-sm bg-accent flex items-center justify-center flex-shrink-0 shadow-apple-sm">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -88,12 +88,12 @@ export default function Sidebar() {
                 const active = path === item.href;
                 return (
                   <Link key={item.href} href={item.href}
-                    className={`flex items-center gap-3 px-2.5 py-2 rounded-apple-sm text-sm transition-all duration-200 ease-apple mb-0.5 group ${active ? 'bg-white/[0.07] text-ink-1' : 'text-ink-3 hover:text-ink-1 hover:bg-white/[0.035]'}`}>
-                    <span className="w-7 h-7 rounded-[9px] flex items-center justify-center flex-shrink-0 shadow-apple-sm" style={{ background: item.color }}>
+                    className={`nav-item flex items-center gap-3 px-2.5 py-2 rounded-apple-sm text-sm mb-0.5 group ${active ? 'is-active text-ink-1' : 'text-ink-3 hover:text-ink-1'}`}>
+                    <span className="nav-icon w-7 h-7 rounded-[9px] flex items-center justify-center flex-shrink-0" style={{ background: item.color }}>
                       {item.icon}
                     </span>
                     <span className="font-medium">{item.label}</span>
-                    {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-accent"></span>}
+                    {active && <span className="nav-dot ml-auto w-1.5 h-1.5 rounded-full bg-accent"></span>}
                   </Link>
                 )
               })}
@@ -130,7 +130,7 @@ export default function Sidebar() {
       </aside>
 
       {/* Mobile Bottom Nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-0/97 backdrop-blur-sm border-t border-hairline-soft flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 glass-top flex justify-around gap-0.5 overflow-x-auto py-2 px-1 z-50">
         {navShown.flatMap(g => g.items).slice(0, 8).map(item => {
           const active = path === item.href;
           return (
