@@ -686,7 +686,7 @@ export default function CreatorPage() {
   return (
     <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
-      <main className="flex-1 md:ml-60 min-h-screen">
+      <main className="flex-1 md:ml-60 min-h-screen min-w-0">
         <div className="border-b border-hairline-soft px-6 py-4 flex items-center justify-between bg-surface-0/80 backdrop-blur sticky top-0 z-20">
           <div>
             <h1 className="text-ink-1 font-semibold text-lg">Creator</h1>
