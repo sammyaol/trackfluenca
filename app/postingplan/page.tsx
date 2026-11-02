@@ -10,13 +10,14 @@ import {
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 const DEAL_CLS: Record<string, string> = {
-  offen: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  angefragt: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  zugesagt: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
-  deal: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+  offen: 'bg-[#f2b35a]/15 text-[#f2b35a] border-[#f2b35a]/30',
+  angefragt: 'bg-[#8fc7ff]/15 text-[#8fc7ff] border-[#8fc7ff]/30',
+  zugesagt: 'bg-[#c9b8ff]/15 text-[#c9b8ff] border-[#c9b8ff]/30',
+  deal: 'bg-[#5ee3a3]/15 text-[#5ee3a3] border-[#5ee3a3]/30',
   abgesagt: 'bg-white/5 text-ink-4 border-hairline',
 }
-const DEAL_DOT: Record<string, string> = { offen: '#FFB340', angefragt: '#0A84FF', zugesagt: '#BF5AF2', deal: '#30D158', abgesagt: '#636366' }
+// Kalender-Chips: gedaempfte Palette, Text immer dunkel lesbar
+const DEAL_DOT: Record<string, string> = { offen: '#f2b35a', angefragt: '#8fc7ff', zugesagt: '#c9b8ff', deal: '#5ee3a3', abgesagt: '#6b6f7c' }
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const todayIso = () => iso(new Date())
@@ -34,7 +35,7 @@ export default function Postingplan() {
   const [links, setLinks] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<'planung' | 'zeitleiste'>('planung')
+  const [view, setView] = useState<'planung' | 'zeitleiste' | 'versand'>('planung')
   const [kampagne, setKampagne] = useState('')
   const [dealFilter, setDealFilter] = useState('')
   const [form, setForm] = useState<PlanPost | null>(null)
@@ -310,7 +311,7 @@ export default function Postingplan() {
                   {dayPosts.map(p => (
                     <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
                       title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
-                      className={`w-full text-left rounded-md px-2 py-1.5 text-white hover:brightness-110 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
+                      className={`w-full text-left rounded-md px-2 py-1.5 text-[#14161c] hover:brightness-105 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
                       <div className={`text-xs font-semibold leading-tight break-words ${p.deal_status === 'abgesagt' ? 'line-through' : ''}`}>{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
                       <div className="text-[10px] opacity-90 leading-tight mt-0.5">{(() => { const g = dayPosts.filter(x => x.creator_id === p.creator_id); return g.length > 1 ? `Post ${g.indexOf(p) + 1}/${g.length} · ` : '' })()}{p.format}{p.kampagne !== 'Allgemein' ? ' · ' + p.kampagne : ''}</div>
                       {folText(p.creator_id) ? <div className="text-[10px] opacity-90 leading-tight">👥 {folText(p.creator_id)}</div> : null}
@@ -341,22 +342,17 @@ export default function Postingplan() {
     <div className="flex min-h-screen bg-surface-0">
       <Sidebar />
       <main className="flex-1 md:ml-60 min-h-screen">
-        <div className="border-b border-hairline-soft px-8 py-5 flex items-center justify-between bg-surface-0/80 backdrop-blur-xl sticky top-0 z-20">
+        <div className="glass-top px-8 py-5 flex items-center justify-between sticky top-0 z-20">
           <div>
             <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Postingplan</h1>
             <p className="text-ink-3 text-xs mt-0.5">Wer postet wann was, mit welchem Schmuck und welcher Gage</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex bg-surface-2 border border-hairline rounded-apple-sm p-0.5">
-              {([['planung', 'Planung'], ['zeitleiste', 'Zeitleiste']] as const).map(([k, l]) => (
-                <button key={k} onClick={() => setView(k)} className={`px-3 py-1.5 text-xs rounded-[6px] transition-colors ${view === k ? 'bg-accent text-white' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>
-              ))}
-            </div>
-            <button onClick={() => { setForm(emptyPost()); setError('') }} className="bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm px-4 py-2">+ Post planen</button>
+            <button onClick={() => { setForm(emptyPost()); setError('') }} className="press bg-accent hover:bg-accent-hover text-sm font-semibold rounded-full px-4 py-2">+ Post planen</button>
           </div>
         </div>
 
-        <div className="p-8 space-y-6">
+        <div className="p-8 pb-32 space-y-6">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               ['Geplante Posts', String(stats.anzahl), stats.ueberfaellig ? `${stats.ueberfaellig} überfällig` : 'ohne abgesagte'],
@@ -367,7 +363,7 @@ export default function Postingplan() {
             ].map(([l, v, s]) => (
               <div key={l} className="bg-surface-2 rounded-apple-lg p-5 border border-hairline-soft">
                 <div className="text-ink-3 text-xs font-medium mb-1">{l}</div>
-                <div className="text-2xl font-semibold text-ink-1">{v}</div>
+                <div className={`text-2xl font-semibold tracking-tight ${l === 'Gage gesamt' ? 'text-accent' : l === 'Deal offen' && stats.offen ? 'text-[#f2b35a]' : l === 'Versand fällig' && stats.versandFaellig ? 'text-[#ff7a8a]' : 'text-ink-1'}`}>{v}</div>
                 <div className={`text-xs mt-0.5 ${(l === 'Geplante Posts' && stats.ueberfaellig) || (l === 'Versand fällig' && stats.versandFaellig) ? 'text-red-400' : 'text-ink-4'}`}>{s}</div>
               </div>
             ))}
@@ -397,7 +393,29 @@ export default function Postingplan() {
                     ))}
                   </div>
                 )}
-                {view === 'planung' && groupBy === 'datum' ? (
+                {view === 'versand' ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-ink-1 font-medium text-sm mb-1">Jetzt rausschicken</h2>
+                      <p className="text-ink-4 text-xs mb-3">Nur Deals mit Status Zugesagt / Deal fix, nach Frist sortiert. Frist = Postdatum minus Vorlauf.</p>
+                      {versandListe.length === 0 ? <p className="text-ink-4 text-sm">Nichts offen.</p> : (
+                        <div className="space-y-2">{versandListe.map(({ p }) => renderPost(p))}</div>
+                      )}
+                    </div>
+                    {shown.filter(p => (p.versand_status || 'offen') === 'versendet').length > 0 && (
+                      <div>
+                        <h2 className="text-ink-1 font-medium text-sm mb-2">Unterwegs</h2>
+                        <div className="space-y-2">{shown.filter(p => (p.versand_status || 'offen') === 'versendet').map(p => renderPost(p))}</div>
+                      </div>
+                    )}
+                    {shown.filter(p => p.versand_status === 'angekommen').length > 0 && (
+                      <div>
+                        <h2 className="text-ink-1 font-medium text-sm mb-2">Angekommen</h2>
+                        <div className="space-y-2">{shown.filter(p => p.versand_status === 'angekommen').map(p => renderPost(p))}</div>
+                      </div>
+                    )}
+                  </div>
+                ) : view === 'planung' && groupBy === 'datum' ? (
                   nachDatum.length === 0 ? <div className="text-ink-4 text-sm py-10 text-center">Noch keine Posts. Plane oben den ersten.</div> :
                   nachDatum.map(([d, list]) => (
                     <div key={d || 'x'}>
@@ -441,7 +459,7 @@ export default function Postingplan() {
                           {ohneDatum.map(p => (
                             <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }}
                               onClick={() => { setForm({ ...p, geplant_am: '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
-                              className={`text-left rounded-md px-3 py-2 text-white cursor-grab active:cursor-grabbing hover:brightness-110 ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
+                              className={`text-left rounded-md px-3 py-2 text-[#14161c] cursor-grab active:cursor-grabbing hover:brightness-105 ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
                               <div className="text-xs font-semibold">{p.creator_name}</div>
                               <div className="text-[10px] opacity-90">{p.format} · {p.kampagne}</div>
                               {folText(p.creator_id) && <div className="text-[10px] opacity-90">👥 {folText(p.creator_id)}</div>}
@@ -496,6 +514,22 @@ export default function Postingplan() {
             </div>
           )}
         </div>
+
+        <nav className="fixed bottom-5 left-0 md:left-60 right-0 z-30 flex justify-center pointer-events-none">
+          <div className="glass-bar pointer-events-auto flex gap-1 p-1.5 rounded-full">
+            {([['planung', 'Planung', 'M4 6h16M4 12h16M4 18h10'], ['zeitleiste', 'Zeitleiste', 'M3 5h18v16H3zM16 3v4M8 3v4M3 10h18'], ['versand', 'Versand', 'M3 7h11v8H3zM14 10h4l3 3v2h-7zM6 18a1.5 1.5 0 1 0 0 .01M18 18a1.5 1.5 0 1 0 0 .01']] as const).map(([k, l, d]) => {
+              const on = view === k
+              const badge = k === 'versand' ? stats.versandFaellig : 0
+              return (
+                <button key={k} onClick={() => setView(k)} className={`press relative flex flex-col items-center gap-0.5 min-w-[84px] px-4 py-2 rounded-full text-[12px] font-medium transition-colors ${on ? 'bg-accent/15 text-accent' : 'text-ink-3 hover:text-ink-1'}`} style={on ? { boxShadow: 'inset 0 0.5px 0 rgba(255,255,255,0.18)' } : undefined}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
+                  {l}
+                  {badge > 0 && <span className="absolute -top-0.5 right-2 min-w-[16px] h-4 px-1 rounded-full bg-[#ff7a8a] text-[#14161c] text-[10px] font-semibold flex items-center justify-center">{badge}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </nav>
 
         {form && (
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setForm(null)}>
