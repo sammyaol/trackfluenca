@@ -52,6 +52,9 @@ export async function GET(req: NextRequest, ctx: Context) {
 
   let finalUrl = target.toString()
   if (link.rabatt_code) {
+    // Code auch als Parameter in die Zieladresse: bleibt in der Adresszeile erhalten, wenn der
+    // Link aus dem Instagram-Browser in Safari/Chrome geoeffnet oder weitergeleitet wird.
+    target.searchParams.set('discount', link.rabatt_code)
     // Shopify-Discount-Link: wendet den Code an und leitet zur Zielseite weiter
     finalUrl = `${target.origin}/discount/${encodeURIComponent(link.rabatt_code)}?redirect=${encodeURIComponent(target.pathname + target.search)}`
   }
