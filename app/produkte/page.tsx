@@ -6,6 +6,34 @@ import { fmtPreis, type Galerie, type GalerieItem, type Wunsch } from '@/lib/pro
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 const linkUrl = (token: string) => `${typeof window !== 'undefined' ? window.location.origin : 'https://kolure.trackfluenca.com'}/p/${token}`
+
+// Bilder fuers Web vorbereiten: HEIC/HEIF (iPhone) -> JPEG, grosse Bilder auf max. 1800px verkleinern.
+let heicLib: Promise<any> | null = null
+const loadHeic = () => heicLib || (heicLib = new Promise((res, rej) => {
+  if ((window as any).heic2any) return res((window as any).heic2any)
+  const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js'
+  sc.onload = () => res((window as any).heic2any); sc.onerror = () => rej(new Error('HEIC-Konverter konnte nicht geladen werden')); document.head.appendChild(sc)
+}))
+async function prepareImage(file: File): Promise<File> {
+  const isHeic = /heic|heif/i.test(file.type) || /\.(heic|heif)$/i.test(file.name)
+  let blob: Blob = file
+  if (isHeic) {
+    const heic2any = await loadHeic()
+    const out = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
+    blob = Array.isArray(out) ? out[0] : out
+  }
+  // Verkleinern ueber Canvas (auch fuer normale JPG/PNG), Ausgabe immer JPEG
+  const bmp = await createImageBitmap(blob).catch(() => null)
+  if (!bmp) return isHeic ? new File([blob], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' }) : file
+  const max = 1800
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height))
+  if (scale === 1 && !isHeic && file.size < 1_500_000) return file
+  const c = document.createElement('canvas'); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+  const jpg: Blob = await new Promise(r => c.toBlob(b => r(b!), 'image/jpeg', 0.88))
+  return new File([jpg], file.name.replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' })
+}
+
 const dat = (d?: string | null) => d ? new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''
 
 export default function Produkte() {
@@ -61,7 +89,8 @@ export default function Produkte() {
     try {
       const token = await getToken()
       const urls: string[] = []
-      for (const f of Array.from(files).slice(0, 8)) {
+      for (const raw of Array.from(files).slice(0, 8)) {
+        const f = await prepareImage(raw)
         const r = await fetch('/api/produkte/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ filename: f.name }) })
         const d = await r.json()
         if (!r.ok) throw new Error(d.error || 'Upload-URL fehlgeschlagen')
@@ -76,15 +105,16 @@ export default function Produkte() {
   const [over, setOver] = useState(false)
   // Schnell-Upload: jedes Bild wird ein eigenes Produkt (Name = Dateiname), direkt im Pool, danach Name/Preis anpassen
   const bulkUpload = async (files: FileList | File[] | null) => {
-    const arr = Array.from(files || []).filter(f => f.type.startsWith('image/'))
+    const arr = Array.from(files || []).filter(f => f.type.startsWith('image/') || /\.(heic|heif)$/i.test(f.name))
     if (!arr.length || !edit) return
     setError('')
     const token = await getToken()
     const neu: GalerieItem[] = []
     for (let i = 0; i < arr.length; i++) {
-      const f = arr[i]
-      setBulkBusy(`Lädt ${i + 1} von ${arr.length} hoch…`)
+      setBulkBusy(`Bereitet ${i + 1} von ${arr.length} vor…`)
       try {
+        const f = await prepareImage(arr[i])
+        setBulkBusy(`Lädt ${i + 1} von ${arr.length} hoch…`)
         const r = await fetch('/api/produkte/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ filename: f.name }) })
         const d = await r.json()
         if (!r.ok) throw new Error(d.error || 'Upload-URL fehlgeschlagen')
@@ -102,7 +132,8 @@ export default function Produkte() {
     if (!files?.length || !edit) return
     const token = await getToken()
     const urls: string[] = []
-    for (const f of Array.from(files).slice(0, 8)) {
+    for (const raw of Array.from(files).slice(0, 8)) {
+      const f = await prepareImage(raw).catch(() => raw)
       const r = await fetch('/api/produkte/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ filename: f.name }) })
       const d = await r.json(); if (!r.ok) continue
       const { error } = await sb.storage.from('produkte').uploadToSignedUrl(d.path, d.token, f, { contentType: f.type || 'image/jpeg' })
@@ -262,7 +293,7 @@ export default function Produkte() {
                       className={`rounded-apple-lg border-2 border-dashed p-8 text-center transition-colors ${over ? 'border-accent bg-accent/10' : 'border-hairline bg-surface-3'}`}>
                       <div className="text-ink-1 text-sm font-medium">Produktbilder hierher ziehen</div>
                       <div className="text-ink-4 text-xs mt-1">Jedes Bild wird ein eigenes Produkt (Name aus dem Dateinamen). Name, Preis und weitere Bilder passt du danach rechts im Pool an.</div>
-                      <label className="inline-block mt-3 text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 cursor-pointer hover:text-ink-1">oder Dateien auswählen<input type="file" accept="image/*" multiple className="hidden" onChange={e => { bulkUpload(e.target.files); e.currentTarget.value = '' }} /></label>
+                      <label className="inline-block mt-3 text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 cursor-pointer hover:text-ink-1">oder Dateien auswählen<input type="file" accept="image/*,.heic,.heif" multiple className="hidden" onChange={e => { bulkUpload(e.target.files); e.currentTarget.value = '' }} /></label>
                       {bulkBusy && <div className="text-accent text-xs mt-3">{bulkBusy}</div>}
                     </div>
                     <details className="bg-surface-3 rounded-apple-sm p-4"><summary className="text-ink-2 text-xs cursor-pointer">Einzelnes Produkt mit mehreren Bildern anlegen</summary>
@@ -274,7 +305,7 @@ export default function Produkte() {
                       <div><label className={labelCls}>Hinweis (optional)</label><input value={custom.hinweis} onChange={e => setCustom({ ...custom, hinweis: e.target.value })} placeholder="z. B. Neu ab Dezember · Silber und Gold" className={inputCls} /></div>
                       <div>
                         <label className={labelCls}>Bilder (1. Bild = Produktbild, danach getragen etc.)</label>
-                        <input type="file" accept="image/*" multiple onChange={e => upload(e.target.files)} className="text-xs text-ink-3" />
+                        <input type="file" accept="image/*,.heic,.heif" multiple onChange={e => upload(e.target.files)} className="text-xs text-ink-3" />
                         {uploading && <p className="text-ink-4 text-xs mt-1">Lädt hoch…</p>}
                         {custom.images.length > 0 && <div className="flex gap-2 mt-2 flex-wrap">{custom.images.map((u, i) => <div key={u} className="relative"><img src={u} alt="" className="w-16 h-20 object-cover rounded" /><button onClick={() => setCustom({ ...custom, images: custom.images.filter(x => x !== u) })} className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-[10px]">×</button><span className="absolute bottom-0.5 left-0.5 text-[9px] px-1 bg-black/60 text-white rounded">{i + 1}</span></div>)}</div>}
                       </div>
@@ -306,7 +337,7 @@ export default function Produkte() {
                                 <input value={i.price ?? ''} onChange={e => setItemField(i.id, { price: e.target.value || null })} placeholder="€" className="w-14 bg-transparent border-b border-hairline text-ink-1 text-xs focus:outline-none focus:border-accent/50 py-0.5 text-right" />
                               </div>
                             ) : <div className="text-ink-1 text-xs truncate">{i.title}</div>}
-                            <div className="text-ink-4 text-[10px]">{!i.custom && i.price ? fmtPreis(i.price) + ' · ' : ''}{i.custom ? 'eigenes · ' : ''}{i.images.length} Bild{i.images.length === 1 ? '' : 'er'}{i.hidden ? ' · ausgeblendet' : ''}{i.custom && <label className="ml-1 text-accent cursor-pointer hover:underline">+ Bild<input type="file" accept="image/*" multiple className="hidden" onChange={e => { addImageTo(i.id, e.target.files); e.currentTarget.value = '' }} /></label>}</div>
+                            <div className="text-ink-4 text-[10px]">{!i.custom && i.price ? fmtPreis(i.price) + ' · ' : ''}{i.custom ? 'eigenes · ' : ''}{i.images.length} Bild{i.images.length === 1 ? '' : 'er'}{i.hidden ? ' · ausgeblendet' : ''}{i.images.some(u => /\.(heic|heif)(\?|$)/i.test(u)) && <span className="text-red-400"> · HEIC, bitte Bild löschen und neu hochladen</span>}{i.custom && <label className="ml-1 text-accent cursor-pointer hover:underline">+ Bild<input type="file" accept="image/*,.heic,.heif" multiple className="hidden" onChange={e => { addImageTo(i.id, e.target.files); e.currentTarget.value = '' }} /></label>}</div>
                           </div>
                           <button onClick={() => setEdit({ ...edit, items: edit.items.filter(x => x.id !== i.id) })} className="text-ink-4 hover:text-red-400 text-sm">×</button>
                         </div>
