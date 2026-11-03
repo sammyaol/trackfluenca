@@ -19,7 +19,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   // Rabattcode am Tracking-Link mitziehen, damit der Shopify-Sync ihn aufnimmt
   const linkUpd: Record<string, unknown> = {}
-  if ('rabatt_code' in upd) linkUpd.rabatt_code = upd.rabatt_code
+  if ('rabatt_code' in upd) { linkUpd.rabatt_code = upd.rabatt_code; if (upd.rabatt_code) linkUpd.utm_campaign = `mk-${String(upd.rabatt_code).toLowerCase()}` }
   if ('ziel_url' in b && String(b.ziel_url || '').trim()) linkUpd.ziel_url = String(b.ziel_url).trim()
   if (Object.keys(linkUpd).length) await db.from('outreach_links').update(linkUpd).eq('agency_creator_id', id).eq('agency', m.agency)
   return NextResponse.json(data)

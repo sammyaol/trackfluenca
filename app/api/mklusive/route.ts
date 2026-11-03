@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
     const bestellungen = gesamt.bestellungen
     return {
       ...c,
-      link: l ? { short_code: l.short_code, url: LINK_BASE + l.short_code, direct: `${SHOP_URL}/?utm_source=mklusive&utm_medium=influencer&utm_campaign=${encodeURIComponent(l.utm_campaign || '')}${l.rabatt_code ? '&discount=' + encodeURIComponent(l.rabatt_code) : ''}`, letzter_klick_am: l.letzter_klick_am } : null,
+      link: l ? { short_code: l.short_code, url: l.rabatt_code ? `https://link.kolure.de/${encodeURIComponent(String(l.rabatt_code).toLowerCase())}` : LINK_BASE + l.short_code, direct: `${SHOP_URL}/?utm_source=mklusive&utm_medium=influencer&utm_campaign=${encodeURIComponent(l.utm_campaign || '')}${l.rabatt_code ? '&discount=' + encodeURIComponent(l.rabatt_code) : ''}`, letzter_klick_am: l.letzter_klick_am } : null,
       link_campaign: l?.utm_campaign || null,
       klicks: Number(l?.klicks) || 0,
       sessions: Number(cp?.sessions) || 0,

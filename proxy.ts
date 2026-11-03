@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function proxy(req: NextRequest) {
+    // Die Link-Domain ist komplett oeffentlich (nur Weiterleitungen)
+    if ((req.headers.get('host') || '').startsWith('link.')) return NextResponse.next()
     const isPublic = req.nextUrl.pathname.startsWith('/login') || 
                          req.nextUrl.pathname.startsWith('/api') ||
                          req.nextUrl.pathname.startsWith('/r/') ||

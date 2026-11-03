@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const { error: le } = await db.from('outreach_links').insert({
     user_id: null, creator_id: null, agency: m.agency, agency_creator_id: c.id,
     ziel_url: String(b.ziel_url || '').trim() || SHOP_URL,
-    utm_source: 'mklusive', utm_medium: 'influencer', utm_campaign: `mk-${slugify(name)}-${short.slice(0, 3)}`,
+    utm_source: 'mklusive', utm_medium: 'influencer', utm_campaign: code ? `mk-${code.toLowerCase()}` : `mk-${slugify(name)}-${short.slice(0, 3)}`,
     rabatt_code: code, short_code: short,
   })
   if (le) return NextResponse.json({ error: le.message }, { status: 500 })
