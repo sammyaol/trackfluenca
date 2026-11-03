@@ -25,7 +25,8 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   if (!g) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
   if (g.status !== 'aktiv') return NextResponse.json({ error: 'Diese Auswahl ist bereits geschlossen.' }, { status: 410 })
   const b = await req.json().catch(() => ({}))
-  const name = String(b.creator_name || '').trim().slice(0, 120) || null
+  const name = String(b.creator_name || '').trim().slice(0, 120)
+  if (name.length < 2) return NextResponse.json({ error: 'Bitte deinen Namen eingeben.' }, { status: 400 })
   const valid = new Set((g.items as any[]).map(i => String(i.id)))
   const auswahl = Array.from(new Set((Array.isArray(b.auswahl) ? b.auswahl : []).map((x: unknown) => String(x)).filter((x: string) => valid.has(x))))
   if (!auswahl.length) return NextResponse.json({ error: 'Bitte mindestens ein Produkt auswählen.' }, { status: 400 })

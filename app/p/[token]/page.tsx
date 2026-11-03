@@ -119,6 +119,7 @@ export default function Galerie() {
   const [sel, setSel] = useState<string[]>([])
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
+  const [name, setName] = useState('')
   const [link, setLink] = useState('')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
@@ -137,10 +138,11 @@ export default function Galerie() {
 
   const submit = async () => {
     setError('')
+    if (name.trim().length < 2) { setError(t.errName); return }
     if (!sel.length) { setError(t.errMin); return }
     setSending(true)
     try {
-      const r = await fetch('/api/galerie/' + token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ auswahl: sel }) })
+      const r = await fetch('/api/galerie/' + token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creator_name: name.trim(), auswahl: sel }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { setError(d.error || t.errSend); return }
       setLink(d.url || `${location.origin}/w/${d.code}`)
@@ -183,7 +185,7 @@ export default function Galerie() {
             {done ? (
               <div className="text-center py-12 max-w-md mx-auto">
                 <p className={label + ' mb-3'}>{t.sent}</p>
-                <h2 className="text-[26px] mb-3 leading-snug" style={serif}>{t.linkHead}</h2>
+                <h2 className="text-[26px] mb-3 leading-snug" style={serif}>{t.linkHead.replace('{name}', name.trim().split(' ')[0])}</h2>
                 <p className="text-neutral-500 text-sm leading-relaxed">{t.linkText}</p>
                 <div className="mt-7 border border-neutral-900 px-4 py-3 text-[15px] break-all select-all">{link}</div>
                 <div className="grid grid-cols-2 gap-2 mt-3">
@@ -245,6 +247,7 @@ export default function Galerie() {
                     </div>
                   ))}
                 </div>
+                <div><label className={label}>{t.name}</label><input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className="w-full border-0 border-b border-neutral-300 bg-transparent px-0 py-2.5 text-[16px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:border-neutral-900 rounded-none" /></div>
                 {error && <p className="text-sm text-red-600">{error}</p>}
                 <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-[11px] uppercase tracking-[0.22em] disabled:opacity-50">{sending ? t.creating : t.create}</button>
               </div>
