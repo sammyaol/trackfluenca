@@ -27,6 +27,8 @@ export async function GET(req: NextRequest) {
         out.push({
           id: p.id, title: p.title, handle: p.handle, type: p.product_type || '',
           image: p.images?.[0]?.src || null, price: v.price || null,
+          images: (p.images || []).map((i: any) => i.src).filter(Boolean).slice(0, 8),
+          varianten: (p.variants || []).map((x: any) => x.title).filter((t: string) => t && t !== 'Default Title').slice(0, 12),
           available: (p.variants || []).some((x: any) => x.available),
           url: `${SHOP}/products/${p.handle}`,
         })
