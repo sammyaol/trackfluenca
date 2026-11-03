@@ -16,6 +16,7 @@ type Link = { id: string; ziel_url: string; utm_source: string | null; utm_mediu
 
 // Kurzer In-Memory-Cache pro Edge-Instanz: wiederholte Klicks auf denselben
 // Link (z. B. aus einer Story) brauchen dann gar keine DB-Abfrage mehr.
+const BOOT = Date.now()
 const cache = new Map<string, { at: number; link: Link | null }>()
 const TTL = 60_000
 
@@ -41,7 +42,14 @@ export async function GET(req: NextRequest, ctx: Context) {
   const { code } = await ctx.params
   if (!/^[a-z0-9]{4,20}$/i.test(code)) return NextResponse.redirect(FALLBACK_URL, 302)
 
+  const t0 = Date.now()
+  const cached = !!cache.get(code)
   const link = await lookup(code)
+  const lookupMs = Date.now() - t0
+  // Diagnose: /r/<code>?__t=1 liefert Zeiten statt Weiterleitung (zaehlt keinen Klick)
+  if (req.nextUrl.searchParams.get('__t') === '1') {
+    return NextResponse.json({ lookupMs, cached, found: !!link, region: process.env.VERCEL_REGION || null, isolateAgeMs: Date.now() - BOOT }, { headers: { 'Cache-Control': 'no-store' } })
+  }
   if (!link) return NextResponse.redirect(FALLBACK_URL, 302)
 
   let target: URL
