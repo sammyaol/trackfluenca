@@ -68,8 +68,8 @@ export default function Produkte() {
   const copy = async (k: string, t: string) => { try { await navigator.clipboard.writeText(t); setCopied(k); setTimeout(() => setCopied(c => c === k ? null : c), 1500) } catch {} }
   const twoClick = (k: string, fn: () => void) => { if (confirm === k) { setConfirm(null); fn() } else setConfirm(k) }
 
-  const openNew = () => { setEdit({ titel: '', label: '', sprache: 'de', beschreibung: '', max_auswahl: null, items: [] }); setError(''); setTab('shop') }
-  const openEdit = (g: any) => { setEdit({ id: g.id, token: g.token, titel: g.titel || '', label: g.label || '', sprache: g.sprache === 'en' ? 'en' : 'de', beschreibung: g.beschreibung || '', max_auswahl: g.max_auswahl, items: g.items || [], status: g.status }); setError(''); setTab('shop') }
+  const openNew = () => { setEdit({ titel: '', label: '', sprache: 'de', beschreibung: '', max_auswahl: null, whatsapp: '', items: [] }); setError(''); setTab('shop') }
+  const openEdit = (g: any) => { setEdit({ id: g.id, token: g.token, titel: g.titel || '', label: g.label || '', sprache: g.sprache === 'en' ? 'en' : 'de', beschreibung: g.beschreibung || '', max_auswahl: g.max_auswahl, whatsapp: g.whatsapp || '', items: g.items || [], status: g.status }); setError(''); setTab('shop') }
 
   const hasItem = (id: string) => !!edit?.items.some(i => i.id === id)
   const toggleShop = (p: any) => {
@@ -266,6 +266,7 @@ export default function Produkte() {
                     <div><label className={labelCls}>Überschrift (optional)</label><input value={edit.titel} onChange={e => setEdit({ ...edit, titel: e.target.value })} className={inputCls} /></div>
                     <div><label className={labelCls}>Max. Auswahl</label><input type="number" min={1} value={edit.max_auswahl ?? ''} onChange={e => setEdit({ ...edit, max_auswahl: e.target.value ? Number(e.target.value) : null })} placeholder="frei" className={inputCls} /></div>
                   </div>
+                  <div><label className={labelCls}>WhatsApp-Nummer für Rückmeldungen (mit Ländervorwahl, z. B. +49 170 1234567)</label><input value={edit.whatsapp || ''} onChange={e => setEdit({ ...edit, whatsapp: e.target.value })} placeholder="+49 …" className={inputCls} /><p className="text-ink-4 text-xs mt-1">Nach dem Absenden bekommt die Creatorin einen Button, der ihre Auswahl als vorgefertigte WhatsApp-Nachricht an diese Nummer schickt. Ohne Nummer gibt es nur die Bestätigung.</p></div>
                   <div><label className={labelCls}>Text unter der Überschrift (optional, Zeilenumbrüche bleiben erhalten)</label><textarea rows={3} value={edit.beschreibung || ''} onChange={e => setEdit({ ...edit, beschreibung: e.target.value })} placeholder="z. B. Such dir bis zu 3 Teile aus, die du im Reel zeigen möchtest." className={inputCls + ' resize-none'} /></div>
 
                   <div className="flex gap-1 bg-surface-3 rounded-full p-1 w-fit">

@@ -10,7 +10,7 @@ const validToken = (t: string) => /^[A-Za-z0-9]{12,40}$/.test(t)
 export async function GET(_req: NextRequest, ctx: Ctx) {
   const { token } = await ctx.params
   if (!validToken(token)) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
-  const { data } = await db.from('produkt_galerien').select('titel, label, sprache, beschreibung, max_auswahl, items, status').eq('token', token).maybeSingle()
+  const { data } = await db.from('produkt_galerien').select('titel, label, sprache, beschreibung, max_auswahl, whatsapp, items, status').eq('token', token).maybeSingle()
   if (!data) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
   data.items = (data.items as any[]).filter(i => !i.hidden)
   return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } })

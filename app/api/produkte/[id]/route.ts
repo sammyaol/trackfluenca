@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cleanItems } from '@/lib/produkte'
+import { cleanItems, cleanWhatsapp } from '@/lib/produkte'
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 type Ctx = { params: Promise<{ id: string }> }
@@ -19,6 +19,7 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   if ('sprache' in b) upd.sprache = b.sprache === 'en' ? 'en' : 'de'
   if ('beschreibung' in b) upd.beschreibung = b.beschreibung ? String(b.beschreibung).slice(0, 1000) : null
   if ('max_auswahl' in b) upd.max_auswahl = b.max_auswahl ? Math.max(1, Math.min(50, Number(b.max_auswahl) || 0)) || null : null
+  if ('whatsapp' in b) upd.whatsapp = cleanWhatsapp(b.whatsapp)
   if ('items' in b) upd.items = cleanItems(b.items)
   if ('status' in b && ['aktiv', 'geschlossen'].includes(b.status)) upd.status = b.status
   const { data, error } = await db.from('produkt_galerien').update(upd).eq('id', id).eq('user_id', user.id).select().single()

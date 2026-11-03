@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { cleanItems, genToken } from '@/lib/produkte'
+import { cleanItems, cleanWhatsapp, genToken } from '@/lib/produkte'
 
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 async function getUser(req: NextRequest) {
@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
     sprache: b.sprache === 'en' ? 'en' : 'de',
     beschreibung: b.beschreibung ? String(b.beschreibung).slice(0, 1000) : null,
     max_auswahl: b.max_auswahl ? Math.max(1, Math.min(50, Number(b.max_auswahl) || 0)) || null : null,
+    whatsapp: cleanWhatsapp(b.whatsapp),
     items: cleanItems(b.items),
   }
   const { data, error } = await db.from('produkt_galerien').insert(row).select().single()
