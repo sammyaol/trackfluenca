@@ -26,7 +26,9 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({}))
   const row = {
     user_id: user.id, token: genToken(),
-    titel: String(b.titel || 'Neue Kollektion').slice(0, 120),
+    titel: String(b.titel || '').slice(0, 120),
+    label: b.label ? String(b.label).slice(0, 120) : null,
+    sprache: b.sprache === 'en' ? 'en' : 'de',
     beschreibung: b.beschreibung ? String(b.beschreibung).slice(0, 1000) : null,
     max_auswahl: b.max_auswahl ? Math.max(1, Math.min(50, Number(b.max_auswahl) || 0)) || null : null,
     items: cleanItems(b.items),

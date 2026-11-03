@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { fmtPreis, type Galerie, type GalerieItem } from '@/lib/produkte'
+import { fmtPreis, UI, type Galerie, type GalerieItem } from '@/lib/produkte'
 
 // Oeffentliche Produktgalerie fuer Creator (kein Login). Hell, ruhig, im Look des Kolure-Shops.
 // Pro Produkt: durchwischbare Bilder (Produktbild, getragen, Detail), Auswahl per Tipp, Wunschliste absenden.
@@ -52,23 +52,24 @@ export default function Galerie() {
     fetch('/api/galerie/' + token, { cache: 'no-store' }).then(async r => { if (!r.ok) { setState('missing'); return } setG(await r.json()); setState('ok') }).catch(() => setState('missing'))
   }, [token])
 
+  const t = UI[g?.sprache === 'en' ? 'en' : 'de']
   const toggle = (id: string) => {
     setError('')
-    setSel(s => s.includes(id) ? s.filter(x => x !== id) : (g?.max_auswahl && s.length >= g.max_auswahl ? (setError(`Du kannst maximal ${g.max_auswahl} Produkte auswählen.`), s) : [...s, id]))
+    setSel(s => s.includes(id) ? s.filter(x => x !== id) : (g?.max_auswahl && s.length >= g.max_auswahl ? (setError(t.errMax.replace('{n}', String(g.max_auswahl))), s) : [...s, id]))
   }
   const gewaehlt = useMemo(() => (g?.items || []).filter(i => sel.includes(i.id)), [g, sel])
 
   const submit = async () => {
     setError('')
-    if (name.trim().length < 2) { setError('Bitte gib deinen Namen ein.'); return }
-    if (!sel.length) { setError('Bitte wähle mindestens ein Produkt.'); return }
+    if (name.trim().length < 2) { setError(t.errName); return }
+    if (!sel.length) { setError(t.errMin); return }
     setSending(true)
     try {
       const r = await fetch('/api/galerie/' + token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creator_name: name.trim(), kontakt: kontakt.trim(), nachricht: nachricht.trim(), auswahl: sel }) })
       const d = await r.json().catch(() => ({}))
-      if (!r.ok) { setError(d.error || 'Senden fehlgeschlagen.'); return }
+      if (!r.ok) { setError(d.error || t.errSend); return }
       setDone(true)
-    } catch { setError('Keine Verbindung. Bitte nochmal versuchen.') } finally { setSending(false) }
+    } catch { setError(t.errNet) } finally { setSending(false) }
   }
 
   const serif = { fontFamily: 'Georgia, "Times New Roman", ui-serif, serif' }
@@ -81,30 +82,31 @@ export default function Galerie() {
         <div className="flex justify-center mb-6">
           <img src="/koluere-logo.png" alt="Koluré" className="h-16 w-auto select-none" draggable={false} />
         </div>
-        {state === 'loading' && <p className="text-neutral-400 text-center py-16 text-sm tracking-wide">Lädt…</p>}
+        {state === 'loading' && <p className="text-neutral-400 text-center py-16 text-sm tracking-wide">{t.loading}</p>}
         {state === 'missing' && (
           <div className="text-center py-16">
-            <h1 className="text-2xl mb-2" style={serif}>Link nicht gefunden</h1>
-            <p className="text-neutral-500 text-sm">Dieser Link ist ungültig oder nicht mehr aktiv.</p>
+            <h1 className="text-2xl mb-2" style={serif}>{t.notFound}</h1>
+            <p className="text-neutral-500 text-sm">{t.notFoundText}</p>
           </div>
         )}
         {state === 'ok' && g && (
           <>
-            <div className="text-center mb-10">
-              <p className={label + ' mb-3'}>Für dich ausgewählt</p>
-              <h1 className="text-[30px] leading-tight" style={serif}>{g.titel}</h1>
-              {g.beschreibung && <p className="text-neutral-500 text-[15px] mt-3 max-w-xl mx-auto leading-relaxed">{g.beschreibung}</p>}
-              <p className="text-neutral-400 text-xs mt-4">Tippe die Produkte an, die du möchtest{g.max_auswahl ? ` (bis zu ${g.max_auswahl})` : ''}. Bilder lassen sich seitlich durchwischen.</p>
-              <div className="w-10 h-px bg-neutral-900 mx-auto mt-6" />
-            </div>
+            {(g.label || g.titel || g.beschreibung) && (
+              <div className="text-center mb-10">
+                {g.label && <p className={label + ' mb-3'}>{g.label}</p>}
+                {g.titel && <h1 className="text-[30px] leading-tight" style={serif}>{g.titel}</h1>}
+                {g.beschreibung && <p className="text-neutral-500 text-[15px] mt-3 max-w-xl mx-auto leading-relaxed whitespace-pre-line">{g.beschreibung}</p>}
+                <div className="w-10 h-px bg-neutral-900 mx-auto mt-6" />
+              </div>
+            )}
 
-            {g.status !== 'aktiv' && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">Diese Auswahl ist geschlossen.</div>}
+            {g.status !== 'aktiv' && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">{t.closed}</div>}
 
             {done ? (
               <div className="text-center py-16">
-                <p className={label + ' mb-3'}>Gesendet</p>
-                <h2 className="text-[26px] mb-2" style={serif}>Danke, {name.split(' ')[0]}.</h2>
-                <p className="text-neutral-500 text-sm">Wir haben deine Auswahl erhalten und melden uns bei dir.</p>
+                <p className={label + ' mb-3'}>{t.sent}</p>
+                <h2 className="text-[26px] mb-2" style={serif}>{t.thanks}, {name.split(' ')[0]}.</h2>
+                <p className="text-neutral-500 text-sm">{t.thanksText}</p>
                 <div className="flex flex-wrap justify-center gap-2 mt-6">{gewaehlt.map(i => <span key={i.id} className="text-xs border border-neutral-300 px-3 py-1.5">{i.title}</span>)}</div>
               </div>
             ) : (
@@ -128,7 +130,7 @@ export default function Galerie() {
                         {item.varianten && item.varianten.length > 0 && <p className="text-[11px] text-neutral-400 mt-1">{item.varianten.join(' · ')}</p>}
                         {item.hinweis && <p className="text-[12px] text-neutral-500 mt-1">{item.hinweis}</p>}
                         {g.status === 'aktiv' && (
-                          <button type="button" onClick={() => toggle(item.id)} className={`mt-3 w-full py-2.5 text-[11px] uppercase tracking-[0.2em] transition ${on ? 'bg-neutral-900 text-white' : 'border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white'}`}>{on ? 'Ausgewählt' : 'Auswählen'}</button>
+                          <button type="button" onClick={() => toggle(item.id)} className={`mt-3 w-full py-2.5 text-[11px] uppercase tracking-[0.2em] transition ${on ? 'bg-neutral-900 text-white' : 'border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white'}`}>{on ? t.selected : t.select}</button>
                         )}
                       </div>
                     </div>
@@ -147,22 +149,22 @@ export default function Galerie() {
             <div className="bg-white border-t border-neutral-200 shadow-[0_-10px_40px_rgba(0,0,0,0.08)]">
               <div className="max-w-[640px] mx-auto px-5 py-6 space-y-5">
                 <div className="flex items-center justify-between">
-                  <p className="text-[20px]" style={serif}>Deine Auswahl ({sel.length})</p>
-                  <button onClick={() => setOpen(false)} className="text-neutral-400 text-sm underline underline-offset-4">Schließen</button>
+                  <p className="text-[20px]" style={serif}>{t.chosen} ({sel.length})</p>
+                  <button onClick={() => setOpen(false)} className="text-neutral-400 text-sm underline underline-offset-4">{t.close}</button>
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                   {gewaehlt.map(i => (
                     <div key={i.id} className="flex-shrink-0 w-16">
                       <div className="w-16 h-20 bg-neutral-100 overflow-hidden">{i.images[0] && <img src={i.images[0]} alt="" className="w-full h-full object-cover" />}</div>
-                      <button onClick={() => toggle(i.id)} className="text-[10px] text-neutral-400 underline mt-1">entfernen</button>
+                      <button onClick={() => toggle(i.id)} className="text-[10px] text-neutral-400 underline mt-1">{t.remove}</button>
                     </div>
                   ))}
                 </div>
-                <div><label className={label}>Dein Name *</label><input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className={input} /></div>
-                <div><label className={label}>Instagram oder E-Mail (optional)</label><input value={kontakt} onChange={e => setKontakt(e.target.value)} placeholder="@deinname" className={input} /></div>
-                <div><label className={label}>Nachricht (optional, z. B. Größe oder Farbe)</label><input value={nachricht} onChange={e => setNachricht(e.target.value)} className={input} /></div>
+                <div><label className={label}>{t.name}</label><input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className={input} /></div>
+                <div><label className={label}>{t.contact}</label><input value={kontakt} onChange={e => setKontakt(e.target.value)} placeholder={t.contactPh} className={input} /></div>
+                <div><label className={label}>{t.message}</label><input value={nachricht} onChange={e => setNachricht(e.target.value)} className={input} /></div>
                 {error && <p className="text-sm text-red-600">{error}</p>}
-                <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-[11px] uppercase tracking-[0.22em] disabled:opacity-50">{sending ? 'Wird gesendet…' : 'Auswahl senden'}</button>
+                <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-[11px] uppercase tracking-[0.22em] disabled:opacity-50">{sending ? t.sending : t.send}</button>
               </div>
             </div>
           )}
@@ -170,8 +172,8 @@ export default function Galerie() {
             <div className="px-5 pb-5 pt-2 bg-gradient-to-t from-white via-white/95 to-transparent">
               <div className="max-w-[640px] mx-auto">
                 {error && <p className="text-sm text-red-600 text-center mb-2">{error}</p>}
-                <button onClick={() => { if (!sel.length) { setError('Wähle zuerst mindestens ein Produkt.'); return } setOpen(true) }} className={`w-full py-4 text-[11px] uppercase tracking-[0.22em] transition ${sel.length ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
-                  {sel.length ? `${sel.length} ${sel.length === 1 ? 'Produkt' : 'Produkte'} ausgewählt · Weiter` : 'Produkte auswählen'}
+                <button onClick={() => { if (!sel.length) { setError(t.errFirst); return } setOpen(true) }} className={`w-full py-4 text-[11px] uppercase tracking-[0.22em] transition ${sel.length ? 'bg-neutral-900 text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                  {sel.length ? `${sel.length} ${sel.length === 1 ? t.product : t.products} · ${t.next}` : t.pick}
                 </button>
               </div>
             </div>

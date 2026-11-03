@@ -40,8 +40,8 @@ export default function Produkte() {
   const copy = async (k: string, t: string) => { try { await navigator.clipboard.writeText(t); setCopied(k); setTimeout(() => setCopied(c => c === k ? null : c), 1500) } catch {} }
   const twoClick = (k: string, fn: () => void) => { if (confirm === k) { setConfirm(null); fn() } else setConfirm(k) }
 
-  const openNew = () => { setEdit({ titel: 'Neue Kollektion', beschreibung: '', max_auswahl: null, items: [] }); setError(''); setTab('shop') }
-  const openEdit = (g: any) => { setEdit({ id: g.id, token: g.token, titel: g.titel, beschreibung: g.beschreibung || '', max_auswahl: g.max_auswahl, items: g.items || [], status: g.status }); setError(''); setTab('shop') }
+  const openNew = () => { setEdit({ titel: '', label: '', sprache: 'de', beschreibung: '', max_auswahl: null, items: [] }); setError(''); setTab('shop') }
+  const openEdit = (g: any) => { setEdit({ id: g.id, token: g.token, titel: g.titel || '', label: g.label || '', sprache: g.sprache === 'en' ? 'en' : 'de', beschreibung: g.beschreibung || '', max_auswahl: g.max_auswahl, items: g.items || [], status: g.status }); setError(''); setTab('shop') }
 
   const hasItem = (id: string) => !!edit?.items.some(i => i.id === id)
   const toggleShop = (p: any) => {
@@ -82,7 +82,6 @@ export default function Produkte() {
 
   const save = async () => {
     if (!edit) return
-    if (!edit.titel.trim()) { setError('Bitte einen Titel eingeben.'); return }
     if (!edit.items.length) { setError('Bitte mindestens ein Produkt hinzufügen.'); return }
     setSaving(true); setError('')
     const { ok, j } = edit.id ? await api('/api/produkte/' + edit.id, 'PATCH', edit) : await api('/api/produkte', 'POST', edit)
@@ -125,7 +124,8 @@ export default function Produkte() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-ink-1 font-medium truncate">{g.titel}</h2>
+                        <h2 className="text-ink-1 font-medium truncate">{g.titel || g.label || 'Ohne Titel'}</h2>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-ink-3 font-mono">{(g.sprache || 'de').toUpperCase()}</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${g.status === 'aktiv' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-ink-4 border-hairline'}`}>{g.status === 'aktiv' ? 'Aktiv' : 'Geschlossen'}</span>
                       </div>
                       <p className="text-ink-4 text-xs mt-0.5">{(g.items || []).length} Produkte · erstellt {dat(g.created_at)}{g.max_auswahl ? ` · max. ${g.max_auswahl} pro Creator` : ''}</p>
@@ -156,7 +156,7 @@ export default function Produkte() {
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setWuensche(null)}>
             <div className="bg-surface-2 rounded-apple-lg w-full max-w-2xl border border-hairline max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft">
-                <div><h2 className="text-ink-1 font-semibold">Wünsche · {wuensche.g.titel}</h2><p className="text-ink-4 text-xs">{wuensche.list.length} Einsendung{wuensche.list.length === 1 ? '' : 'en'}</p></div>
+                <div><h2 className="text-ink-1 font-semibold">Wünsche · {wuensche.g.titel || wuensche.g.label || 'Galerie'}</h2><p className="text-ink-4 text-xs">{wuensche.list.length} Einsendung{wuensche.list.length === 1 ? '' : 'en'}</p></div>
                 <button onClick={() => setWuensche(null)} className="text-ink-3 hover:text-ink-1 text-xl leading-none">×</button>
               </div>
               <div className="overflow-y-auto p-6 space-y-4">
@@ -191,11 +191,13 @@ export default function Produkte() {
               </div>
               <div className="overflow-y-auto p-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
                 <div className="space-y-4 min-w-0">
-                  <div className="grid grid-cols-[1fr_140px] gap-3">
-                    <div><label className={labelCls}>Titel</label><input value={edit.titel} onChange={e => setEdit({ ...edit, titel: e.target.value })} className={inputCls} /></div>
+                  <div className="grid grid-cols-[120px_1fr_1fr_120px] gap-3">
+                    <div><label className={labelCls}>Sprache</label><select value={edit.sprache || 'de'} onChange={e => setEdit({ ...edit, sprache: e.target.value as any })} className={inputCls}><option value="de">Deutsch</option><option value="en">English</option></select></div>
+                    <div><label className={labelCls}>Kleine Zeile oben (optional)</label><input value={edit.label || ''} onChange={e => setEdit({ ...edit, label: e.target.value })} placeholder="z. B. Women · Launch 2026" className={inputCls} /></div>
+                    <div><label className={labelCls}>Überschrift (optional)</label><input value={edit.titel} onChange={e => setEdit({ ...edit, titel: e.target.value })} className={inputCls} /></div>
                     <div><label className={labelCls}>Max. Auswahl</label><input type="number" min={1} value={edit.max_auswahl ?? ''} onChange={e => setEdit({ ...edit, max_auswahl: e.target.value ? Number(e.target.value) : null })} placeholder="frei" className={inputCls} /></div>
                   </div>
-                  <div><label className={labelCls}>Text für die Creator (optional)</label><textarea rows={2} value={edit.beschreibung || ''} onChange={e => setEdit({ ...edit, beschreibung: e.target.value })} placeholder="z. B. Such dir bis zu 3 Teile aus, die du im Reel zeigen möchtest." className={inputCls + ' resize-none'} /></div>
+                  <div><label className={labelCls}>Text unter der Überschrift (optional, Zeilenumbrüche bleiben erhalten)</label><textarea rows={3} value={edit.beschreibung || ''} onChange={e => setEdit({ ...edit, beschreibung: e.target.value })} placeholder="z. B. Such dir bis zu 3 Teile aus, die du im Reel zeigen möchtest." className={inputCls + ' resize-none'} /></div>
 
                   <div className="flex gap-1 bg-surface-3 rounded-full p-1 w-fit">
                     {([['shop', 'Aus dem Shop'], ['eigene', 'Eigenes Produkt (Bilder hochladen)']] as const).map(([k, l]) => <button key={k} onClick={() => setTab(k)} className={`px-3 py-1.5 text-xs rounded-full ${tab === k ? 'bg-accent' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>)}

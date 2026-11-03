@@ -8,9 +8,12 @@ export type GalerieItem = {
   hinweis?: string | null
   custom?: boolean
 }
+export type Sprache = 'de' | 'en'
 export type Galerie = {
   id?: string
   token?: string
+  sprache?: Sprache
+  label?: string | null
   titel: string
   beschreibung?: string | null
   max_auswahl?: number | null
@@ -39,3 +42,8 @@ export function cleanItems(v: unknown): GalerieItem[] {
   })).filter(it => it.id && it.title)
 }
 export const fmtPreis = (p?: string | null) => p == null || p === '' || isNaN(Number(p)) ? '' : Number(p).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+
+export const UI: Record<Sprache, Record<string, string>> = {
+  de: { loading: 'Lädt…', notFound: 'Link nicht gefunden', notFoundText: 'Dieser Link ist ungültig oder nicht mehr aktiv.', closed: 'Diese Auswahl ist geschlossen.', select: 'Auswählen', selected: 'Ausgewählt', pick: 'Produkte auswählen', next: 'Weiter', chosen: 'Deine Auswahl', close: 'Schließen', remove: 'entfernen', name: 'Dein Name *', contact: 'Instagram oder E-Mail (optional)', contactPh: '@deinname', message: 'Nachricht (optional, z. B. Größe oder Farbe)', send: 'Auswahl senden', sending: 'Wird gesendet…', sent: 'Gesendet', thanks: 'Danke', thanksText: 'Wir haben deine Auswahl erhalten und melden uns bei dir.', errName: 'Bitte gib deinen Namen ein.', errMin: 'Bitte wähle mindestens ein Produkt.', errFirst: 'Wähle zuerst mindestens ein Produkt.', errMax: 'Du kannst maximal {n} Produkte auswählen.', errSend: 'Senden fehlgeschlagen.', errNet: 'Keine Verbindung. Bitte nochmal versuchen.', product: 'Produkt', products: 'Produkte' },
+  en: { loading: 'Loading…', notFound: 'Link not found', notFoundText: 'This link is invalid or no longer active.', closed: 'This selection is closed.', select: 'Select', selected: 'Selected', pick: 'Select products', next: 'Continue', chosen: 'Your selection', close: 'Close', remove: 'remove', name: 'Your name *', contact: 'Instagram or email (optional)', contactPh: '@yourname', message: 'Message (optional, e.g. size or colour)', send: 'Send selection', sending: 'Sending…', sent: 'Sent', thanks: 'Thank you', thanksText: 'We have received your selection and will get back to you.', errName: 'Please enter your name.', errMin: 'Please select at least one product.', errFirst: 'Select at least one product first.', errMax: 'You can select up to {n} products.', errSend: 'Sending failed.', errNet: 'No connection. Please try again.', product: 'product', products: 'products' },
+}

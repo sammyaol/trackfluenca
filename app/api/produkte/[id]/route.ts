@@ -14,7 +14,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
   const user = await getUser(req); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const b = await req.json().catch(() => ({}))
   const upd: Record<string, unknown> = {}
-  if ('titel' in b) upd.titel = String(b.titel || 'Neue Kollektion').slice(0, 120)
+  if ('titel' in b) upd.titel = String(b.titel || '').slice(0, 120)
+  if ('label' in b) upd.label = b.label ? String(b.label).slice(0, 120) : null
+  if ('sprache' in b) upd.sprache = b.sprache === 'en' ? 'en' : 'de'
   if ('beschreibung' in b) upd.beschreibung = b.beschreibung ? String(b.beschreibung).slice(0, 1000) : null
   if ('max_auswahl' in b) upd.max_auswahl = b.max_auswahl ? Math.max(1, Math.min(50, Number(b.max_auswahl) || 0)) || null : null
   if ('items' in b) upd.items = cleanItems(b.items)
