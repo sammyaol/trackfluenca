@@ -5,6 +5,7 @@ export const preferredRegion = ['fra1']
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 type Ctx = { params: Promise<{ token: string }> }
 const validToken = (t: string) => /^[A-Za-z0-9]{12,40}$/.test(t)
+const genCode = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let o = ''; const r = crypto.getRandomValues(new Uint8Array(8)); for (const x of r) o += a[x % a.length]; return o }
 
 // Oeffentlich: Galerie fuer Creator (kein Login)
 export async function GET(_req: NextRequest, ctx: Ctx) {
@@ -24,18 +25,19 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   if (!g) return NextResponse.json({ error: 'Nicht gefunden' }, { status: 404 })
   if (g.status !== 'aktiv') return NextResponse.json({ error: 'Diese Auswahl ist bereits geschlossen.' }, { status: 410 })
   const b = await req.json().catch(() => ({}))
-  const name = String(b.creator_name || '').trim().slice(0, 120)
-  if (name.length < 2) return NextResponse.json({ error: 'Bitte deinen Namen eingeben.' }, { status: 400 })
+  const name = String(b.creator_name || '').trim().slice(0, 120) || null
   const valid = new Set((g.items as any[]).map(i => String(i.id)))
   const auswahl = Array.from(new Set((Array.isArray(b.auswahl) ? b.auswahl : []).map((x: unknown) => String(x)).filter((x: string) => valid.has(x))))
   if (!auswahl.length) return NextResponse.json({ error: 'Bitte mindestens ein Produkt auswählen.' }, { status: 400 })
   if (g.max_auswahl && auswahl.length > g.max_auswahl) return NextResponse.json({ error: `Maximal ${g.max_auswahl} Produkte.` }, { status: 400 })
+  const code = genCode()
   const { error } = await db.from('produkt_wuensche').insert({
-    galerie_id: g.id, creator_name: name,
+    galerie_id: g.id, creator_name: name, code,
     kontakt: b.kontakt ? String(b.kontakt).trim().slice(0, 200) : null,
     nachricht: b.nachricht ? String(b.nachricht).trim().slice(0, 1000) : null,
     auswahl,
   })
   if (error) return NextResponse.json({ error: 'Speichern fehlgeschlagen, bitte nochmal versuchen.' }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  const origin = req.headers.get('x-forwarded-host') ? `https://${req.headers.get('x-forwarded-host')}` : req.nextUrl.origin
+  return NextResponse.json({ ok: true, code, url: `${origin}/w/${code}` })
 }

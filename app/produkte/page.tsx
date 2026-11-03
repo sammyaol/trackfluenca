@@ -235,14 +235,14 @@ export default function Produkte() {
                   return (
                     <div key={w.id} className="bg-surface-3 rounded-apple-sm p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <div><div className="text-ink-1 font-medium">{w.creator_name}</div><div className="text-ink-4 text-xs">{w.kontakt || '—'} · {new Date(w.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div></div>
+                        <div><div className="text-ink-1 font-medium">{w.creator_name || ('Auswahl ' + (w.code || ''))}</div><div className="text-ink-4 text-xs">{w.code ? <a href={`/w/${w.code}`} target="_blank" rel="noreferrer" className="text-accent hover:underline">Link öffnen</a> : (w.kontakt || '—')} · {new Date(w.created_at).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div></div>
                         <button onClick={() => twoClick('w' + w.id, () => removeWunsch(wuensche.g.id, w.id))} className={btnDel(confirm === 'w' + w.id)}>{confirm === 'w' + w.id ? 'Sicher?' : 'Löschen'}</button>
                       </div>
                       {w.nachricht && <p className="text-ink-2 text-sm mt-2">„{w.nachricht}“</p>}
                       <div className="flex flex-wrap gap-2 mt-3">
                         {items.map(i => <div key={i.id} className="flex items-center gap-2 bg-surface-2 rounded-apple-sm pr-2 overflow-hidden border border-hairline-soft">{i.images?.[0] ? <img src={i.images[0]} alt="" className="w-9 h-9 object-cover" /> : <div className="w-9 h-9" />}<span className="text-ink-2 text-xs">{i.title}</span></div>)}
                       </div>
-                      <button onClick={() => copy('wl' + w.id, `${w.creator_name}${w.kontakt ? ' (' + w.kontakt + ')' : ''}:\n` + items.map(i => '- ' + i.title + (i.price ? ' · ' + fmtPreis(i.price) : '')).join('\n') + (w.nachricht ? `\nNachricht: ${w.nachricht}` : ''))} className="text-[11px] text-accent mt-3 hover:underline">{copied === 'wl' + w.id ? '✓ Kopiert' : 'Liste kopieren'}</button>
+                      <button onClick={() => copy('wl' + w.id, `${w.creator_name || 'Auswahl ' + (w.code || '')}${w.kontakt ? ' (' + w.kontakt + ')' : ''}:\n` + items.map(i => '- ' + i.title + (i.price ? ' · ' + fmtPreis(i.price) : '')).join('\n') + (w.nachricht ? `\nNachricht: ${w.nachricht}` : ''))} className="text-[11px] text-accent mt-3 hover:underline">{copied === 'wl' + w.id ? '✓ Kopiert' : 'Liste kopieren'}</button>
                     </div>
                   )
                 })}

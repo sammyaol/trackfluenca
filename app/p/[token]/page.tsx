@@ -40,11 +40,10 @@ export default function Galerie() {
   const [g, setG] = useState<Galerie | null>(null)
   const [state, setState] = useState<'loading' | 'ok' | 'missing'>('loading')
   const [sel, setSel] = useState<string[]>([])
-  const [name, setName] = useState('')
-  const [kontakt, setKontakt] = useState('')
-  const [nachricht, setNachricht] = useState('')
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
+  const [link, setLink] = useState('')
+  const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [open, setOpen] = useState(false)
 
@@ -61,27 +60,22 @@ export default function Galerie() {
 
   const submit = async () => {
     setError('')
-    if (name.trim().length < 2) { setError(t.errName); return }
     if (!sel.length) { setError(t.errMin); return }
     setSending(true)
     try {
-      const r = await fetch('/api/galerie/' + token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ creator_name: name.trim(), kontakt: kontakt.trim(), nachricht: nachricht.trim(), auswahl: sel }) })
+      const r = await fetch('/api/galerie/' + token, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ auswahl: sel }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { setError(d.error || t.errSend); return }
+      setLink(d.url || `${location.origin}/w/${d.code}`)
       setDone(true)
     } catch { setError(t.errNet) } finally { setSending(false) }
   }
 
-  const waLink = useMemo(() => {
-    if (!g?.whatsapp) return '#'
-    const lines = [t.waMsgIntro.replace('{name}', name.trim()), ...gewaehlt.map(i => '• ' + i.title), '', t.waMsgFav + ' ', '']
-    if (nachricht.trim()) lines.push(t.waMsgNote + ' ' + nachricht.trim())
-    return 'https://wa.me/' + g.whatsapp + '?text=' + encodeURIComponent(lines.join('\n'))
-  }, [g, t, name, gewaehlt, nachricht])
+  const copyLink = async () => { try { await navigator.clipboard.writeText(link) } catch {} setCopied(true); setTimeout(() => setCopied(false), 1500) }
+  const waHref = (g?.whatsapp ? 'https://wa.me/' + g.whatsapp : 'https://wa.me/') + '?text=' + encodeURIComponent(t.waMsg.replace('{url}', link))
 
   const serif = { fontFamily: 'Georgia, "Times New Roman", ui-serif, serif' }
   const label = 'text-[11px] uppercase tracking-[0.18em] text-neutral-400'
-  const input = 'w-full border-0 border-b border-neutral-300 bg-transparent px-0 py-2.5 text-[16px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:border-neutral-900 rounded-none'
 
   return (
     <div className="fixed inset-0 z-[100] overflow-y-auto bg-white text-neutral-900">
@@ -110,21 +104,19 @@ export default function Galerie() {
             {g.status !== 'aktiv' && <div className="mb-8 border border-neutral-300 text-neutral-700 text-sm px-4 py-3 text-center">{t.closed}</div>}
 
             {done ? (
-              <div className="text-center py-16">
+              <div className="text-center py-12 max-w-md mx-auto">
                 <p className={label + ' mb-3'}>{t.sent}</p>
-                <h2 className="text-[26px] mb-2" style={serif}>{t.thanks}, {name.split(' ')[0]}.</h2>
-                <p className="text-neutral-500 text-sm">{t.thanksText}</p>
-                <div className="flex flex-wrap justify-center gap-2 mt-6">{gewaehlt.map(i => <span key={i.id} className="text-xs border border-neutral-300 px-3 py-1.5">{i.title}</span>)}</div>
-                {g.whatsapp && (
-                  <div className="mt-10 max-w-md mx-auto border border-neutral-200 px-6 py-7">
-                    <h3 className="text-[20px] mb-2" style={serif}>{t.waTitle}</h3>
-                    <p className="text-neutral-500 text-sm leading-relaxed">{t.waText}</p>
-                    <a href={waLink} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center justify-center gap-2 w-full bg-[#25D366] text-white py-4 text-[11px] uppercase tracking-[0.22em]">
-                      <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.54-3.7 8.24-8.23 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
-                      {t.waBtn}
-                    </a>
-                  </div>
-                )}
+                <h2 className="text-[26px] mb-3 leading-snug" style={serif}>{t.linkHead}</h2>
+                <p className="text-neutral-500 text-sm leading-relaxed">{t.linkText}</p>
+                <div className="mt-7 border border-neutral-900 px-4 py-3 text-[15px] break-all select-all">{link}</div>
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button onClick={copyLink} className="border border-neutral-900 py-4 text-[11px] uppercase tracking-[0.22em]">{copied ? '✓ ' + t.copied : t.copyLink}</button>
+                  <a href={waHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white py-4 text-[11px] uppercase tracking-[0.22em]">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2m0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.26 8.26 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 4.54 0 8.24 3.7 8.24 8.24 0 4.54-3.7 8.24-8.23 8.24m4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.78.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28"/></svg>
+                    {t.waBtn}
+                  </a>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 mt-8">{gewaehlt.map(i => <span key={i.id} className="text-xs border border-neutral-300 px-3 py-1.5">{i.title}</span>)}</div>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-8">
@@ -177,11 +169,8 @@ export default function Galerie() {
                     </div>
                   ))}
                 </div>
-                <div><label className={label}>{t.name}</label><input value={name} onChange={e => setName(e.target.value)} autoComplete="name" className={input} /></div>
-                <div><label className={label}>{t.contact}</label><input value={kontakt} onChange={e => setKontakt(e.target.value)} placeholder={t.contactPh} className={input} /></div>
-                <div><label className={label}>{t.message}</label><input value={nachricht} onChange={e => setNachricht(e.target.value)} className={input} /></div>
                 {error && <p className="text-sm text-red-600">{error}</p>}
-                <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-[11px] uppercase tracking-[0.22em] disabled:opacity-50">{sending ? t.sending : t.send}</button>
+                <button onClick={submit} disabled={sending} className="w-full bg-neutral-900 text-white py-4 text-[11px] uppercase tracking-[0.22em] disabled:opacity-50">{sending ? t.creating : t.create}</button>
               </div>
             </div>
           )}
