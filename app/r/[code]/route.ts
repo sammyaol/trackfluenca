@@ -4,7 +4,8 @@ import { NextRequest, NextResponse, after } from 'next/server'
 // naechsten Standort zum Besucher ausgefuehrt. Die Weiterleitung wird sofort
 // gesendet; Klick-Zaehlung passiert danach im Hintergrund (after()).
 export const runtime = 'edge'
-export const preferredRegion = ['fra1', 'dub1', 'cdg1']
+// Nur Frankfurt: so trifft der minuetliche Warmhalte-Ping dieselbe Instanz, die auch die Besucher aus DACH bedient
+export const preferredRegion = ['fra1']
 export const dynamic = 'force-dynamic'
 
 const FALLBACK_URL = 'https://kolure.de'
@@ -18,7 +19,7 @@ type Link = { id: string; ziel_url: string; utm_source: string | null; utm_mediu
 // Link (z. B. aus einer Story) brauchen dann gar keine DB-Abfrage mehr.
 const BOOT = Date.now()
 const cache = new Map<string, { at: number; link: Link | null }>()
-const TTL = 60_000
+const TTL = 5 * 60_000
 
 async function lookup(code: string): Promise<Link | null> {
   const hit = cache.get(code)
@@ -41,6 +42,17 @@ type Context = { params: Promise<{ code: string }> }
 export async function GET(req: NextRequest, ctx: Context) {
   const { code } = await ctx.params
   if (!/^[a-z0-9]{4,20}$/i.test(code)) return NextResponse.redirect(FALLBACK_URL, 302)
+
+  // Warmhalten: laedt alle Links auf einmal in den Cache, damit kein Klick mehr auf die Datenbank warten muss
+  if (req.nextUrl.searchParams.get('__warm') === '1') {
+    const t0 = Date.now()
+    let n = 0
+    try {
+      const r = await fetch(`${SB_URL}/rest/v1/outreach_links?select=id,short_code,ziel_url,utm_source,utm_medium,utm_campaign,rabatt_code&limit=2000`, { headers: H, cache: 'no-store', signal: AbortSignal.timeout(4000) })
+      if (r.ok) { const rows = (await r.json()) as (Link & { short_code: string })[]; for (const l of rows) { cache.set(l.short_code, { at: Date.now(), link: l }); n++ } }
+    } catch {}
+    return NextResponse.json({ warmed: n, ms: Date.now() - t0, region: process.env.VERCEL_REGION || null, isolateAgeMs: Date.now() - BOOT }, { headers: { 'Cache-Control': 'no-store' } })
+  }
 
   const t0 = Date.now()
   const cached = !!cache.get(code)
