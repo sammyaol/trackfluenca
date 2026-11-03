@@ -72,6 +72,44 @@ export default function Produkte() {
       setCustom(c => ({ ...c, images: [...c.images, ...urls] }))
     } catch (e: any) { setError(e.message || 'Upload fehlgeschlagen') } finally { setUploading(false) }
   }
+  const [bulkBusy, setBulkBusy] = useState<string>('')
+  const [over, setOver] = useState(false)
+  // Schnell-Upload: jedes Bild wird ein eigenes Produkt (Name = Dateiname), direkt im Pool, danach Name/Preis anpassen
+  const bulkUpload = async (files: FileList | File[] | null) => {
+    const arr = Array.from(files || []).filter(f => f.type.startsWith('image/'))
+    if (!arr.length || !edit) return
+    setError('')
+    const token = await getToken()
+    const neu: GalerieItem[] = []
+    for (let i = 0; i < arr.length; i++) {
+      const f = arr[i]
+      setBulkBusy(`Lädt ${i + 1} von ${arr.length} hoch…`)
+      try {
+        const r = await fetch('/api/produkte/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ filename: f.name }) })
+        const d = await r.json()
+        if (!r.ok) throw new Error(d.error || 'Upload-URL fehlgeschlagen')
+        const { error } = await sb.storage.from('produkte').uploadToSignedUrl(d.path, d.token, f, { contentType: f.type || 'image/jpeg' })
+        if (error) throw error
+        const name = f.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').replace(/\s+\d+$/, '').trim() || 'Neues Produkt'
+        neu.push({ id: 'c-' + crypto.randomUUID(), title: name, price: null, images: [d.publicUrl], custom: true })
+      } catch (e: any) { setError(e.message || 'Upload fehlgeschlagen'); break }
+    }
+    setBulkBusy('')
+    if (neu.length) setEdit(ed => ed ? { ...ed, items: [...ed.items, ...neu] } : ed)
+  }
+  const setItemField = (id: string, f: Partial<GalerieItem>) => edit && setEdit({ ...edit, items: edit.items.map(i => i.id === id ? { ...i, ...f } : i) })
+  const addImageTo = async (id: string, files: FileList | null) => {
+    if (!files?.length || !edit) return
+    const token = await getToken()
+    const urls: string[] = []
+    for (const f of Array.from(files).slice(0, 8)) {
+      const r = await fetch('/api/produkte/upload-url', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + token }, body: JSON.stringify({ filename: f.name }) })
+      const d = await r.json(); if (!r.ok) continue
+      const { error } = await sb.storage.from('produkte').uploadToSignedUrl(d.path, d.token, f, { contentType: f.type || 'image/jpeg' })
+      if (!error) urls.push(d.publicUrl)
+    }
+    setEdit(ed => ed ? { ...ed, items: ed.items.map(i => i.id === id ? { ...i, images: [...i.images, ...urls] } : i) } : ed)
+  }
   const move = (from: string, to: string) => {
     if (!edit || from === to) return
     const items = [...edit.items]; const a = items.findIndex(i => i.id === from); const b = items.findIndex(i => i.id === to)
@@ -219,7 +257,16 @@ export default function Produkte() {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3 bg-surface-3 rounded-apple-sm p-4">
+                    <div className="space-y-4">
+                    <div onDragOver={e => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={e => { e.preventDefault(); setOver(false); bulkUpload(e.dataTransfer.files) }}
+                      className={`rounded-apple-lg border-2 border-dashed p-8 text-center transition-colors ${over ? 'border-accent bg-accent/10' : 'border-hairline bg-surface-3'}`}>
+                      <div className="text-ink-1 text-sm font-medium">Produktbilder hierher ziehen</div>
+                      <div className="text-ink-4 text-xs mt-1">Jedes Bild wird ein eigenes Produkt (Name aus dem Dateinamen). Name, Preis und weitere Bilder passt du danach rechts im Pool an.</div>
+                      <label className="inline-block mt-3 text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 cursor-pointer hover:text-ink-1">oder Dateien auswählen<input type="file" accept="image/*" multiple className="hidden" onChange={e => { bulkUpload(e.target.files); e.currentTarget.value = '' }} /></label>
+                      {bulkBusy && <div className="text-accent text-xs mt-3">{bulkBusy}</div>}
+                    </div>
+                    <details className="bg-surface-3 rounded-apple-sm p-4"><summary className="text-ink-2 text-xs cursor-pointer">Einzelnes Produkt mit mehreren Bildern anlegen</summary>
+                    <div className="space-y-3 mt-3">
                       <div className="grid grid-cols-[1fr_120px] gap-3">
                         <div><label className={labelCls}>Produktname</label><input value={custom.title} onChange={e => setCustom({ ...custom, title: e.target.value })} className={inputCls} /></div>
                         <div><label className={labelCls}>Preis (€)</label><input type="number" min={0} value={custom.price} onChange={e => setCustom({ ...custom, price: e.target.value })} className={inputCls} /></div>
@@ -232,6 +279,8 @@ export default function Produkte() {
                         {custom.images.length > 0 && <div className="flex gap-2 mt-2 flex-wrap">{custom.images.map((u, i) => <div key={u} className="relative"><img src={u} alt="" className="w-16 h-20 object-cover rounded" /><button onClick={() => setCustom({ ...custom, images: custom.images.filter(x => x !== u) })} className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-[10px]">×</button><span className="absolute bottom-0.5 left-0.5 text-[9px] px-1 bg-black/60 text-white rounded">{i + 1}</span></div>)}</div>}
                       </div>
                       <button onClick={addCustom} className="press bg-accent text-sm font-semibold rounded-full px-4 py-2">Zur Galerie hinzufügen</button>
+                    </div>
+                    </details>
                     </div>
                   )}
                 </div>
@@ -250,7 +299,15 @@ export default function Produkte() {
                         <div className="flex items-center gap-2">
                           <button title={i.hidden ? 'Einblenden' : 'Ausblenden'} onClick={() => setEdit({ ...edit, items: edit.items.map(x => x.id === i.id ? { ...x, hidden: !x.hidden } : x) })} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i.hidden ? 'bg-white/5 text-ink-4' : 'bg-accent/20 text-accent'}`}>{i.hidden ? '○' : '●'}</button>
                           {i.images[0] ? <img src={i.images[0]} alt="" className="w-10 h-12 object-cover rounded" /> : <div className="w-10 h-12 bg-white/5 rounded" />}
-                          <div className="min-w-0 flex-1"><div className="text-ink-1 text-xs truncate">{i.title}</div><div className="text-ink-4 text-[10px]">{i.price ? fmtPreis(i.price) : ''}{i.custom ? ' · eigenes Produkt' : ''} · {i.images.length} Bild{i.images.length === 1 ? '' : 'er'}{i.hidden ? ' · ausgeblendet' : ''}</div></div>
+                          <div className="min-w-0 flex-1">
+                            {i.custom ? (
+                              <div className="flex gap-1">
+                                <input value={i.title} onChange={e => setItemField(i.id, { title: e.target.value })} className="flex-1 min-w-0 bg-transparent border-b border-hairline text-ink-1 text-xs focus:outline-none focus:border-accent/50 py-0.5" />
+                                <input value={i.price ?? ''} onChange={e => setItemField(i.id, { price: e.target.value || null })} placeholder="€" className="w-14 bg-transparent border-b border-hairline text-ink-1 text-xs focus:outline-none focus:border-accent/50 py-0.5 text-right" />
+                              </div>
+                            ) : <div className="text-ink-1 text-xs truncate">{i.title}</div>}
+                            <div className="text-ink-4 text-[10px]">{!i.custom && i.price ? fmtPreis(i.price) + ' · ' : ''}{i.custom ? 'eigenes · ' : ''}{i.images.length} Bild{i.images.length === 1 ? '' : 'er'}{i.hidden ? ' · ausgeblendet' : ''}{i.custom && <label className="ml-1 text-accent cursor-pointer hover:underline">+ Bild<input type="file" accept="image/*" multiple className="hidden" onChange={e => { addImageTo(i.id, e.target.files); e.currentTarget.value = '' }} /></label>}</div>
+                          </div>
                           <button onClick={() => setEdit({ ...edit, items: edit.items.filter(x => x.id !== i.id) })} className="text-ink-4 hover:text-red-400 text-sm">×</button>
                         </div>
                         {i.images.length > 1 && (
