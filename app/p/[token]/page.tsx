@@ -6,9 +6,81 @@ import { fmtPreis, UI, type Galerie, type GalerieItem } from '@/lib/produkte'
 // Oeffentliche Produktgalerie fuer Creator (kein Login). Hell, ruhig, im Look des Kolure-Shops.
 // Pro Produkt: durchwischbare Bilder (Produktbild, getragen, Detail), Auswahl per Tipp, Wunschliste absenden.
 
+
+function Lightbox({ images, start, title, onClose }: { images: string[]; start: number; title: string; onClose: () => void }) {
+  const [idx, setIdx] = useState(start)
+  const [scale, setScale] = useState(1)
+  const [pos, setPos] = useState({ x: 0, y: 0 })
+  const ptrs = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ d: number; s: number } | null>(null)
+  const drag = useRef<{ x: number; y: number; px: number; py: number; moved: boolean } | null>(null)
+  const swipe = useRef<number | null>(null)
+  const lastTap = useRef(0)
+  const n = images.length
+  const reset = () => { setScale(1); setPos({ x: 0, y: 0 }) }
+  const go = (i: number) => { setIdx(((i % n) + n) % n); reset() }
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); if (e.key === 'ArrowRight') go(idx + 1); if (e.key === 'ArrowLeft') go(idx - 1) }
+    window.addEventListener('keydown', k); const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', k); document.body.style.overflow = prev }
+  }) // eslint-disable-line react-hooks/exhaustive-deps
+  const dist = () => { const a = [...ptrs.current.values()]; return a.length < 2 ? 0 : Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y) }
+  const onDown = (e: React.PointerEvent) => {
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (ptrs.current.size === 2) { pinch.current = { d: dist(), s: scale }; drag.current = null }
+    else if (ptrs.current.size === 1) { drag.current = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y, moved: false }; swipe.current = scale === 1 ? e.clientX : null }
+  }
+  const onMove = (e: React.PointerEvent) => {
+    if (!ptrs.current.has(e.pointerId)) return
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    if (ptrs.current.size === 2 && pinch.current) { const s = Math.min(5, Math.max(1, pinch.current.s * dist() / (pinch.current.d || 1))); setScale(s); if (s === 1) setPos({ x: 0, y: 0 }) }
+    else if (drag.current && scale > 1) { const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.current.moved = true; setPos({ x: drag.current.px + dx, y: drag.current.py + dy }) }
+  }
+  const onUp = (e: React.PointerEvent) => {
+    ptrs.current.delete(e.pointerId)
+    if (ptrs.current.size < 2) pinch.current = null
+    if (ptrs.current.size === 0) {
+      if (swipe.current !== null && scale === 1 && n > 1) { const dx = e.clientX - swipe.current; if (Math.abs(dx) > 60) { go(idx + (dx < 0 ? 1 : -1)); swipe.current = null; drag.current = null; return } }
+      if (drag.current && !drag.current.moved) {
+        const now = Date.now()
+        if (now - lastTap.current < 320) { if (scale > 1) reset(); else { setScale(2.5); const r = (e.currentTarget as HTMLElement).getBoundingClientRect(); setPos({ x: (r.width / 2 - (e.clientX - r.left)) * 1.5, y: (r.height / 2 - (e.clientY - r.top)) * 1.5 }) } lastTap.current = 0 }
+        else lastTap.current = now
+      }
+      swipe.current = null; drag.current = null
+    }
+  }
+  const onWheel = (e: React.WheelEvent) => { const s = Math.min(5, Math.max(1, scale * (e.deltaY < 0 ? 1.15 : 0.87))); setScale(s); if (s === 1) setPos({ x: 0, y: 0 }) }
+  return (
+    <div className="fixed inset-0 z-[200] bg-white flex flex-col select-none" onClick={e => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-4 py-3 text-neutral-900">
+        <p className="text-sm truncate pr-4">{title}{n > 1 ? ` · ${idx + 1}/${n}` : ''}</p>
+        <button type="button" onClick={onClose} aria-label="Schließen" className="w-10 h-10 -mr-2 flex items-center justify-center text-2xl leading-none">×</button>
+      </div>
+      <div className="relative flex-1 overflow-hidden touch-none" style={{ touchAction: 'none' }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel}>
+        <img src={images[idx]} alt={title} draggable={false} className="absolute inset-0 w-full h-full object-contain" style={{ transform: `translate(${pos.x}px, ${pos.y}px) scale(${scale})`, transition: pinch.current || drag.current?.moved ? 'none' : 'transform .2s', transformOrigin: 'center' }} />
+        {n > 1 && (
+          <>
+            <button type="button" onClick={() => go(idx - 1)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow flex items-center justify-center text-neutral-900 text-xl">‹</button>
+            <button type="button" onClick={() => go(idx + 1)} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 shadow flex items-center justify-center text-neutral-900 text-xl">›</button>
+          </>
+        )}
+      </div>
+      <div className="px-4 py-3 flex items-center justify-between text-neutral-400 text-[11px] uppercase tracking-[0.18em]">
+        <span>{scale > 1 ? Math.round(scale * 100) + ' %' : ''}</span>
+        <div className="flex gap-3">
+          <button type="button" onClick={() => { const s = Math.min(5, scale * 1.5); setScale(s) }} className="w-9 h-9 border border-neutral-300 text-neutral-900 text-base">+</button>
+          <button type="button" onClick={() => { const s = Math.max(1, scale / 1.5); setScale(s); if (s === 1) setPos({ x: 0, y: 0 }) }} className="w-9 h-9 border border-neutral-300 text-neutral-900 text-base">−</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Bilder({ item }: { item: GalerieItem }) {
   const ref = useRef<HTMLDivElement>(null)
   const [idx, setIdx] = useState(0)
+  const [big, setBig] = useState(false)
   const n = item.images.length
   const onScroll = () => { const el = ref.current; if (!el || !n) return; setIdx(Math.round(el.scrollLeft / el.clientWidth)) }
   const go = (i: number) => { const el = ref.current; if (!el) return; el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' }) }
@@ -22,6 +94,10 @@ function Bilder({ item }: { item: GalerieItem }) {
           </div>
         ))}
       </div>
+      <button type="button" onClick={e => { e.stopPropagation(); setBig(true) }} aria-label="Groß ansehen" className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center text-neutral-900">
+        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      </button>
+      {big && <Lightbox images={item.images} start={idx} title={item.title} onClose={() => setBig(false)} />}
       {n > 1 && (
         <>
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
@@ -136,7 +212,6 @@ export default function Galerie() {
                           <h3 className="text-[15px] leading-snug" style={serif}>{item.title}</h3>
                           {item.price && <span className="text-[13px] text-neutral-500 whitespace-nowrap">{fmtPreis(item.price)}</span>}
                         </div>
-                        {item.varianten && item.varianten.length > 0 && <p className="text-[11px] text-neutral-400 mt-1">{item.varianten.join(' · ')}</p>}
                         {item.hinweis && <p className="text-[12px] text-neutral-500 mt-1">{item.hinweis}</p>}
                         {g.status === 'aktiv' && (
                           <button type="button" onClick={() => toggle(item.id)} className={`mt-3 w-full py-2.5 text-[11px] uppercase tracking-[0.2em] transition ${on ? 'bg-neutral-900 text-white' : 'border border-neutral-900 text-neutral-900 hover:bg-neutral-900 hover:text-white'}`}>{on ? t.selected : t.select}</button>
