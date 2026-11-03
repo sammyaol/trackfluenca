@@ -128,12 +128,12 @@ export default function Produkte() {
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-ink-3 font-mono">{(g.sprache || 'de').toUpperCase()}</span>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${g.status === 'aktiv' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' : 'bg-white/5 text-ink-4 border-hairline'}`}>{g.status === 'aktiv' ? 'Aktiv' : 'Geschlossen'}</span>
                       </div>
-                      <p className="text-ink-4 text-xs mt-0.5">{(g.items || []).length} Produkte · erstellt {dat(g.created_at)}{g.max_auswahl ? ` · max. ${g.max_auswahl} pro Creator` : ''}</p>
+                      <p className="text-ink-4 text-xs mt-0.5">{(g.items || []).filter((i: GalerieItem) => !i.hidden).length} sichtbar von {(g.items || []).length} Produkten · erstellt {dat(g.created_at)}{g.max_auswahl ? ` · max. ${g.max_auswahl} pro Creator` : ''}</p>
                     </div>
                     <button onClick={() => openWuensche(g)} className={`press text-xs px-3 py-1.5 rounded-full border ${g.wuensche ? 'border-accent text-accent bg-accent/10' : 'border-hairline text-ink-3'}`}>{g.wuensche} {g.wuensche === 1 ? 'Wunsch' : 'Wünsche'}</button>
                   </div>
                   <div className="flex gap-1.5 mt-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                    {(g.items || []).slice(0, 10).map((i: GalerieItem) => <div key={i.id} className="w-12 h-14 flex-shrink-0 rounded bg-surface-3 overflow-hidden">{i.images?.[0] && <img src={i.images[0]} alt="" className="w-full h-full object-cover" />}</div>)}
+                    {(g.items || []).filter((i: GalerieItem) => !i.hidden).slice(0, 10).map((i: GalerieItem) => <div key={i.id} className="w-12 h-14 flex-shrink-0 rounded bg-surface-3 overflow-hidden">{i.images?.[0] && <img src={i.images[0]} alt="" className="w-full h-full object-cover" />}</div>)}
                     {(g.items || []).length > 10 && <div className="w-12 h-14 flex-shrink-0 rounded bg-surface-3 flex items-center justify-center text-ink-4 text-xs">+{g.items.length - 10}</div>}
                   </div>
                   <div className="flex gap-2 mt-4">
@@ -237,14 +237,20 @@ export default function Produkte() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between"><h3 className="text-ink-1 text-sm font-medium">In der Galerie ({edit.items.length})</h3><span className="text-ink-4 text-[10px]">Ziehen zum Sortieren</span></div>
+                  <div className="flex items-center justify-between"><h3 className="text-ink-1 text-sm font-medium">Pool ({edit.items.filter(i => !i.hidden).length} sichtbar / {edit.items.length})</h3><span className="text-ink-4 text-[10px]">Ziehen zum Sortieren · Auge = ein-/ausblenden</span></div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button onClick={() => setEdit({ ...edit, items: [...edit.items, ...products.filter(p => !hasItem(String(p.id))).map(p => ({ id: String(p.id), title: p.title, price: p.price, images: p.images?.length ? p.images : (p.image ? [p.image] : []), url: p.url, varianten: p.varianten || [], custom: false }))] })} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Alle Shop-Produkte hinzufügen</button>
+                    <button onClick={() => setEdit({ ...edit, items: edit.items.map(i => ({ ...i, hidden: false })) })} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Alle einblenden</button>
+                    <button onClick={() => setEdit({ ...edit, items: edit.items.map(i => ({ ...i, hidden: true })) })} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Alle ausblenden</button>
+                  </div>
                   <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
                     {edit.items.length === 0 && <p className="text-ink-4 text-xs">Noch leer. Links Produkte antippen.</p>}
                     {edit.items.map(i => (
-                      <div key={i.id} draggable onDragStart={() => setDrag(i.id)} onDragOver={e => e.preventDefault()} onDrop={() => { if (drag) move(drag, i.id); setDrag(null) }} className={`bg-surface-3 rounded-apple-sm p-2 border border-hairline-soft cursor-grab ${drag === i.id ? 'opacity-40' : ''}`}>
+                      <div key={i.id} draggable onDragStart={() => setDrag(i.id)} onDragOver={e => e.preventDefault()} onDrop={() => { if (drag) move(drag, i.id); setDrag(null) }} className={`bg-surface-3 rounded-apple-sm p-2 border border-hairline-soft cursor-grab ${drag === i.id ? 'opacity-40' : ''} ${i.hidden ? 'opacity-50' : ''}`}>
                         <div className="flex items-center gap-2">
+                          <button title={i.hidden ? 'Einblenden' : 'Ausblenden'} onClick={() => setEdit({ ...edit, items: edit.items.map(x => x.id === i.id ? { ...x, hidden: !x.hidden } : x) })} className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${i.hidden ? 'bg-white/5 text-ink-4' : 'bg-accent/20 text-accent'}`}>{i.hidden ? '○' : '●'}</button>
                           {i.images[0] ? <img src={i.images[0]} alt="" className="w-10 h-12 object-cover rounded" /> : <div className="w-10 h-12 bg-white/5 rounded" />}
-                          <div className="min-w-0 flex-1"><div className="text-ink-1 text-xs truncate">{i.title}</div><div className="text-ink-4 text-[10px]">{i.price ? fmtPreis(i.price) : ''}{i.custom ? ' · eigenes Produkt' : ''} · {i.images.length} Bild{i.images.length === 1 ? '' : 'er'}</div></div>
+                          <div className="min-w-0 flex-1"><div className="text-ink-1 text-xs truncate">{i.title}</div><div className="text-ink-4 text-[10px]">{i.price ? fmtPreis(i.price) : ''}{i.custom ? ' · eigenes Produkt' : ''} · {i.images.length} Bild{i.images.length === 1 ? '' : 'er'}{i.hidden ? ' · ausgeblendet' : ''}</div></div>
                           <button onClick={() => setEdit({ ...edit, items: edit.items.filter(x => x.id !== i.id) })} className="text-ink-4 hover:text-red-400 text-sm">×</button>
                         </div>
                         {i.images.length > 1 && (

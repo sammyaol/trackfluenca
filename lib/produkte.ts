@@ -7,6 +7,7 @@ export type GalerieItem = {
   varianten?: string[]
   hinweis?: string | null
   custom?: boolean
+  hidden?: boolean   // im Pool behalten, aber nicht anzeigen
 }
 export type Sprache = 'de' | 'en'
 export type Galerie = {
@@ -39,6 +40,7 @@ export function cleanItems(v: unknown): GalerieItem[] {
     varianten: (Array.isArray(it?.varianten) ? it.varianten : []).map((x: unknown) => String(x ?? '').slice(0, 40)).filter(Boolean).slice(0, 12),
     hinweis: it?.hinweis ? String(it.hinweis).slice(0, 300) : null,
     custom: !!it?.custom,
+    hidden: !!it?.hidden,
   })).filter(it => it.id && it.title)
 }
 export const fmtPreis = (p?: string | null) => p == null || p === '' || isNaN(Number(p)) ? '' : Number(p).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
