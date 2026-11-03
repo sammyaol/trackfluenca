@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { createPortal } from 'react-dom'
 import { fmtPreis, UI, type Galerie, type GalerieItem } from '@/lib/produkte'
 
 // Oeffentliche Produktgalerie fuer Creator (kein Login). Hell, ruhig, im Look des Kolure-Shops.
@@ -52,7 +53,7 @@ function Lightbox({ images, start, title, onClose }: { images: string[]; start: 
   }
   const onWheel = (e: React.WheelEvent) => { const s = Math.min(5, Math.max(1, scale * (e.deltaY < 0 ? 1.15 : 0.87))); setScale(s); if (s === 1) setPos({ x: 0, y: 0 }) }
   return (
-    <div className="fixed inset-0 z-[200] bg-white flex flex-col select-none" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[200] bg-white flex flex-col select-none" style={{ animation: 'none' }} onClick={e => e.stopPropagation()}>
       <div className="flex items-center justify-between px-4 py-3 text-neutral-900">
         <p className="text-sm truncate pr-4">{title}{n > 1 ? ` · ${idx + 1}/${n}` : ''}</p>
         <button type="button" onClick={onClose} aria-label="Schließen" className="w-10 h-10 -mr-2 flex items-center justify-center text-2xl leading-none">×</button>
@@ -97,7 +98,7 @@ function Bilder({ item }: { item: GalerieItem }) {
       <button type="button" onClick={e => { e.stopPropagation(); setBig(true) }} aria-label="Groß ansehen" className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center text-neutral-900">
         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
       </button>
-      {big && <Lightbox images={item.images} start={idx} title={item.title} onClose={() => setBig(false)} />}
+      {big && createPortal(<Lightbox images={item.images} start={idx} title={item.title} onClose={() => setBig(false)} />, document.body)}
       {n > 1 && (
         <>
           <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
