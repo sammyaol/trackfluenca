@@ -103,6 +103,23 @@ export async function storeMedia(adId: string, src: string, kind: 'img' | 'poste
   return db.storage.from('ads').getPublicUrl(path).data.publicUrl
 }
 
+// Importierte Ads (Quelle Browser): Medien von der Quell-URL in unseren Storage kopieren
+export async function processImports(n = 10) {
+  const { data: ads } = await db.from('ads_library').select('id, ad_id, media_type, media_url, media_poster').eq('media_status', 'import').order('first_seen', { ascending: false }).limit(n)
+  let ok = 0, fail = 0
+  for (const a of ads || []) {
+    try {
+      const upd: Record<string, unknown> = { media_status: 'done' }
+      if (a.media_type === 'video' && a.media_url) {
+        if (a.media_poster && !a.media_poster.includes('supabase')) upd.media_poster = await storeMedia(a.ad_id, a.media_poster, 'poster').catch(() => a.media_poster)
+        upd.media_url = await storeMedia(a.ad_id, a.media_url, 'video', 60_000_000)
+      } else if (a.media_url) upd.media_url = await storeMedia(a.ad_id, a.media_url, 'img')
+      await db.from('ads_library').update(upd).eq('id', a.id); ok++
+    } catch { await db.from('ads_library').update({ media_status: 'error' }).eq('id', a.id); fail++ }
+  }
+  return { ok, fail, remaining: (ads || []).length === n }
+}
+
 // Naechste Ads ohne Medien verarbeiten (wird vom Cron alle paar Minuten aufgerufen)
 export async function processMedia(userId: string, token: string, n = 12) {
   const { data: ads } = await db.from('ads_library').select('id, ad_id, snapshot_url, media_status').eq('user_id', userId).eq('media_status', 'pending').not('snapshot_url', 'is', null).order('first_seen', { ascending: false }).limit(n)

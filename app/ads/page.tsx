@@ -128,16 +128,17 @@ export default function AdsPage() {
           </div>
           <div className="flex items-center gap-2">
             {syncMsg && <span className="text-ink-4 text-xs max-w-md truncate" title={syncMsg}>{syncMsg}</span>}
-            <button onClick={() => sync()} disabled={!!syncing || !settings?.hasToken} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'all' ? 'Synchronisiert…' : 'Jetzt synchronisieren'}</button>
+            <button onClick={async () => { setSyncing('imports'); const { j } = await api('/api/ads/sync?mode=imports', 'POST'); setSyncing(null); const r = (j.imports || []).reduce((a: any, x: any) => ({ ok: a.ok + x.ok, fail: a.fail + x.fail }), { ok: 0, fail: 0 }); setSyncMsg(`Medien: ${r.ok} gespeichert${r.fail ? `, ${r.fail} fehlgeschlagen` : ''}`); loadAds(0, false) }} disabled={!!syncing} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'imports' ? 'Lädt Medien…' : 'Medien nachladen'}</button>
+            {settings?.hasToken && <button onClick={() => sync()} disabled={!!syncing || !settings?.hasToken} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'all' ? 'Synchronisiert…' : 'Jetzt synchronisieren'}</button>}
             <button onClick={() => setSetup(true)} className="press bg-accent hover:bg-accent-hover text-sm font-semibold rounded-full px-4 py-2">Marken & Zugang</button>
           </div>
         </div>
 
         <div className="p-8 space-y-5">
           {settings && !settings.hasToken && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-apple-lg p-4 text-sm text-amber-300 flex items-center justify-between gap-4">
-              <span>Noch kein Meta-Zugang hinterlegt. Ohne Token kann nichts gesammelt werden.</span>
-              <button onClick={() => setSetup(true)} className="press text-xs font-semibold rounded-full px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30">Einrichten</button>
+            <div className="bg-surface-2 border border-hairline-soft rounded-apple-lg p-4 text-sm text-ink-3 flex items-center justify-between gap-4">
+              <span>Die Ads werden per Browser aus der öffentlichen Meta Ad Library eingesammelt (Claude macht das auf Zuruf). Ein API-Token ist optional – damit liefe es automatisch jede Nacht.</span>
+              <button onClick={() => setSetup(true)} className="press text-xs font-semibold rounded-full px-3 py-1.5 border border-hairline text-ink-2 hover:text-ink-1 whitespace-nowrap">API einrichten</button>
             </div>
           )}
           {err && <div className="text-red-400 text-sm">{err}</div>}
@@ -169,7 +170,7 @@ export default function AdsPage() {
           {loading && !ads.length ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : !ads.length ? (
             <div className="text-center py-16">
               <div className="text-ink-2 text-sm font-medium">Keine Ads in dieser Auswahl</div>
-              <div className="text-ink-4 text-xs mt-1">{settings?.hasToken ? 'Filter anpassen oder „Jetzt synchronisieren“ klicken.' : 'Zuerst unter „Marken & Zugang“ den Meta-Token hinterlegen.'}</div>
+              <div className="text-ink-4 text-xs mt-1">{settings?.hasToken ? 'Filter anpassen oder „Jetzt synchronisieren“ klicken.' : 'Filter anpassen – oder Claude bitten, die Marke per Browser einzusammeln.'}</div>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
