@@ -9,6 +9,7 @@ export async function proxy(req: NextRequest) {
                          req.nextUrl.pathname.startsWith('/v/') ||
                          req.nextUrl.pathname.startsWith('/p/') ||
                          req.nextUrl.pathname.startsWith('/w/') ||
+                         req.nextUrl.pathname === '/ads/bridge' ||
                          req.nextUrl.pathname.startsWith('/galerie/') ||
                          req.nextUrl.pathname === '/koluere-logo.png' ||
                          req.nextUrl.pathname.startsWith('/_next')
