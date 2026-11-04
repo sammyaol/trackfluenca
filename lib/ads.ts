@@ -104,10 +104,10 @@ export async function storeMedia(adId: string, src: string, kind: 'img' | 'poste
 }
 
 // Importierte Ads (Quelle Browser): Medien von der Quell-URL in unseren Storage kopieren
-export async function processImports(n = 10) {
+export async function processImports(n = 24) {
   const { data: ads } = await db.from('ads_library').select('id, ad_id, media_type, media_url, media_poster').eq('media_status', 'import').order('first_seen', { ascending: false }).limit(n)
   let ok = 0, fail = 0
-  for (const a of ads || []) {
+  const one = async (a: { id: string; ad_id: string; media_type: string | null; media_url: string | null; media_poster: string | null }) => {
     try {
       const upd: Record<string, unknown> = { media_status: 'done' }
       if (a.media_type === 'video' && a.media_url) {
@@ -117,7 +117,9 @@ export async function processImports(n = 10) {
       await db.from('ads_library').update(upd).eq('id', a.id); ok++
     } catch { await db.from('ads_library').update({ media_status: 'error' }).eq('id', a.id); fail++ }
   }
-  return { ok, fail, remaining: (ads || []).length === n }
+  const list = ads || []
+  for (let i = 0; i < list.length; i += 6) await Promise.all(list.slice(i, i + 6).map(one))
+  return { ok, fail, remaining: list.length === n }
 }
 
 // Naechste Ads ohne Medien verarbeiten (wird vom Cron alle paar Minuten aufgerufen)

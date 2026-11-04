@@ -31,13 +31,13 @@ export async function POST(req: NextRequest) {
   const auth = req.headers.get('authorization')?.replace('Bearer ', '') || ''
   if (process.env.ADS_CRON_KEY && auth === process.env.ADS_CRON_KEY) {
     const out: Record<string, unknown> = {}
-    if (mode !== 'ads') { const t0 = Date.now(); const imp: unknown[] = []; while (Date.now() - t0 < 40_000) { const r = await processImports(8); imp.push(r); if (!r.remaining) break } out.imports = imp }
+    if (mode !== 'ads') { const t0 = Date.now(); const imp: unknown[] = []; while (Date.now() - t0 < 40_000) { const r = await processImports(24); imp.push(r); if (!r.remaining) break } out.imports = imp }
     const { data: users } = await db.from('ads_settings').select('user_id').not('meta_token', 'is', null)
     for (const u of users || []) out[u.user_id] = await run(u.user_id, null, mode, 40_000)
     return NextResponse.json(out)
   }
   const user = await getUser(req); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (mode === 'imports') { const t0 = Date.now(); const imp: unknown[] = []; while (Date.now() - t0 < 45_000) { const r = await processImports(8); imp.push(r); if (!r.remaining) break } return NextResponse.json({ imports: imp }) }
+  if (mode === 'imports') { const t0 = Date.now(); const imp: unknown[] = []; while (Date.now() - t0 < 45_000) { const r = await processImports(24); imp.push(r); if (!r.remaining) break } return NextResponse.json({ imports: imp }) }
   const r = await run(user.id, req.nextUrl.searchParams.get('brand'), mode, 45_000)
   return NextResponse.json(r, { status: 'error' in r ? 400 : 200 })
 }
