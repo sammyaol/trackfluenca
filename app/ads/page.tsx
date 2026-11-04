@@ -12,7 +12,8 @@ const libUrl = (adId: string) => `https://www.facebook.com/ads/library/?id=${adI
 const PLAT: Record<string, string> = { facebook: 'FB', instagram: 'IG', messenger: 'MSG', audience_network: 'AN', threads: 'TH' }
 
 type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; updated_at: string | null }
-type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'custom'
+type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom'
+const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 'Weihnachten', valentinstag: 'Valentinstag', muttertag: 'Muttertag' }
 
 export default function AdsPage() {
   const [brands, setBrands] = useState<Brand[]>([])
@@ -24,7 +25,7 @@ export default function AdsPage() {
   const [sel, setSel] = useState<string[]>([])
   const [preset, setPreset] = useState<Preset>('all')
   const [from, setFrom] = useState(''); const [to, setTo] = useState('')
-  const [platform, setPlatform] = useState(''); const [type, setType] = useState(''); const [sort, setSort] = useState('newest')
+  const [platform, setPlatform] = useState(''); const [anlass, setAnlass] = useState(''); const [type, setType] = useState(''); const [sort, setSort] = useState('newest')
   const [q, setQ] = useState(''); const [qDeb, setQDeb] = useState('')
   const [detail, setDetail] = useState<Ad | null>(null)
   const [setup, setSetup] = useState(false)
@@ -52,6 +53,7 @@ export default function AdsPage() {
     if (preset === 'y0') return { from: `${y}-01-01`, to: '' }
     if (preset === 'y1') return { from: `${y - 1}-01-01`, to: `${y - 1}-12-31` }
     if (preset === 'y2') return { from: `${y - 2}-01-01`, to: `${y - 2}-12-31` }
+    if (preset === 'y3') return { from: `${y - 3}-01-01`, to: `${y - 3}-12-31` }
     if (preset === 'custom') return { from, to }
     return { from: '', to: '' }
   }, [preset, from, to])
@@ -61,9 +63,9 @@ export default function AdsPage() {
     if (sel.length) p.set('brand', sel.join(','))
     if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to)
     if (preset === 'active') p.set('status', 'active')
-    if (platform) p.set('platform', platform); if (type) p.set('type', type); if (qDeb) p.set('q', qDeb); if (sort !== 'newest') p.set('sort', sort)
+    if (platform) p.set('platform', platform); if (anlass) p.set('anlass', anlass); if (type) p.set('type', type); if (qDeb) p.set('q', qDeb); if (sort !== 'newest') p.set('sort', sort)
     return p.toString()
-  }, [sel, range, preset, platform, type, qDeb, sort])
+  }, [sel, range, preset, platform, anlass, type, qDeb, sort])
 
   const loadAds = useCallback(async (pg: number, append: boolean) => {
     setLoading(true)
@@ -157,9 +159,11 @@ export default function AdsPage() {
               <option value="y0">{new Date().getFullYear()}</option>
               <option value="y1">{new Date().getFullYear() - 1}</option>
               <option value="y2">{new Date().getFullYear() - 2}</option>
+              <option value="y3">{new Date().getFullYear() - 3}</option>
               <option value="custom">Eigener Zeitraum</option>
             </select>
             {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
+            <div className="flex gap-1">{Object.entries(ANLASS).map(([k, v]) => <button key={k} onClick={() => setAnlass(a => a === k ? '' : k)} className={chip(anlass === k)}>{v}</button>)}</div>
             <select value={platform} onChange={e => setPlatform(e.target.value)} className={selCls}><option value="">Alle Plattformen</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="messenger">Messenger</option><option value="audience_network">Audience Network</option></select>
             <select value={type} onChange={e => setType(e.target.value)} className={selCls}><option value="">Bild & Video</option><option value="image">Nur Bilder</option><option value="video">Nur Videos</option></select>
             <select value={sort} onChange={e => setSort(e.target.value)} className={selCls}><option value="newest">Neueste zuerst</option><option value="oldest">Älteste zuerst</option><option value="reach">Größte Reichweite (EU)</option></select>
@@ -179,6 +183,7 @@ export default function AdsPage() {
                   <button onClick={() => setDetail(a)} className="aspect-[4/5] bg-surface-3 overflow-hidden text-left relative">
                     <Media a={a} />
                     {a.media_type === 'video' && <span className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-black/60 text-white font-medium">VIDEO</span>}
+                    {a.anlass && a.anlass.length > 0 && <span className="absolute bottom-2 left-2 text-[10px] px-1.5 py-0.5 rounded bg-white/90 text-neutral-900 font-medium">{a.anlass.map(x => ANLASS[x] || x).join(' · ')}</span>}
                     {!a.end_date && <span className="absolute top-2 right-2 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/90 text-white font-medium">aktiv</span>}
                   </button>
                   <div className="p-3 flex-1 flex flex-col gap-1.5">

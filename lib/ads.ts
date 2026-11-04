@@ -16,7 +16,7 @@ export type Ad = {
   body?: string | null; title?: string | null; caption?: string | null; description?: string | null; link_url?: string | null; cta?: string | null
   platforms: string[]; languages: string[]; start_date?: string | null; end_date?: string | null
   media_type?: string | null; media_url?: string | null; media_poster?: string | null; media_status: string; eu_reach?: number | null
-  first_seen: string; last_seen: string
+  first_seen: string; last_seen: string; anlass?: string[]
 }
 
 export async function getUser(req: Request) {
