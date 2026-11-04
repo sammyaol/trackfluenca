@@ -21,6 +21,26 @@ export default function Bridge() {
     }
     window.addEventListener('message', h)
     if (window.opener) window.opener.postMessage({ type: 'ads-bridge-ready' }, '*')
+    // Variante 2: Daten im URL-Fragment (#data=base64), weil facebook.com weder fetch noch Popups zu uns erlaubt
+    const m = location.hash.match(/^#data=(.+)$/)
+    if (m) {
+      ;(async () => {
+        try {
+          const d = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))))
+          history.replaceState(null, '', location.pathname)
+          const ads: unknown[] = d.ads || []
+          setLog([`${ads.length} Ads empfangen für Marke ${d.brand_id} – importiere…`])
+          let ins = 0, upd = 0
+          for (let i = 0; i < ads.length; i += 40) {
+            const r = await fetch('/api/ads/import', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + d.key }, body: JSON.stringify({ user_id: d.user_id, brand_id: d.brand_id, ads: ads.slice(i, i + 40) }) })
+            const j = await r.json().catch(() => ({}))
+            if (r.ok) { ins += j.inserted; upd += j.updated } else setLog(l => [...l, 'Fehler: ' + (j.error || r.status)])
+          }
+          setLog(l => [...l, `Fertig: ${ins} neu, ${upd} aktualisiert`])
+          ;(window as any).__done = { inserted: ins, updated: upd }
+        } catch (e: any) { setLog(l => [...l, 'Fehler: ' + e.message]) }
+      })()
+    }
     return () => window.removeEventListener('message', h)
   }, [])
   return <div className="p-6 text-sm text-ink-2 font-mono space-y-1">{log.map((l, i) => <div key={i}>{l}</div>)}</div>
