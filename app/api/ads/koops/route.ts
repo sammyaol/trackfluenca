@@ -33,11 +33,12 @@ export async function POST(req: NextRequest) {
   const { data: brand } = await db.from('ads_brands').select('id').eq('id', String(b.brand_id || '')).eq('user_id', userId).maybeSingle()
   if (!brand) return NextResponse.json({ error: 'Marke nicht gefunden' }, { status: 400, headers: CORS })
   const list: any[] = Array.isArray(b.koops) ? b.koops : []
+  const clean = (v: unknown, n: number) => v == null ? null : String(v).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|\u0000/g, '').slice(0, n)
   const d = (s: unknown) => { const m = String(s || '').match(/^(\d{4}-\d{2}-\d{2})/); return m ? m[1] : null }
   const rows = list.filter(k => k.creator && k.ref).map(k => ({
-    user_id: userId, brand_id: brand.id, creator: String(k.creator).trim().slice(0, 120), creator_handle: k.handle ? String(k.handle).replace(/^@/, '').slice(0, 120) : null,
+    user_id: userId, brand_id: brand.id, creator: clean(k.creator, 120)!.trim(), creator_handle: k.handle ? clean(String(k.handle).replace(/^@/, ''), 120) : null,
     creator_url: k.creator_url ? String(k.creator_url).slice(0, 500) : null, source: String(k.source || 'branded').slice(0, 20), ref: String(k.ref).slice(0, 200), url: k.url ? String(k.url).slice(0, 1000) : null,
-    start_date: d(k.date), end_date: null, media_url: k.media ? String(k.media).slice(0, 2000) : null, text: k.text ? String(k.text).slice(0, 500) : null, platform: k.platform ? String(k.platform).slice(0, 20) : 'instagram',
+    start_date: d(k.date), end_date: null, media_url: k.media ? clean(k.media, 2000) : null, text: k.text ? clean(k.text, 500) : null, platform: k.platform ? String(k.platform).slice(0, 20) : 'instagram',
   }))
   if (!rows.length) return NextResponse.json({ ok: true, inserted: 0 }, { headers: CORS })
   const { error, data } = await db.from('ads_koops').upsert(rows, { onConflict: 'user_id,source,ref', ignoreDuplicates: false }).select('id')

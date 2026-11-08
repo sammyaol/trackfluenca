@@ -9,7 +9,7 @@ const CORS = { 'Access-Control-Allow-Origin': 'https://www.facebook.com', 'Acces
 export async function OPTIONS() { return new NextResponse(null, { status: 204, headers: CORS }) }
 
 const d = (s: unknown) => { const m = String(s || '').match(/^(\d{4}-\d{2}-\d{2})/); return m ? m[1] : null }
-const str = (s: unknown, n = 2000) => s ? String(s).slice(0, n) : null
+const str = (s: unknown, n = 2000) => s ? String(s).replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]|\u0000/g, '').slice(0, n) : null
 
 export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({}))
