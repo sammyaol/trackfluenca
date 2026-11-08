@@ -28,6 +28,17 @@ export default function Bridge() {
         try {
           const d = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))))
           history.replaceState(null, '', location.pathname)
+          if (Array.isArray(d.koops)) {
+            setLog([`${d.koops.length} Kooperationen empfangen für Marke ${d.brand_id} – importiere…`])
+            let ins = 0
+            for (let i = 0; i < d.koops.length; i += 100) {
+              const r = await fetch('/api/ads/koops', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + d.key }, body: JSON.stringify({ user_id: d.user_id, brand_id: d.brand_id, koops: d.koops.slice(i, i + 100) }) })
+              const j = await r.json().catch(() => ({}))
+              if (r.ok) ins += j.inserted || 0; else setLog(l => [...l, 'Fehler: ' + (j.error || r.status)])
+            }
+            setLog(l => [...l, `Fertig: ${ins} Kooperationen gespeichert`])
+            return
+          }
           const ads: unknown[] = d.ads || []
           setLog([`${ads.length} Ads empfangen für Marke ${d.brand_id} – importiere…`])
           let ins = 0, upd = 0
