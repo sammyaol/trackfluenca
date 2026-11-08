@@ -41,6 +41,9 @@ export default function AdsPage() {
   const [koops, setKoops] = useState<Koop[]>([])
   const [koopsLoading, setKoopsLoading] = useState(false)
   const [koopCreator, setKoopCreator] = useState<string | null>(null)
+  const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>('brands')
+  const [koopMin, setKoopMin] = useState<'all' | 'multi' | 'multibrand'>('all')
+  const [koopQ, setKoopQ] = useState('')
   const [adding, setAdding] = useState<string | null>(null)
   const [addedMsg, setAddedMsg] = useState('')
 
@@ -98,8 +101,24 @@ export default function AdsPage() {
       r.items.push(k); r.brands.add(k.brand_id); if (!r.handle && k.creator_handle) r.handle = k.creator_handle; if (!r.url && k.creator_url) r.url = k.creator_url
       m.set(key, r)
     }
-    return [...m.values()].sort((a, b) => b.items.length - a.items.length || (b.items[0]?.start_date || '').localeCompare(a.items[0]?.start_date || ''))
-  }, [koops])
+    let rows = [...m.values()]
+    if (koopMin === 'multi') rows = rows.filter(r => r.items.length > 1)
+    if (koopMin === 'multibrand') rows = rows.filter(r => r.brands.size > 1)
+    if (koopQ.trim()) { const q = koopQ.trim().toLowerCase(); rows = rows.filter(r => r.creator.toLowerCase().includes(q) || (r.handle || '').toLowerCase().includes(q)) }
+    const last = (r: { items: Koop[] }) => r.items.reduce((a, k) => (k.start_date || '') > a ? (k.start_date || '') : a, '')
+    rows.sort((a, b) => {
+      if (koopSort === 'brands') return b.brands.size - a.brands.size || b.items.length - a.items.length || last(b).localeCompare(last(a))
+      if (koopSort === 'count') return b.items.length - a.items.length || b.brands.size - a.brands.size || last(b).localeCompare(last(a))
+      return last(b).localeCompare(last(a)) || b.items.length - a.items.length
+    })
+    return rows
+  }, [koops, koopSort, koopMin, koopQ])
+  // Farbe pro Marke (stabil aus der ID), damit man in der Zeitleiste sieht, welche Marke wann gebucht hat
+  const brandColor = useCallback((id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return `hsl(${h % 360} 70% 62%)` }, [])
+  const brandStats = useCallback((items: Koop[]) => { const m = new Map<string, number>(); for (const k of items) m.set(k.brand_id, (m.get(k.brand_id) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]) }, [])
+  const spanLabel = useCallback((items: Koop[]) => { const ds = items.map(k => k.start_date).filter(Boolean).sort() as string[]; if (!ds.length) return ''; const f = (d: string) => new Date(d).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' }); const a = f(ds[0]), b = f(ds[ds.length - 1]); return a === b ? a : `${a} – ${b}` }, [])
+  const postLink = (k: Koop) => k.url || (k.source === 'tiktok' && k.creator_handle ? `https://www.tiktok.com/@${k.creator_handle}` : k.creator_handle ? `https://www.instagram.com/${k.creator_handle}/` : '#')
+  const profileLink = (r: { handle: string | null; url: string | null; items: Koop[] }) => r.url || (r.handle ? (r.items.some(k => k.source === 'tiktok') && !r.items.some(k => k.source !== 'tiktok') ? `https://www.tiktok.com/@${r.handle}` : `https://www.instagram.com/${r.handle}/`) : null)
   const koopSpan = useMemo(() => {
     const ds = koops.map(k => k.start_date).filter(Boolean).sort() as string[]
     const end = new Date(); end.setDate(1)
@@ -208,8 +227,21 @@ export default function AdsPage() {
                   <option value="custom">Eigener Zeitraum</option>
                 </select>
                 {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
-                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4">{Object.entries(SRC).map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: v.color }} />{v.label}</span>)}</div>
-                <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht</span>
+                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke (Farbe), Rand = Quelle:</span>{Object.entries(SRC).map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
+              </div>
+              <div className="flex flex-wrap gap-2 items-center">
+                <select value={koopSort} onChange={e => setKoopSort(e.target.value as 'brands' | 'count' | 'recent')} className={selCls}>
+                  <option value="brands">Sortierung: meiste Marken</option>
+                  <option value="count">Sortierung: meiste Buchungen</option>
+                  <option value="recent">Sortierung: zuletzt gebucht</option>
+                </select>
+                <select value={koopMin} onChange={e => setKoopMin(e.target.value as 'all' | 'multi' | 'multibrand')} className={selCls}>
+                  <option value="all">Alle Creator</option>
+                  <option value="multi">Nur mehrfach gebucht (≥2 Posts)</option>
+                  <option value="multibrand">Nur bei ≥2 Marken gebucht</option>
+                </select>
+                <input value={koopQ} onChange={e => setKoopQ(e.target.value)} placeholder="Creator suchen…" className={selCls + ' w-44'} />
+                <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht · {koopRows.filter(r => r.brands.size > 1).length} bei mehreren Marken</span>
               </div>
               {addedMsg && <div className="text-emerald-400 text-sm">{addedMsg}</div>}
               {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : !koopRows.length ? (
@@ -219,7 +251,7 @@ export default function AdsPage() {
                   <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4">
                     <div className="px-4 py-2">Creator</div>
                     <div className="relative h-7">{koopSpan.months.map((m, i) => <span key={i} className="absolute top-2 -translate-x-1/2" style={{ left: `${((i + 0.5) / koopSpan.months.length) * 100}%` }}>{m.toLocaleDateString('de-DE', { month: 'short' })}{m.getMonth() === 0 || i === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''}</span>)}</div>
-                    <div className="px-3 py-2 text-right">Koops</div>
+                    <div className="px-3 py-2 text-right">Buchungen</div>
                   </div>
                   <div className="max-h-[70vh] overflow-y-auto">
                     {koopRows.map(r => (
@@ -227,28 +259,41 @@ export default function AdsPage() {
                         <div className="px-4 py-2.5 min-w-0">
                           <button onClick={() => setKoopCreator(koopCreator === r.creator ? null : r.creator)} className="text-ink-1 text-sm font-medium truncate block text-left hover:text-accent">{r.creator}</button>
                           <div className="text-ink-4 text-[11px] flex items-center gap-2">
-                            {r.handle && <a href={`https://www.instagram.com/${r.handle}/`} target="_blank" rel="noreferrer" className="hover:text-ink-2">@{r.handle}</a>}
-                            {!sel.length && r.brands.size > 1 && <span className="text-accent">{r.brands.size} Marken</span>}
-                            <button onClick={() => addCreator(r)} disabled={adding === r.creator} className="text-[10px] px-1.5 py-0.5 rounded border border-hairline text-ink-3 hover:text-ink-1 disabled:opacity-50">{adding === r.creator ? '…' : '+ Creator'}</button>
+                            {profileLink(r) && <a href={profileLink(r)!} target="_blank" rel="noreferrer" className="hover:text-ink-2 truncate">{r.handle ? '@' + r.handle : 'Profil'} ↗</a>}
+                            {r.brands.size > 1 && <span className="text-accent font-medium whitespace-nowrap">{r.brands.size} Marken</span>}
+                            <button onClick={() => addCreator(r)} disabled={adding === r.creator} className="text-[10px] px-1.5 py-0.5 rounded border border-hairline text-ink-3 hover:text-ink-1 disabled:opacity-50 whitespace-nowrap">{adding === r.creator ? '…' : '+ Creator'}</button>
                           </div>
+                          <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] px-1.5 py-px rounded-full border" style={{ borderColor: brandColor(b), color: brandColor(b) }}>{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
                         </div>
                         <div className="relative h-10">
                           <div className="absolute inset-y-0 left-0 right-0">{koopSpan.months.map((_, i) => <span key={i} className="absolute top-0 bottom-0 border-l border-hairline-soft/40" style={{ left: `${(i / koopSpan.months.length) * 100}%` }} />)}</div>
                           {r.items.filter(k => k.start_date).map(k => {
                             const days = k.end_date ? Math.max(1, Math.round((new Date(k.end_date).getTime() - new Date(k.start_date!).getTime()) / 86400000)) : 1
                             const size = Math.min(18, 8 + Math.log2(days + 1) * 2)
-                            return <a key={k.id} href={k.url || '#'} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border border-black/40 hover:scale-125 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: SRC[k.source]?.color || '#999' }} />
+                            return <a key={k.id} href={postLink(k)} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}\nKlick: Post öffnen`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 hover:scale-125 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: brandColor(k.brand_id), borderColor: SRC[k.source]?.color || '#999' }} />
                           })}
                         </div>
-                        <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}</span><div className="text-ink-4 text-[10px]">{r.items[0]?.start_date ? 'zuletzt ' + dat(r.items[0].start_date) : ''}</div></div>
+                        <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}×</span><div className="text-ink-4 text-[10px] whitespace-nowrap">{spanLabel(r.items)}</div></div>
                         {koopCreator === r.creator && (
-                          <div className="col-span-3 px-4 pb-3 flex gap-2 overflow-x-auto">
-                            {r.items.map(k => (
-                              <a key={k.id} href={k.url || '#'} target="_blank" rel="noreferrer" className="flex-shrink-0 w-28 bg-surface-3 rounded-apple-sm overflow-hidden border border-hairline-soft">
-                                <div className="aspect-[4/5] bg-black/30">{k.media_url && <img src={k.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />}</div>
-                                <div className="p-1.5 text-[10px] text-ink-3"><div className="text-ink-1 truncate">{brandName(k.brand_id)}</div>{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}<div style={{ color: SRC[k.source]?.color }}>{SRC[k.source]?.label || k.source}</div></div>
-                              </a>
-                            ))}
+                          <div className="col-span-3 px-4 pb-3">
+                            <div className="flex items-center gap-2 mb-2 text-xs text-ink-3">
+                              <span className="text-ink-1 font-medium">{r.items.length} Posts</span>
+                              <span>·</span>
+                              {brandStats(r.items).map(([b, n]) => <span key={b} style={{ color: brandColor(b) }}>{brandName(b)} {n}×</span>)}
+                              {profileLink(r) && <a href={profileLink(r)!} target="_blank" rel="noreferrer" className="ml-auto press text-[11px] px-2.5 py-1 rounded-full border border-hairline text-ink-2 hover:text-ink-1">Profil öffnen ↗</a>}
+                            </div>
+                            <div className="grid gap-1.5 max-h-[50vh] overflow-y-auto pr-1">
+                              {[...r.items].sort((a, b) => (b.start_date || '').localeCompare(a.start_date || '')).map(k => (
+                                <div key={k.id} className="flex items-center gap-3 bg-surface-3 rounded-apple-sm border border-hairline-soft p-1.5">
+                                  <a href={postLink(k)} target="_blank" rel="noreferrer" className="w-12 h-14 rounded bg-black/30 overflow-hidden flex-shrink-0">{k.media_url && <img src={k.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />}</a>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2 text-[11px]"><span className="font-medium" style={{ color: brandColor(k.brand_id) }}>{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: (SRC[k.source]?.color || '#999') + '22', color: SRC[k.source]?.color || '#999' }}>{SRC[k.source]?.label || k.source}</span></div>
+                                    <div className="text-ink-3 text-[11px] truncate">{k.text || '—'}</div>
+                                  </div>
+                                  <a href={postLink(k)} target="_blank" rel="noreferrer" className="press flex-shrink-0 text-[11px] px-2.5 py-1 rounded-full bg-accent text-[#1a1507] font-semibold">Öffnen ↗</a>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>

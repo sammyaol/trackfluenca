@@ -9,16 +9,22 @@ export async function OPTIONS() { return new NextResponse(null, { status: 204, h
 export async function GET(req: NextRequest) {
   const user = await getUser(req); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const p = req.nextUrl.searchParams
-  let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, ref, url, start_date, end_date, media_url, text, platform').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).limit(5000)
+  // Seitenweise laden (PostgREST liefert max. 1000 Zeilen pro Request), bis zu 30.000 Kooperationen
   const brands = (p.get('brand') || '').split(',').filter(Boolean)
-  if (brands.length) q = q.in('brand_id', brands)
-  if (p.get('creator')) q = q.ilike('creator', p.get('creator')!)
-  if (p.get('from')) q = q.gte('start_date', p.get('from')!)
-  if (p.get('to')) q = q.lte('start_date', p.get('to')!)
-  if (p.get('source')) q = q.eq('source', p.get('source')!)
-  const { data, error } = await q
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ koops: data })
+  const all: unknown[] = []
+  for (let off = 0; off < 30000; off += 1000) {
+    let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
+    if (brands.length) q = q.in('brand_id', brands)
+    if (p.get('creator')) q = q.ilike('creator', p.get('creator')!)
+    if (p.get('from')) q = q.gte('start_date', p.get('from')!)
+    if (p.get('to')) q = q.lte('start_date', p.get('to')!)
+    if (p.get('source')) q = q.eq('source', p.get('source')!)
+    const { data, error } = await q
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    for (const k of data || []) all.push({ ...k, text: k.text ? String(k.text).slice(0, 220) : null })
+    if (!data || data.length < 1000) break
+  }
+  return NextResponse.json({ koops: all })
 }
 
 // Import aus dem Browser (Bridge) oder App: Kooperationen anlegen/aktualisieren
