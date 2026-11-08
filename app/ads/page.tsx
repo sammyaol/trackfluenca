@@ -17,18 +17,24 @@ type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; upd
 type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom'
 const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 'Weihnachten', valentinstag: 'Valentinstag', muttertag: 'Muttertag' }
 
+// Filter-Zustand bleibt erhalten (Tab-Wechsel, Zurück-Navigation, Reload)
+const FKEY = 'tf_ads_filters'
+type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string }
+const loadSaved = (): Saved => { if (typeof window === 'undefined') return {}; try { return JSON.parse(localStorage.getItem(FKEY) || '{}') } catch { return {} } }
+
 export default function AdsPage() {
+  const saved = useMemo(loadSaved, [])
   const [brands, setBrands] = useState<Brand[]>([])
   const [settings, setSettings] = useState<Settings | null>(null)
   const [ads, setAds] = useState<Ad[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [sel, setSel] = useState<string[]>([])
-  const [preset, setPreset] = useState<Preset>('all')
-  const [from, setFrom] = useState(''); const [to, setTo] = useState('')
-  const [platform, setPlatform] = useState(''); const [anlass, setAnlass] = useState(''); const [type, setType] = useState(''); const [sort, setSort] = useState('newest')
-  const [q, setQ] = useState(''); const [qDeb, setQDeb] = useState('')
+  const [sel, setSel] = useState<string[]>(saved.sel || [])
+  const [preset, setPreset] = useState<Preset>(saved.preset || 'all')
+  const [from, setFrom] = useState(saved.from || ''); const [to, setTo] = useState(saved.to || '')
+  const [platform, setPlatform] = useState(saved.platform || ''); const [anlass, setAnlass] = useState(saved.anlass || ''); const [type, setType] = useState(saved.type || ''); const [sort, setSort] = useState(saved.sort || 'newest')
+  const [q, setQ] = useState(saved.q || ''); const [qDeb, setQDeb] = useState(saved.q || '')
   const [detail, setDetail] = useState<Ad | null>(null)
   const [setup, setSetup] = useState(false)
   const [syncing, setSyncing] = useState<string | null>(null)
@@ -37,13 +43,16 @@ export default function AdsPage() {
   const [newBrand, setNewBrand] = useState({ name: '', search_term: '', page_ids: '' })
   const [confirm, setConfirm] = useState<string | null>(null)
   const [err, setErr] = useState('')
-  const [view, setView] = useState<'ads' | 'koops'>('ads')
+  const [view, setView] = useState<'ads' | 'koops'>(saved.view || 'ads')
   const [koops, setKoops] = useState<Koop[]>([])
   const [koopsLoading, setKoopsLoading] = useState(false)
   const [koopCreator, setKoopCreator] = useState<string | null>(null)
-  const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>('brands')
-  const [koopMin, setKoopMin] = useState<'all' | 'multi' | 'multibrand'>('all')
-  const [koopQ, setKoopQ] = useState('')
+  const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>(saved.koopSort || 'brands')
+  const [koopMin, setKoopMin] = useState<'all' | 'multi' | 'multibrand'>(saved.koopMin || 'all')
+  const [koopQ, setKoopQ] = useState(saved.koopQ || '')
+  const [koopShow, setKoopShow] = useState(60)
+  useEffect(() => { try { localStorage.setItem(FKEY, JSON.stringify({ sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ })) } catch {} }, [sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ])
+  useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to])
   const [adding, setAdding] = useState<string | null>(null)
   const [addedMsg, setAddedMsg] = useState('')
 
@@ -123,7 +132,9 @@ export default function AdsPage() {
     const ds = koops.map(k => k.start_date).filter(Boolean).sort() as string[]
     const end = new Date(); end.setDate(1)
     let start = new Date(end); start.setMonth(start.getMonth() - 11)
-    if (ds.length) { const first = new Date(ds[0]); first.setDate(1); if (first < start) start = first }
+    // Zeitachse: mindestens 12, hoechstens 24 Monate – aeltere Punkte werden am linken Rand gesammelt
+    const min = new Date(end); min.setMonth(min.getMonth() - 23)
+    if (ds.length) { const first = new Date(ds[0]); first.setDate(1); if (first < start) start = first < min ? min : first }
     const months: Date[] = []; const c = new Date(start); while (c <= end) { months.push(new Date(c)); c.setMonth(c.getMonth() + 1) }
     const total = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
     const pos = (d: string) => { const x = new Date(d); const idx = (x.getFullYear() - start.getFullYear()) * 12 + (x.getMonth() - start.getMonth()) + (x.getDate() - 1) / 31; return Math.max(0, Math.min(100, (idx / total) * 100)) }
@@ -248,14 +259,14 @@ export default function AdsPage() {
                 <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Keine Kooperationen in dieser Auswahl</div><div className="text-ink-4 text-xs mt-1">Quellen: Partnership-Ads („Creator mit Marke“) aus der Ad Library, Branded-Content-Library und Instagram-Tags. Sag Claude, welche Marke per Browser nachgezogen werden soll.</div></div>
               ) : (
                 <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
-                  <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4">
+                  <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4 bg-surface-2">
                     <div className="px-4 py-2">Creator</div>
-                    <div className="relative h-7">{koopSpan.months.map((m, i) => <span key={i} className="absolute top-2 -translate-x-1/2" style={{ left: `${((i + 0.5) / koopSpan.months.length) * 100}%` }}>{m.toLocaleDateString('de-DE', { month: 'short' })}{m.getMonth() === 0 || i === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''}</span>)}</div>
+                    <div className="relative h-8">{koopSpan.months.map((m, i) => <span key={i} className={`absolute top-0 bottom-0 flex items-center justify-center text-[10px] ${i % 2 ? 'bg-white/[0.025]' : ''} ${m.getMonth() === 0 || i === 0 ? 'text-ink-2 font-semibold' : ''}`} style={{ left: `${(i / koopSpan.months.length) * 100}%`, width: `${100 / koopSpan.months.length}%` }}>{m.toLocaleDateString('de-DE', { month: 'short' })}{m.getMonth() === 0 || i === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''}</span>)}</div>
                     <div className="px-3 py-2 text-right">Buchungen</div>
                   </div>
                   <div className="max-h-[70vh] overflow-y-auto">
-                    {koopRows.map(r => (
-                      <div key={r.creator} className="grid grid-cols-[260px_1fr_120px] items-center border-b border-hairline-soft/60 hover:bg-white/[0.02]">
+                    {koopRows.slice(0, koopShow).map(r => (
+                      <div key={r.creator} className="grid grid-cols-[260px_1fr_120px] items-center border-b border-hairline-soft/60 hover:bg-white/[0.03]">
                         <div className="px-4 py-2.5 min-w-0">
                           <button onClick={() => setKoopCreator(koopCreator === r.creator ? null : r.creator)} className="text-ink-1 text-sm font-medium truncate block text-left hover:text-accent">{r.creator}</button>
                           <div className="text-ink-4 text-[11px] flex items-center gap-2">
@@ -265,12 +276,13 @@ export default function AdsPage() {
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] px-1.5 py-px rounded-full border" style={{ borderColor: brandColor(b), color: brandColor(b) }}>{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
                         </div>
-                        <div className="relative h-10">
-                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.months.map((_, i) => <span key={i} className="absolute top-0 bottom-0 border-l border-hairline-soft/40" style={{ left: `${(i / koopSpan.months.length) * 100}%` }} />)}</div>
+                        <div className="relative h-14">
+                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.months.map((_, i) => <span key={i} className={`absolute top-0 bottom-0 border-l border-hairline-soft/50 ${i % 2 ? 'bg-white/[0.025]' : ''}`} style={{ left: `${(i / koopSpan.months.length) * 100}%`, width: `${100 / koopSpan.months.length}%` }} />)}</div>
+                          <div className="absolute left-0 right-0 top-1/2 border-t border-hairline-soft/60" />
                           {r.items.filter(k => k.start_date).map(k => {
                             const days = k.end_date ? Math.max(1, Math.round((new Date(k.end_date).getTime() - new Date(k.start_date!).getTime()) / 86400000)) : 1
-                            const size = Math.min(18, 8 + Math.log2(days + 1) * 2)
-                            return <a key={k.id} href={postLink(k)} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}\nKlick: Post öffnen`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 hover:scale-125 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: brandColor(k.brand_id), borderColor: SRC[k.source]?.color || '#999' }} />
+                            const size = Math.min(26, 14 + Math.log2(days + 1) * 2)
+                            return <a key={k.id} href={postLink(k)} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}\nKlick: Post öffnen`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-[3px] shadow-[0_0_0_1px_rgba(0,0,0,.5)] hover:scale-125 hover:z-10 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: brandColor(k.brand_id), borderColor: SRC[k.source]?.color || '#999' }} />
                           })}
                         </div>
                         <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}×</span><div className="text-ink-4 text-[10px] whitespace-nowrap">{spanLabel(r.items)}</div></div>
@@ -298,6 +310,9 @@ export default function AdsPage() {
                         )}
                       </div>
                     ))}
+                    {koopRows.length > koopShow && (
+                      <div className="p-3 text-center"><button onClick={() => setKoopShow(n => n + 100)} className="press text-xs px-4 py-2 rounded-full border border-hairline text-ink-2 hover:text-ink-1">Weitere {Math.min(100, koopRows.length - koopShow)} Creator anzeigen ({koopRows.length - koopShow} übrig)</button></div>
+                    )}
                   </div>
                 </div>
               )}
