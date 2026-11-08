@@ -11,15 +11,18 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 const libUrl = (adId: string) => `https://www.facebook.com/ads/library/?id=${adId}`
 const PLAT: Record<string, string> = { facebook: 'FB', instagram: 'IG', messenger: 'MSG', audience_network: 'AN', threads: 'TH' }
 
-type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null }
+type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref?: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null; likes?: number | null; views?: number | null; flags?: string[] | null }
 const SRC: Record<string, { label: string; color: string }> = { ad: { label: 'Partnership-Ad', color: '#e6c27a' }, branded: { label: 'Branded Content (IG)', color: '#c9b8ff' }, ig_tag: { label: 'Instagram-Tag', color: '#ff7a8a' }, tiktok: { label: 'TikTok', color: '#5ee3a3' } }
 type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; updated_at: string | null }
-type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom'
+type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom' | 'month' | 'event'
+// Anlass-Zeitfenster fuer die Kooperationen (Jahr waehlbar)
+const EVENTS: Record<string, { label: string; from: [number, number]; to: [number, number]; prevYear?: boolean }> = { black_week: { label: 'Black Week', from: [11, 10], to: [12, 3] }, weihnachten: { label: 'Weihnachten', from: [11, 25], to: [12, 26] }, valentinstag: { label: 'Valentinstag', from: [1, 15], to: [2, 14] }, muttertag: { label: 'Muttertag', from: [4, 15], to: [5, 12] }, sommer: { label: 'Sommer / Summer Sale', from: [6, 1], to: [8, 31] }, herbst: { label: 'Herbst', from: [9, 1], to: [10, 31] } }
+const pad = (n: number) => String(n).padStart(2, '0')
 const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 'Weihnachten', valentinstag: 'Valentinstag', muttertag: 'Muttertag' }
 
 // Filter-Zustand bleibt erhalten (Tab-Wechsel, Zurück-Navigation, Reload)
 const FKEY = 'tf_ads_filters'
-type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string }
+type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string; koopMinLikes?: number; koopFlagged?: boolean; koopSrc?: string; month?: string; event?: string; eventYear?: number }
 const loadSaved = (): Saved => { if (typeof window === 'undefined') return {}; try { return JSON.parse(localStorage.getItem(FKEY) || '{}') } catch { return {} } }
 
 export default function AdsPage() {
@@ -47,12 +50,18 @@ export default function AdsPage() {
   const [koops, setKoops] = useState<Koop[]>([])
   const [koopsLoading, setKoopsLoading] = useState(false)
   const [koopCreator, setKoopCreator] = useState<string | null>(null)
-  const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>(saved.koopSort || 'brands')
+  const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>(saved.koopSort || 'count')
   const [koopMin, setKoopMin] = useState<'all' | 'multi' | 'multibrand'>(saved.koopMin || 'all')
   const [koopQ, setKoopQ] = useState(saved.koopQ || '')
+  const [koopMinLikes, setKoopMinLikes] = useState<number>(saved.koopMinLikes ?? 0)
+  const [koopFlagged, setKoopFlagged] = useState<boolean>(saved.koopFlagged ?? false)
+  const [koopSrc, setKoopSrc] = useState<string>(saved.koopSrc || '')
+  const [month, setMonth] = useState(saved.month || `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}`)
+  const [event, setEvent] = useState(saved.event || 'black_week'); const [eventYear, setEventYear] = useState<number>(saved.eventYear || new Date().getFullYear() - 1)
+  const [brandQ, setBrandQ] = useState(''); const [brandOpen, setBrandOpen] = useState(false)
   const [koopShow, setKoopShow] = useState(60)
-  useEffect(() => { try { localStorage.setItem(FKEY, JSON.stringify({ sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ })) } catch {} }, [sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ])
-  useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to])
+  useEffect(() => { try { localStorage.setItem(FKEY, JSON.stringify({ sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear })) } catch {} }, [sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
+  useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
   const [adding, setAdding] = useState<string | null>(null)
   const [addedMsg, setAddedMsg] = useState('')
 
@@ -75,8 +84,10 @@ export default function AdsPage() {
     if (preset === 'y2') return { from: `${y - 2}-01-01`, to: `${y - 2}-12-31` }
     if (preset === 'y3') return { from: `${y - 3}-01-01`, to: `${y - 3}-12-31` }
     if (preset === 'custom') return { from, to }
+    if (preset === 'month') { const [yy, mm] = month.split('-').map(Number); const last = new Date(yy, mm, 0).getDate(); return { from: `${yy}-${pad(mm)}-01`, to: `${yy}-${pad(mm)}-${pad(last)}` } }
+    if (preset === 'event') { const e = EVENTS[event] || EVENTS.black_week; return { from: `${eventYear}-${pad(e.from[0])}-${pad(e.from[1])}`, to: `${eventYear}-${pad(e.to[0])}-${pad(e.to[1])}` } }
     return { from: '', to: '' }
-  }, [preset, from, to])
+  }, [preset, from, to, month, event, eventYear])
 
   const query = useMemo(() => {
     const p = new URLSearchParams()
@@ -105,6 +116,9 @@ export default function AdsPage() {
   const koopRows = useMemo(() => {
     const m = new Map<string, { creator: string; handle: string | null; url: string | null; items: Koop[]; brands: Set<string> }>()
     for (const k of koops) {
+      if (koopSrc && k.source !== koopSrc) continue
+      if (koopFlagged && k.source !== 'ad' && !(k.flags && k.flags.length)) continue
+      if (koopMinLikes && k.source !== 'ad') { const score = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); if (score < koopMinLikes && !(k.flags || []).some(f => f === 'Anzeige' || f === 'Collab')) continue }
       const key = (k.creator_handle || k.creator).toLowerCase()
       const r = m.get(key) || { creator: k.creator, handle: k.creator_handle || null, url: k.creator_url || null, items: [], brands: new Set<string>() }
       r.items.push(k); r.brands.add(k.brand_id); if (!r.handle && k.creator_handle) r.handle = k.creator_handle; if (!r.url && k.creator_url) r.url = k.creator_url
@@ -121,7 +135,7 @@ export default function AdsPage() {
       return last(b).localeCompare(last(a)) || b.items.length - a.items.length
     })
     return rows
-  }, [koops, koopSort, koopMin, koopQ])
+  }, [koops, koopSort, koopMin, koopQ, koopSrc, koopFlagged, koopMinLikes])
   // Farbe pro Marke (stabil aus der ID), damit man in der Zeitleiste sieht, welche Marke wann gebucht hat
   const brandColor = useCallback((id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return `hsl(${h % 360} 70% 62%)` }, [])
   const brandStats = useCallback((items: Koop[]) => { const m = new Map<string, number>(); for (const k of items) m.set(k.brand_id, (m.get(k.brand_id) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]) }, [])
@@ -129,17 +143,20 @@ export default function AdsPage() {
   const postLink = (k: Koop) => k.url || (k.source === 'tiktok' && k.creator_handle ? `https://www.tiktok.com/@${k.creator_handle}` : k.creator_handle ? `https://www.instagram.com/${k.creator_handle}/` : '#')
   const profileLink = (r: { handle: string | null; url: string | null; items: Koop[] }) => r.url || (r.handle ? (r.items.some(k => k.source === 'tiktok') && !r.items.some(k => k.source !== 'tiktok') ? `https://www.tiktok.com/@${r.handle}` : `https://www.instagram.com/${r.handle}/`) : null)
   const koopSpan = useMemo(() => {
+    // Zeitachse folgt dem gewaehlten Zeitraum; ohne Auswahl: letzte 24 Monate (bzw. bis zum aeltesten Eintrag, max. 48 Monate)
     const ds = koops.map(k => k.start_date).filter(Boolean).sort() as string[]
-    const end = new Date(); end.setDate(1)
-    let start = new Date(end); start.setMonth(start.getMonth() - 11)
-    // Zeitachse: mindestens 12, hoechstens 24 Monate – aeltere Punkte werden am linken Rand gesammelt
-    const min = new Date(end); min.setMonth(min.getMonth() - 23)
-    if (ds.length) { const first = new Date(ds[0]); first.setDate(1); if (first < start) start = first < min ? min : first }
-    const months: Date[] = []; const c = new Date(start); while (c <= end) { months.push(new Date(c)); c.setMonth(c.getMonth() + 1) }
-    const total = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
-    const pos = (d: string) => { const x = new Date(d); const idx = (x.getFullYear() - start.getFullYear()) * 12 + (x.getMonth() - start.getMonth()) + (x.getDate() - 1) / 31; return Math.max(0, Math.min(100, (idx / total) * 100)) }
-    return { months, pos }
-  }, [koops])
+    let start: Date, end: Date
+    if (range.from) { start = new Date(range.from); end = range.to ? new Date(range.to) : new Date() }
+    else { end = new Date(); start = new Date(end); start.setMonth(start.getMonth() - 23); start.setDate(1); const min = new Date(end); min.setMonth(min.getMonth() - 47); min.setDate(1); if (ds.length) { const first = new Date(ds[0]); first.setDate(1); if (first < start) start = first < min ? min : first } }
+    const span = Math.max(1, (end.getTime() - start.getTime()) / 86400000 + 1)
+    const pos = (d: string) => Math.max(0, Math.min(100, ((new Date(d).getTime() - start.getTime()) / 86400000) / span * 100))
+    // Raster: Monate (lang), Wochen (bis 4 Monate) oder Tage (bis 6 Wochen)
+    const ticks: { label: string; left: number; width: number; strong?: boolean }[] = []
+    if (span <= 45) { const c = new Date(start); while (c <= end) { const n = new Date(c); n.setDate(n.getDate() + 1); ticks.push({ label: c.getDate() + '.', left: pos(c.toISOString().slice(0, 10)), width: 100 / span, strong: c.getDay() === 1 }); c.setDate(c.getDate() + 1) } }
+    else if (span <= 125) { const c = new Date(start); c.setDate(c.getDate() - ((c.getDay() + 6) % 7)); while (c <= end) { const n = new Date(c); n.setDate(n.getDate() + 7); const l = Math.max(0, pos(c.toISOString().slice(0, 10))); const r = Math.min(100, pos(n.toISOString().slice(0, 10))); ticks.push({ label: `${c.getDate()}.${c.getMonth() + 1}.`, left: l, width: r - l, strong: c.getDate() <= 7 }); c.setDate(c.getDate() + 7) } }
+    else { const c = new Date(start.getFullYear(), start.getMonth(), 1); while (c <= end) { const n = new Date(c.getFullYear(), c.getMonth() + 1, 1); const l = Math.max(0, pos(c.toISOString().slice(0, 10))); const r = Math.min(100, pos(n.toISOString().slice(0, 10))); ticks.push({ label: c.toLocaleDateString('de-DE', { month: 'short' }) + (c.getMonth() === 0 || ticks.length === 0 ? ` ${String(c.getFullYear()).slice(2)}` : ''), left: l, width: r - l, strong: c.getMonth() === 0 }); c.setMonth(c.getMonth() + 1) } }
+    return { ticks, pos, span }
+  }, [koops, range])
   const addCreator = async (r: { creator: string; handle: string | null; url: string | null }) => {
     setAdding(r.creator); setAddedMsg('')
     const ig = r.handle || (r.url && /instagram\.com\/([^/?]+)/.exec(r.url)?.[1]) || (/^[a-z0-9._]+$/i.test(r.creator) ? r.creator : '')
@@ -223,8 +240,22 @@ export default function AdsPage() {
           {err && <div className="text-red-400 text-sm">{err}</div>}
 
           <div className="flex flex-wrap gap-2 items-center">
-            <button onClick={() => setSel([])} className={chip(!sel.length)}>Alle Marken</button>
-            {brands.map(b => <button key={b.id} onClick={() => setSel(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id])} className={chip(sel.includes(b.id))} title={b.last_error || ''}>{b.name}<span className="ml-1.5 opacity-60">{b.ad_count}</span></button>)}
+            <div className="relative">
+              <input value={brandQ} onChange={e => { setBrandQ(e.target.value); setBrandOpen(true) }} onFocus={() => setBrandOpen(true)} onBlur={() => setTimeout(() => setBrandOpen(false), 150)} onKeyDown={e => { if (e.key === 'Enter') { const hit = brands.find(b => b.name.toLowerCase().includes(brandQ.trim().toLowerCase())); if (hit) { setSel(s => s.includes(hit.id) ? s : [...s, hit.id]); setBrandQ(''); setBrandOpen(false) } } if (e.key === 'Escape') setBrandOpen(false) }} placeholder={`Marke suchen… (${brands.length})`} className={selCls + ' w-56'} />
+              {brandOpen && (
+                <div className="absolute z-30 mt-1 w-72 max-h-72 overflow-y-auto bg-surface-2 border border-hairline rounded-apple-md shadow-xl">
+                  {brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)).map(b => (
+                    <button key={b.id} onMouseDown={e => e.preventDefault()} onClick={() => { setSel(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id]); setBrandQ('') }} className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between hover:bg-white/[0.04] ${sel.includes(b.id) ? 'text-accent' : 'text-ink-2'}`}>
+                      <span className="truncate">{sel.includes(b.id) ? '✓ ' : ''}{b.name}</span><span className="text-ink-4 text-[11px] ml-2">{b.ad_count} Ads</span>
+                    </button>
+                  ))}
+                  {!brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).length && <div className="px-3 py-2 text-xs text-ink-4">Keine Marke gefunden</div>}
+                </div>
+              )}
+            </div>
+            {!sel.length && <span className="text-ink-4 text-xs">Alle Marken</span>}
+            {sel.map(id => <button key={id} onClick={() => setSel(s => s.filter(x => x !== id))} className={chip(true)} title="Entfernen">{brandName(id)} <span className="ml-1 opacity-70">×</span></button>)}
+            {sel.length > 0 && <button onClick={() => setSel([])} className="text-xs text-ink-4 hover:text-ink-2">Zurücksetzen</button>}
           </div>
 
           {view === 'koops' && (
@@ -235,8 +266,18 @@ export default function AdsPage() {
                   <option value="90">Letzte 90 Tage</option>
                   <option value="y0">{new Date().getFullYear()}</option>
                   <option value="y1">{new Date().getFullYear() - 1}</option>
+                  <option value="y2">{new Date().getFullYear() - 2}</option>
+                  <option value="y3">{new Date().getFullYear() - 3}</option>
+                  <option value="month">Einzelner Monat…</option>
+                  <option value="event">Anlass (Black Week, Weihnachten…)</option>
                   <option value="custom">Eigener Zeitraum</option>
                 </select>
+                {preset === 'month' && <input type="month" value={month} onChange={e => setMonth(e.target.value)} className={selCls} />}
+                {preset === 'event' && <>
+                  <select value={event} onChange={e => setEvent(e.target.value)} className={selCls}>{Object.entries(EVENTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select>
+                  <select value={eventYear} onChange={e => setEventYear(Number(e.target.value))} className={selCls}>{[0, 1, 2, 3, 4].map(i => <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>)}</select>
+                  <span className="text-ink-4 text-xs">{range.from} – {range.to}</span>
+                </>}
                 {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
                 <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke (Farbe), Rand = Quelle:</span>{Object.entries(SRC).map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
               </div>
@@ -251,6 +292,18 @@ export default function AdsPage() {
                   <option value="multi">Nur mehrfach gebucht (≥2 Posts)</option>
                   <option value="multibrand">Nur bei ≥2 Marken gebucht</option>
                 </select>
+                <select value={koopSrc} onChange={e => setKoopSrc(e.target.value)} className={selCls}>
+                  <option value="">Alle Quellen</option>
+                  {Object.entries(SRC).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+                <select value={koopMinLikes} onChange={e => setKoopMinLikes(Number(e.target.value))} className={selCls} title="Qualitätsfilter: Mindest-Likes (Instagram) bzw. Views/20 (TikTok). Gekennzeichnete Posts (Anzeige/Collab) bleiben immer drin.">
+                  <option value={0}>Qualität: alle</option>
+                  <option value={100}>≥ 100 Likes</option>
+                  <option value={300}>≥ 300 Likes</option>
+                  <option value={1000}>≥ 1.000 Likes</option>
+                  <option value={5000}>≥ 5.000 Likes</option>
+                </select>
+                <label className="flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer"><input type="checkbox" checked={koopFlagged} onChange={e => setKoopFlagged(e.target.checked)} className="accent-[#e6c27a]" />Nur gekennzeichnet (Anzeige/Collab/verifiziert)</label>
                 <input value={koopQ} onChange={e => setKoopQ(e.target.value)} placeholder="Creator suchen…" className={selCls + ' w-44'} />
                 <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht · {koopRows.filter(r => r.brands.size > 1).length} bei mehreren Marken</span>
               </div>
@@ -261,7 +314,7 @@ export default function AdsPage() {
                 <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
                   <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4 bg-surface-2">
                     <div className="px-4 py-2">Creator</div>
-                    <div className="relative h-8">{koopSpan.months.map((m, i) => <span key={i} className={`absolute top-0 bottom-0 flex items-center justify-center text-[10px] ${i % 2 ? 'bg-white/[0.025]' : ''} ${m.getMonth() === 0 || i === 0 ? 'text-ink-2 font-semibold' : ''}`} style={{ left: `${(i / koopSpan.months.length) * 100}%`, width: `${100 / koopSpan.months.length}%` }}>{m.toLocaleDateString('de-DE', { month: 'short' })}{m.getMonth() === 0 || i === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''}</span>)}</div>
+                    <div className="relative h-8 overflow-hidden">{koopSpan.ticks.map((t, i) => <span key={i} className={`absolute top-0 bottom-0 flex items-center justify-center text-[10px] overflow-hidden whitespace-nowrap ${i % 2 ? 'bg-white/[0.025]' : ''} ${t.strong ? 'text-ink-2 font-semibold' : ''}`} style={{ left: `${t.left}%`, width: `${t.width}%` }}>{koopSpan.ticks.length > 40 && i % 2 ? '' : t.label}</span>)}</div>
                     <div className="px-3 py-2 text-right">Buchungen</div>
                   </div>
                   <div className="max-h-[70vh] overflow-y-auto">
@@ -277,7 +330,7 @@ export default function AdsPage() {
                           <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] px-1.5 py-px rounded-full border" style={{ borderColor: brandColor(b), color: brandColor(b) }}>{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
                         </div>
                         <div className="relative h-14">
-                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.months.map((_, i) => <span key={i} className={`absolute top-0 bottom-0 border-l border-hairline-soft/50 ${i % 2 ? 'bg-white/[0.025]' : ''}`} style={{ left: `${(i / koopSpan.months.length) * 100}%`, width: `${100 / koopSpan.months.length}%` }} />)}</div>
+                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.ticks.map((t, i) => <span key={i} className={`absolute top-0 bottom-0 border-l border-hairline-soft/50 ${i % 2 ? 'bg-white/[0.025]' : ''}`} style={{ left: `${t.left}%`, width: `${t.width}%` }} />)}</div>
                           <div className="absolute left-0 right-0 top-1/2 border-t border-hairline-soft/60" />
                           {r.items.filter(k => k.start_date).map(k => {
                             const days = k.end_date ? Math.max(1, Math.round((new Date(k.end_date).getTime() - new Date(k.start_date!).getTime()) / 86400000)) : 1
@@ -301,6 +354,7 @@ export default function AdsPage() {
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2 text-[11px]"><span className="font-medium" style={{ color: brandColor(k.brand_id) }}>{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: (SRC[k.source]?.color || '#999') + '22', color: SRC[k.source]?.color || '#999' }}>{SRC[k.source]?.label || k.source}</span></div>
                                     <div className="text-ink-3 text-[11px] truncate">{k.text || '—'}</div>
+                                    {(k.likes || k.views || (k.flags && k.flags.length)) ? <div className="text-ink-4 text-[10px] flex gap-2">{k.views ? <span>{(k.views / 1000).toFixed(k.views >= 100000 ? 0 : 1)}k Views</span> : null}{k.likes ? <span>{k.likes.toLocaleString('de-DE')} Likes</span> : null}{(k.flags || []).map(f => <span key={f} className="text-accent">{f}</span>)}</div> : null}
                                   </div>
                                   <a href={postLink(k)} target="_blank" rel="noreferrer" className="press flex-shrink-0 text-[11px] px-2.5 py-1 rounded-full bg-accent text-[#1a1507] font-semibold">Öffnen ↗</a>
                                 </div>
@@ -330,8 +384,12 @@ export default function AdsPage() {
               <option value="y1">{new Date().getFullYear() - 1}</option>
               <option value="y2">{new Date().getFullYear() - 2}</option>
               <option value="y3">{new Date().getFullYear() - 3}</option>
+              <option value="month">Einzelner Monat…</option>
+              <option value="event">Anlass-Zeitraum…</option>
               <option value="custom">Eigener Zeitraum</option>
             </select>
+            {preset === 'month' && <input type="month" value={month} onChange={e => setMonth(e.target.value)} className={selCls} />}
+            {preset === 'event' && <><select value={event} onChange={e => setEvent(e.target.value)} className={selCls}>{Object.entries(EVENTS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select><select value={eventYear} onChange={e => setEventYear(Number(e.target.value))} className={selCls}>{[0, 1, 2, 3, 4].map(i => <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>)}</select></>}
             {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
             <div className="flex gap-1">{Object.entries(ANLASS).map(([k, v]) => <button key={k} onClick={() => setAnlass(a => a === k ? '' : k)} className={chip(anlass === k)}>{v}</button>)}</div>
             <select value={platform} onChange={e => setPlatform(e.target.value)} className={selCls}><option value="">Alle Plattformen</option><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="messenger">Messenger</option><option value="audience_network">Audience Network</option></select>

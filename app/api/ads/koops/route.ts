@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const brands = (p.get('brand') || '').split(',').filter(Boolean)
   const all: unknown[] = []
   for (let off = 0; off < 30000; off += 1000) {
-    let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
+    let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform, likes, views, flags').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
     if (brands.length) q = q.in('brand_id', brands)
     if (p.get('creator')) q = q.ilike('creator', p.get('creator')!)
     if (p.get('from')) q = q.gte('start_date', p.get('from')!)
@@ -45,6 +45,9 @@ export async function POST(req: NextRequest) {
     user_id: userId, brand_id: brand.id, creator: clean(k.creator, 120)!.trim(), creator_handle: k.handle ? clean(String(k.handle).replace(/^@/, ''), 120) : null,
     creator_url: k.creator_url ? String(k.creator_url).slice(0, 500) : null, source: String(k.source || 'branded').slice(0, 20), ref: String(k.ref).slice(0, 200), url: k.url ? String(k.url).slice(0, 1000) : null,
     start_date: d(k.date), end_date: null, media_url: k.media ? clean(k.media, 2000) : null, text: k.text ? clean(k.text, 500) : null, platform: k.platform ? String(k.platform).slice(0, 20) : 'instagram',
+    likes: Number.isFinite(Number(k.likes)) ? Math.round(Number(k.likes)) : (Number((String(k.text || '').match(/(\d+) Likes/) || [])[1]) || null),
+    views: Number.isFinite(Number(k.views)) && k.views != null ? Math.round(Number(k.views)) : (Number((String(k.text || '').match(/(\d+)k Views/) || [])[1]) * 1000 || null),
+    flags: Array.isArray(k.flags) ? k.flags.map((f: unknown) => String(f).slice(0, 30)).slice(0, 6) : ((String(k.text || '').match(/\[([^\]]+)\]/) || [])[1] || '').split(', ').filter(Boolean),
   }))
   if (!rows.length) return NextResponse.json({ ok: true, inserted: 0 }, { headers: CORS })
   const { error, data } = await db.from('ads_koops').upsert(rows, { onConflict: 'user_id,source,ref', ignoreDuplicates: false }).select('id')
