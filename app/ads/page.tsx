@@ -11,6 +11,8 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 const libUrl = (adId: string) => `https://www.facebook.com/ads/library/?id=${adId}`
 const PLAT: Record<string, string> = { facebook: 'FB', instagram: 'IG', messenger: 'MSG', audience_network: 'AN', threads: 'TH' }
 
+type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null }
+const SRC: Record<string, { label: string; color: string }> = { ad: { label: 'Partnership-Ad', color: '#e6c27a' }, branded: { label: 'Branded Content (IG)', color: '#c9b8ff' }, ig_tag: { label: 'Instagram-Tag', color: '#ff7a8a' }, tiktok: { label: 'TikTok', color: '#5ee3a3' } }
 type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; updated_at: string | null }
 type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom'
 const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 'Weihnachten', valentinstag: 'Valentinstag', muttertag: 'Muttertag' }
@@ -35,6 +37,12 @@ export default function AdsPage() {
   const [newBrand, setNewBrand] = useState({ name: '', search_term: '', page_ids: '' })
   const [confirm, setConfirm] = useState<string | null>(null)
   const [err, setErr] = useState('')
+  const [view, setView] = useState<'ads' | 'koops'>('ads')
+  const [koops, setKoops] = useState<Koop[]>([])
+  const [koopsLoading, setKoopsLoading] = useState(false)
+  const [koopCreator, setKoopCreator] = useState<string | null>(null)
+  const [adding, setAdding] = useState<string | null>(null)
+  const [addedMsg, setAddedMsg] = useState('')
 
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
   const api = useCallback(async (url: string, method = 'GET', body?: any) => {
@@ -74,6 +82,41 @@ export default function AdsPage() {
     setLoading(false)
   }, [api, query])
   useEffect(() => { loadAds(0, false) }, [loadAds])
+  const loadKoops = useCallback(async () => {
+    setKoopsLoading(true)
+    const p = new URLSearchParams(); if (sel.length) p.set('brand', sel.join(',')); if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to)
+    const { ok, j } = await api('/api/ads/koops?' + p.toString()); if (ok) setKoops(j.koops); setKoopsLoading(false)
+  }, [api, sel, range])
+  useEffect(() => { if (view === 'koops') loadKoops() }, [view, loadKoops])
+
+  // Aggregation fuer die Zeitleiste: pro Creator alle Kooperationen, sortiert nach Anzahl
+  const koopRows = useMemo(() => {
+    const m = new Map<string, { creator: string; handle: string | null; url: string | null; items: Koop[]; brands: Set<string> }>()
+    for (const k of koops) {
+      const key = (k.creator_handle || k.creator).toLowerCase()
+      const r = m.get(key) || { creator: k.creator, handle: k.creator_handle || null, url: k.creator_url || null, items: [], brands: new Set<string>() }
+      r.items.push(k); r.brands.add(k.brand_id); if (!r.handle && k.creator_handle) r.handle = k.creator_handle; if (!r.url && k.creator_url) r.url = k.creator_url
+      m.set(key, r)
+    }
+    return [...m.values()].sort((a, b) => b.items.length - a.items.length || (b.items[0]?.start_date || '').localeCompare(a.items[0]?.start_date || ''))
+  }, [koops])
+  const koopSpan = useMemo(() => {
+    const ds = koops.map(k => k.start_date).filter(Boolean).sort() as string[]
+    const end = new Date(); end.setDate(1)
+    let start = new Date(end); start.setMonth(start.getMonth() - 11)
+    if (ds.length) { const first = new Date(ds[0]); first.setDate(1); if (first < start) start = first }
+    const months: Date[] = []; const c = new Date(start); while (c <= end) { months.push(new Date(c)); c.setMonth(c.getMonth() + 1) }
+    const total = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1
+    const pos = (d: string) => { const x = new Date(d); const idx = (x.getFullYear() - start.getFullYear()) * 12 + (x.getMonth() - start.getMonth()) + (x.getDate() - 1) / 31; return Math.max(0, Math.min(100, (idx / total) * 100)) }
+    return { months, pos }
+  }, [koops])
+  const addCreator = async (r: { creator: string; handle: string | null; url: string | null }) => {
+    setAdding(r.creator); setAddedMsg('')
+    const ig = r.handle || (r.url && /instagram\.com\/([^/?]+)/.exec(r.url)?.[1]) || (/^[a-z0-9._]+$/i.test(r.creator) ? r.creator : '')
+    const { ok, j } = await api('/api/creators', 'POST', { name: r.creator, ig: ig || null, type: 'creator', notes: 'Aus Ad Library / Kooperationen übernommen' })
+    setAdding(null); setAddedMsg(ok ? `${r.creator} als Creator angelegt` : (j.error || 'Fehler'))
+    setTimeout(() => setAddedMsg(''), 3000)
+  }
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { setDetail(null); setSetup(false) } }
@@ -129,6 +172,10 @@ export default function AdsPage() {
             <p className="text-ink-3 text-xs mt-0.5">Meta-Ads der Wettbewerber: automatisch gesammelt, nach Marke und Zeitraum filterbar</p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex rounded-full border border-hairline p-0.5 mr-2">
+              <button onClick={() => setView('ads')} className={`press text-xs px-3 py-1.5 rounded-full ${view === 'ads' ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Ads</button>
+              <button onClick={() => setView('koops')} className={`press text-xs px-3 py-1.5 rounded-full ${view === 'koops' ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Kooperationen</button>
+            </div>
             {syncMsg && <span className="text-ink-4 text-xs max-w-md truncate" title={syncMsg}>{syncMsg}</span>}
             <button onClick={async () => { setSyncing('imports'); const { j } = await api('/api/ads/sync?mode=imports', 'POST'); setSyncing(null); const r = (j.imports || []).reduce((a: any, x: any) => ({ ok: a.ok + x.ok, fail: a.fail + x.fail }), { ok: 0, fail: 0 }); setSyncMsg(`Medien: ${r.ok} gespeichert${r.fail ? `, ${r.fail} fehlgeschlagen` : ''}`); loadAds(0, false) }} disabled={!!syncing} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'imports' ? 'Lädt Medien…' : 'Medien nachladen'}</button>
             {settings?.hasToken && <button onClick={() => sync()} disabled={!!syncing || !settings?.hasToken} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'all' ? 'Synchronisiert…' : 'Jetzt synchronisieren'}</button>}
@@ -150,6 +197,69 @@ export default function AdsPage() {
             {brands.map(b => <button key={b.id} onClick={() => setSel(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id])} className={chip(sel.includes(b.id))} title={b.last_error || ''}>{b.name}<span className="ml-1.5 opacity-60">{b.ad_count}</span></button>)}
           </div>
 
+          {view === 'koops' && (
+            <>
+              <div className="flex flex-wrap gap-2 items-center">
+                <select value={preset} onChange={e => setPreset(e.target.value as Preset)} className={selCls}>
+                  <option value="all">Gesamter Zeitraum</option>
+                  <option value="90">Letzte 90 Tage</option>
+                  <option value="y0">{new Date().getFullYear()}</option>
+                  <option value="y1">{new Date().getFullYear() - 1}</option>
+                  <option value="custom">Eigener Zeitraum</option>
+                </select>
+                {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
+                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4">{Object.entries(SRC).map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: v.color }} />{v.label}</span>)}</div>
+                <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht</span>
+              </div>
+              {addedMsg && <div className="text-emerald-400 text-sm">{addedMsg}</div>}
+              {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : !koopRows.length ? (
+                <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Keine Kooperationen in dieser Auswahl</div><div className="text-ink-4 text-xs mt-1">Quellen: Partnership-Ads („Creator mit Marke“) aus der Ad Library, Branded-Content-Library und Instagram-Tags. Sag Claude, welche Marke per Browser nachgezogen werden soll.</div></div>
+              ) : (
+                <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
+                  <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4">
+                    <div className="px-4 py-2">Creator</div>
+                    <div className="relative h-7">{koopSpan.months.map((m, i) => <span key={i} className="absolute top-2 -translate-x-1/2" style={{ left: `${((i + 0.5) / koopSpan.months.length) * 100}%` }}>{m.toLocaleDateString('de-DE', { month: 'short' })}{m.getMonth() === 0 || i === 0 ? ` ${String(m.getFullYear()).slice(2)}` : ''}</span>)}</div>
+                    <div className="px-3 py-2 text-right">Koops</div>
+                  </div>
+                  <div className="max-h-[70vh] overflow-y-auto">
+                    {koopRows.map(r => (
+                      <div key={r.creator} className="grid grid-cols-[260px_1fr_120px] items-center border-b border-hairline-soft/60 hover:bg-white/[0.02]">
+                        <div className="px-4 py-2.5 min-w-0">
+                          <button onClick={() => setKoopCreator(koopCreator === r.creator ? null : r.creator)} className="text-ink-1 text-sm font-medium truncate block text-left hover:text-accent">{r.creator}</button>
+                          <div className="text-ink-4 text-[11px] flex items-center gap-2">
+                            {r.handle && <a href={`https://www.instagram.com/${r.handle}/`} target="_blank" rel="noreferrer" className="hover:text-ink-2">@{r.handle}</a>}
+                            {!sel.length && r.brands.size > 1 && <span className="text-accent">{r.brands.size} Marken</span>}
+                            <button onClick={() => addCreator(r)} disabled={adding === r.creator} className="text-[10px] px-1.5 py-0.5 rounded border border-hairline text-ink-3 hover:text-ink-1 disabled:opacity-50">{adding === r.creator ? '…' : '+ Creator'}</button>
+                          </div>
+                        </div>
+                        <div className="relative h-10">
+                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.months.map((_, i) => <span key={i} className="absolute top-0 bottom-0 border-l border-hairline-soft/40" style={{ left: `${(i / koopSpan.months.length) * 100}%` }} />)}</div>
+                          {r.items.filter(k => k.start_date).map(k => {
+                            const days = k.end_date ? Math.max(1, Math.round((new Date(k.end_date).getTime() - new Date(k.start_date!).getTime()) / 86400000)) : 1
+                            const size = Math.min(18, 8 + Math.log2(days + 1) * 2)
+                            return <a key={k.id} href={k.url || '#'} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border border-black/40 hover:scale-125 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: SRC[k.source]?.color || '#999' }} />
+                          })}
+                        </div>
+                        <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}</span><div className="text-ink-4 text-[10px]">{r.items[0]?.start_date ? 'zuletzt ' + dat(r.items[0].start_date) : ''}</div></div>
+                        {koopCreator === r.creator && (
+                          <div className="col-span-3 px-4 pb-3 flex gap-2 overflow-x-auto">
+                            {r.items.map(k => (
+                              <a key={k.id} href={k.url || '#'} target="_blank" rel="noreferrer" className="flex-shrink-0 w-28 bg-surface-3 rounded-apple-sm overflow-hidden border border-hairline-soft">
+                                <div className="aspect-[4/5] bg-black/30">{k.media_url && <img src={k.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />}</div>
+                                <div className="p-1.5 text-[10px] text-ink-3"><div className="text-ink-1 truncate">{brandName(k.brand_id)}</div>{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}<div style={{ color: SRC[k.source]?.color }}>{SRC[k.source]?.label || k.source}</div></div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {view === 'ads' && (<>
           <div className="flex flex-wrap gap-2 items-center">
             <select value={preset} onChange={e => setPreset(e.target.value as Preset)} className={selCls}>
               <option value="all">Gesamter Zeitraum</option>
@@ -203,6 +313,7 @@ export default function AdsPage() {
             </div>
           )}
           {ads.length < total && <div className="text-center"><button onClick={() => loadAds(page + 1, true)} disabled={loading} className="press text-sm rounded-full px-5 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{loading ? 'Lädt…' : `Mehr laden (${total - ads.length} weitere)`}</button></div>}
+          </>)}
         </div>
 
         {detail && (
