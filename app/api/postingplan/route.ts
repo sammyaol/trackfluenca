@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     fields.creator_name = c.name
   }
   if (!fields.creator_name) return NextResponse.json({ error: 'Bitte einen Creator waehlen' }, { status: 400 })
+  if (fields.creator_id && typeof fields.adresse === 'string' && fields.adresse.trim()) await supabase.from('creators').update({ adresse: fields.adresse.trim() }).eq('id', fields.creator_id as string).eq('user_id', user.id)
   const { data, error } = await supabase.from('postingplan_posts').insert({ ...fields, user_id: user.id }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)

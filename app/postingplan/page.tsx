@@ -24,7 +24,7 @@ const todayIso = () => iso(new Date())
 const MONATE = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
 
 const emptyPost = (): PlanPost => ({
-  creator_id: '', creator_name: '', kampagne: 'Allgemein', geplant_am: '', geplant_uhrzeit: '', plattform: 'Instagram', format: 'Reel',
+  creator_id: '', creator_name: '', adresse: '', kampagne: 'Allgemein', geplant_am: '', geplant_uhrzeit: '', plattform: 'Instagram', format: 'Reel',
   beschreibung: '', produkte: [], gage: null, deal_status: 'offen', post_status: 'geplant', beispiel_links: [], notizen: '',
   versand_status: 'offen', versand_vorlauf_tage: 6, versendet_am: '', sendungsnummer: '',
 })
@@ -219,6 +219,7 @@ export default function Postingplan() {
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className={`text-sm font-semibold ${late ? 'text-red-400' : 'text-ink-1'}`}>{fmtKurz(p.geplant_am)}{p.geplant_uhrzeit ? ' · ' + p.geplant_uhrzeit : ''}</span>
           {view === 'planung' && groupBy === 'datum' && <span className="text-ink-1 text-sm font-medium">{p.creator_name}</span>}
+          {p.adresse && <button onClick={() => copy('a' + p.id, p.adresse)} title="Adresse kopieren" className="text-ink-4 text-xs hover:text-ink-2 truncate max-w-[320px]">📍 {copied === 'a' + p.id ? 'Adresse kopiert ✓' : p.adresse}</button>}
           {nr > 0 && <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-ink-2">Post {nr}/{gleicheTag.length} an diesem Tag</span>}
           {folText(p.creator_id) && <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-medium">👥 {folText(p.creator_id)}</span>}
           <span className="text-ink-4 text-xs">{p.format} · {p.plattform}</span>
@@ -256,6 +257,7 @@ export default function Postingplan() {
           return (
             <div className={`flex flex-wrap items-center gap-2 rounded-apple-sm border px-3 py-2 mb-2 text-xs ${cls}`}>
               <span>📦</span>
+              {p.adresse ? <button onClick={() => copy('a2' + p.id, p.adresse)} className="truncate max-w-[260px] hover:underline" title={p.adresse}>{copied === 'a2' + p.id ? 'Adresse kopiert ✓' : p.adresse}</button> : <span className="opacity-70">keine Adresse hinterlegt</span>}
               <select value={st} onChange={e => patch(p.id, { versand_status: e.target.value, ...(e.target.value === 'versendet' && !p.versendet_am ? { versendet_am: todayIso() } : {}) })} className="bg-transparent border border-current/30 rounded-full px-2 py-0.5 focus:outline-none">
                 {VERSAND_STATUS.map(s => <option key={s} value={s} className="text-black">{VERSAND_LABEL[s]}</option>)}
               </select>
@@ -272,7 +274,7 @@ export default function Postingplan() {
           <div className="ml-auto flex flex-wrap gap-1.5">
             <button onClick={() => copy('b' + p.id, briefingText(p, link))} className="text-[11px] px-2 py-1 rounded bg-accent text-white hover:bg-accent-hover">{copied === 'b' + p.id ? '✓ Kopiert' : 'Briefing kopieren'}</button>
             {link && <button onClick={() => copy('l' + p.id, link)} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">{copied === 'l' + p.id ? '✓' : 'Link'}</button>}
-            <button onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Bearbeiten</button>
+            <button onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '', adresse: p.adresse || '' }); setError('') }} className="text-[11px] px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-ink-2">Bearbeiten</button>
             <button onClick={() => remove(p.id)} className={`text-[11px] px-2 py-1 rounded ${confirmDelete === p.id ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{confirmDelete === p.id ? 'Sicher?' : 'Löschen'}</button>
           </div>
         </div>
@@ -309,7 +311,7 @@ export default function Postingplan() {
                 <div className={`text-xs font-semibold mb-1.5 ${d === t ? 'text-blue-700' : 'text-neutral-600'}`}>{Number(d.slice(8))}</div>
                 <div className="space-y-1.5">
                   {dayPosts.map(p => (
-                    <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '' }); setError('') }}
+                    <button key={p.id} draggable onDragStart={e => { setDragId(p.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', p.id) }} onDragEnd={() => { setDragId(null); setDragOver(null) }} onClick={() => { setForm({ ...p, geplant_am: p.geplant_am || '', beschreibung: p.beschreibung || '', notizen: p.notizen || '', adresse: p.adresse || '' }); setError('') }}
                       title={`${p.creator_name} · ${p.format} · ${DEAL_LABEL[p.deal_status]}`}
                       className={`w-full text-left rounded-md px-2 py-1.5 text-[#14161c] hover:brightness-105 transition cursor-grab active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`} style={{ background: DEAL_DOT[p.deal_status] }}>
                       <div className={`text-xs font-semibold leading-tight break-words ${p.deal_status === 'abgesagt' ? 'line-through' : ''}`}>{p.geplant_uhrzeit ? <span className="opacity-90 mr-1">{p.geplant_uhrzeit}</span> : null}{p.creator_name}</div>
@@ -542,10 +544,12 @@ export default function Postingplan() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>Creator *</label>
-                    <select value={form.creator_id || ''} onChange={e => setForm({ ...form, creator_id: e.target.value })} className={inputCls}>
+                    <select value={form.creator_id || ''} onChange={e => { const c = creators.find(x => x.id === e.target.value); setForm({ ...form, creator_id: e.target.value, adresse: form.adresse || c?.adresse || '' }) }} className={inputCls}>
                       <option value="">— wählen —</option>
                       {creators.map(c => <option key={c.id} value={c.id}>{c.name}{c.type === 'celeb' ? ' (Celeb)' : ''}</option>)}
                     </select>
+                    <input value={form.adresse || ''} onChange={e => setForm({ ...form, adresse: e.target.value })} placeholder="Versandadresse (Name, Straße, PLZ Ort)" className={inputCls + ' mt-2'} />
+                    <div className="text-ink-4 text-[10px] mt-1">Wird beim Creator gespeichert und bei neuen Posts vorausgefüllt.</div>
                   </div>
                   <div>
                     <label className={labelCls}>Kampagne</label>

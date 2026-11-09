@@ -7,6 +7,7 @@ export type PlanPost = {
   created_at?: string
   creator_id?: string | null
   creator_name?: string | null
+  adresse?: string | null
   kampagne: string
   geplant_am?: string | null
   geplant_uhrzeit?: string | null
@@ -25,7 +26,7 @@ export type PlanPost = {
   sendungsnummer?: string | null
 }
 
-export const EDITABLE = ['creator_id', 'creator_name', 'kampagne', 'geplant_am', 'geplant_uhrzeit', 'plattform', 'format', 'beschreibung', 'produkte', 'gage', 'deal_status', 'post_status', 'beispiel_links', 'notizen', 'versand_status', 'versand_vorlauf_tage', 'versendet_am', 'sendungsnummer'] as const
+export const EDITABLE = ['creator_id', 'creator_name', 'kampagne', 'geplant_am', 'geplant_uhrzeit', 'plattform', 'format', 'beschreibung', 'produkte', 'gage', 'deal_status', 'post_status', 'beispiel_links', 'notizen', 'versand_status', 'versand_vorlauf_tage', 'versendet_am', 'sendungsnummer', 'adresse'] as const
 
 export const KAMPAGNEN: string[] = ['Allgemein', 'Black Week', 'Weihnachten', 'Frauen-Launch', 'Frauen-Black Week', 'Frauen-Weihnachten', 'Couple-Black Week', 'Couple-Weihnachten']
 export const zeitraumFor = (k?: string | null) => { const n = (k || '').toLowerCase(); return n.includes('black week') ? 'Black Week' : n.includes('weihnacht') ? 'Weihnachten' : null }

@@ -22,6 +22,7 @@ export async function PATCH(req: NextRequest, ctx: Context) {
     if (!c) return NextResponse.json({ error: 'Creator nicht gefunden' }, { status: 404 })
     fields.creator_name = c.name
   }
+  if ('adresse' in fields) { const { data: cur } = await supabase.from('postingplan_posts').select('creator_id').eq('id', id).eq('user_id', user.id).maybeSingle(); const cid = (fields.creator_id as string) || cur?.creator_id; if (cid && typeof fields.adresse === 'string' && fields.adresse.trim()) await supabase.from('creators').update({ adresse: fields.adresse.trim() }).eq('id', cid).eq('user_id', user.id) }
   const { data, error } = await supabase.from('postingplan_posts').update(fields).eq('id', id).eq('user_id', user.id).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
