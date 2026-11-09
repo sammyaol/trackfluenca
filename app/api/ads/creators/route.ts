@@ -50,12 +50,15 @@ export async function POST(req: NextRequest) {
       const tier = c.tier || c.size ? String(c.tier || c.size).toUpperCase().slice(0, 10) : null
       return { user_id: userId, handle: String(c.handle).replace(/^@/, '').toLowerCase(), name: c.name ? String(c.name).slice(0, 200) : undefined, bio, follower: Number.isFinite(Number(c.follower)) && c.follower != null ? Math.round(Number(c.follower)) : null, avatar: c.avatar ? String(c.avatar).slice(0, 2000) : null, land: c.land ? String(c.land).slice(0, 2).toUpperCase() : guessLand(bio, c.lang || null), lang: c.lang ? String(c.lang).slice(0, 5).toLowerCase() : undefined, tier, categories: Array.isArray(c.categories) ? c.categories.slice(0, 5) : undefined, fetched_at: c.source === 'linkster' ? undefined : now, updated_at: now, ...(gIn ? { gender: gIn, gender_src: c.source || 'import' } : g ? { gender: g, gender_src: 'bio' } : {}) }
     })
+    // Doppelte Handles innerhalb einer Lieferung zusammenfassen (sonst scheitert der Upsert)
+    const byH = new Map<string, any>(); for (const r of rows) byH.set(r.handle, { ...(byH.get(r.handle) || {}), ...Object.fromEntries(Object.entries(r).filter(([, v]) => v != null)) })
+    const uniqRows = [...byH.values()]
     let saved = 0
-    for (let i = 0; i < rows.length; i += 100) {
+    for (let i = 0; i < uniqRows.length; i += 100) {
       // vorhandene Werte (Sprache, manuelles Geschlecht) nicht ueberschreiben
-      const { data: ex } = await db.from('ads_creators').select('handle, gender, gender_src, lang, name').eq('user_id', userId).in('handle', rows.slice(i, i + 100).map((r: any) => r.handle))
+      const { data: ex } = await db.from('ads_creators').select('handle, gender, gender_src, lang, name').eq('user_id', userId).in('handle', uniqRows.slice(i, i + 100).map((r: any) => r.handle))
       const exm = new Map((ex || []).map(e => [e.handle, e]))
-      const batch = rows.slice(i, i + 100).map((r: any) => { const e = exm.get(r.handle); const out: any = { ...r }; for (const k of Object.keys(out)) if (out[k] === undefined) delete out[k]; if (!out.name) out.name = e?.name || r.handle; if (e?.gender_src === 'manual') { delete out.gender; delete out.gender_src } else if (!out.gender && e?.gender) { out.gender = e.gender; out.gender_src = e.gender_src } if (!out.lang && e?.lang) out.lang = e.lang; if (!out.land && (out.lang || e?.lang)) out.land = guessLand(out.bio, out.lang || e?.lang); return out })
+      const batch = uniqRows.slice(i, i + 100).map((r: any) => { const e = exm.get(r.handle); const out: any = { ...r }; for (const k of Object.keys(out)) if (out[k] === undefined) delete out[k]; if (!out.name) out.name = e?.name || r.handle; if (e?.gender_src === 'manual') { delete out.gender; delete out.gender_src } else if (!out.gender && e?.gender) { out.gender = e.gender; out.gender_src = e.gender_src } if (!out.lang && e?.lang) out.lang = e.lang; if (!out.land && (out.lang || e?.lang)) out.land = guessLand(out.bio, out.lang || e?.lang); return out })
       const { error } = await db.from('ads_creators').upsert(batch, { onConflict: 'user_id,handle' })
       if (!error) saved += batch.length
     }
