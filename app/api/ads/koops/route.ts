@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
     typ: k.typ ? String(k.typ).slice(0, 20) : (k.source === 'tiktok' ? 'video' : k.source === 'ad' ? 'ad' : 'post'),
   }))
   if (!rows.length) return NextResponse.json({ ok: true, inserted: 0 }, { headers: CORS })
-  const { error, data } = await db.from('ads_koops').upsert(rows, { onConflict: 'user_id,source,ref', ignoreDuplicates: false }).select('id')
+  // Doppelte Refs innerhalb einer Lieferung entfernen (sonst scheitert der Upsert)
+  const seen = new Map<string, typeof rows[number]>(); for (const r of rows) seen.set(r.source + '|' + r.ref, r); const uniq = [...seen.values()]
+  const { error, data } = await db.from('ads_koops').upsert(uniq, { onConflict: 'user_id,source,ref', ignoreDuplicates: false }).select('id')
   if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: CORS })
   await db.from('ads_brands').update({ koop_sync: new Date().toISOString() }).eq('id', brand.id)
   return NextResponse.json({ ok: true, inserted: data?.length || 0 }, { headers: CORS })
