@@ -110,7 +110,7 @@ export function MonthChart({ items, months = 13, height = 120 }: { items: Koop[]
 
 // Zeitleiste: Punkte auf einer Zeile; Farbe = Fuellung (Marke oder Typ), Rand = Typ; Groesse nach Engagement
 export function DotRow({ items, pos, fill, ticks, onOpen }: { items: Koop[]; pos: (d: string) => number; fill: (k: Koop) => string; ticks: { left: number; width: number }[]; onOpen?: (k: Koop) => void }) {
-  const size = (k: Koop) => { const e = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); return Math.max(12, Math.min(26, 12 + Math.log10(Math.max(1, e)) * 3)) }
+  const size = (k: Koop) => { const e = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); return Math.max(10, Math.min(22, 9 + Math.log10(Math.max(1, e)) * 2.6)) }
   return (
     <div className="relative h-14">
       <div className="absolute inset-y-0 left-0 right-0">{ticks.map((t, i) => <span key={i} className={`absolute top-0 bottom-0 border-l border-hairline-soft/50 ${i % 2 ? 'bg-white/[0.025]' : ''}`} style={{ left: `${t.left}%`, width: `${t.width}%` }} />)}</div>
