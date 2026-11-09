@@ -2,6 +2,7 @@
 import Sidebar from '../components/Sidebar'
 import { useState, useEffect, useMemo } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
+import MklusiveVertraege from './MklusiveVertraege'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 const eur = (n: number) => (n || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -34,6 +35,7 @@ export default function Mklusive() {
   const [copied, setCopied] = useState<string | null>(null)
   const [memberMail, setMemberMail] = useState('')
   const [memberMsg, setMemberMsg] = useState('')
+  const [tab, setTab] = useState<'creator' | 'vertraege'>('creator')
 
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
   const api = async (url: string, method = 'GET', body?: any) => {
@@ -127,6 +129,10 @@ export default function Mklusive() {
           </div>
           {data.me?.role && (
             <div className="flex items-center gap-2">
+              <div className="flex rounded-full border border-hairline p-0.5 mr-2">
+                <button onClick={() => setTab('creator')} className={`text-xs px-3 py-1.5 rounded-full ${tab === 'creator' ? 'bg-accent text-white font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Creator</button>
+                <button onClick={() => setTab('vertraege')} className={`text-xs px-3 py-1.5 rounded-full ${tab === 'vertraege' ? 'bg-accent text-white font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Verträge</button>
+              </div>
               <button onClick={sync} disabled={syncing} className="px-3 py-2 rounded-apple-sm border border-hairline text-ink-2 text-xs hover:text-ink-1 disabled:opacity-50">{syncing ? 'Aktualisiert…' : 'Aktualisieren'}</button>
               <button onClick={openAdd} className="bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-apple-sm px-4 py-2">+ Creator hinzufügen</button>
             </div>
@@ -139,6 +145,8 @@ export default function Mklusive() {
               <h2 className="text-ink-1 font-semibold mb-2">Noch nicht freigeschaltet</h2>
               <p className="text-ink-3 text-sm">Dein Account ({data.me?.email}) ist noch nicht für das Mklusive-Portal freigegeben. Bitte kurz bei Koluré melden, dann geht es los.</p>
             </div>
+          ) : tab === 'vertraege' ? (
+            <MklusiveVertraege api={api} creators={creators} inputCls={inputCls} labelCls={labelCls} />
           ) : (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">

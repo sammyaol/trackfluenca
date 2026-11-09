@@ -137,7 +137,7 @@ export default function Unterschreiben() {
         {state === 'ok' && v && (
           <>
             <div className="text-center mb-10">
-              <p className={labelCls + ' mb-3'}>{t.title}</p>
+              <p className={labelCls + ' mb-3'}>{t.title}{v.bereich === 'mklusive' ? ` · ${v.agentur_name || 'Mklusive'} × ${v.marke_name || v.firma_name || 'Koluré'}` : ''}</p>
               <h1 className="text-[28px] leading-tight" style={serif}>{v.creator_name}</h1>
               {v.creator_handle && <p className="text-neutral-400 text-sm mt-1">{v.creator_handle}</p>}
               <div className="w-10 h-px bg-neutral-900 mx-auto mt-6" />
