@@ -42,10 +42,15 @@ export default function Bridge() {
           if (Array.isArray(d.koops)) {
             setLog([`${d.koops.length} Kooperationen empfangen für Marke ${d.brand_id} – importiere…`])
             let ins = 0
-            for (let i = 0; i < d.koops.length; i += 100) {
-              const r = await fetch('/api/ads/koops', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + d.key }, body: JSON.stringify({ user_id: d.user_id, brand_id: d.brand_id, koops: d.koops.slice(i, i + 100) }) })
-              const j = await r.json().catch(() => ({}))
-              if (r.ok) ins += j.inserted || 0; else setLog(l => [...l, 'Fehler: ' + (j.error || r.status)])
+            // 200er-Pakete, 4 parallel
+            const parts: unknown[][] = []; for (let i = 0; i < d.koops.length; i += 200) parts.push(d.koops.slice(i, i + 200))
+            for (let i = 0; i < parts.length; i += 4) {
+              await Promise.all(parts.slice(i, i + 4).map(async part => {
+                const r = await fetch('/api/ads/koops', { method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + d.key }, body: JSON.stringify({ user_id: d.user_id, brand_id: d.brand_id, koops: part }) })
+                const j = await r.json().catch(() => ({}))
+                if (r.ok) ins += j.inserted || 0; else setLog(l => [...l, 'Fehler: ' + (j.error || r.status)])
+              }))
+              setLog(l => [l[0], `${Math.min(d.koops.length, (i + 4) * 200)} / ${d.koops.length} …`])
             }
             setLog(l => [...l, `Fertig: ${ins} Kooperationen gespeichert`])
             return
