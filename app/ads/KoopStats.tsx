@@ -1,11 +1,11 @@
 'use client'
 // Statistik-Tab fuer Kooperationen (wie Linkster "Brand Statistics"): Koops pro Monat, Kennzahlen, Verteilung, Top-Creator.
 import { useMemo } from 'react'
-import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges } from './koopUi'
+import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges, BrandLogo } from './koopUi'
 
-type Props = { items: Koop[]; brandName: (id: string) => string; brandColor: (id: string) => string; creatorInfo: (handle: string) => CreatorInfo | null; onCreator: (handle: string) => void; onBrand?: (id: string) => void; selectedBrands: string[] }
+type Props = { items: Koop[]; brandName: (id: string) => string; brandColor: (id: string) => string; brandLogo: (id: string) => string | null; creatorInfo: (handle: string) => CreatorInfo | null; onCreator: (handle: string) => void; onBrand?: (id: string) => void; selectedBrands: string[] }
 
-export default function KoopStats({ items, brandName, brandColor, creatorInfo, onCreator, onBrand, selectedBrands }: Props) {
+export default function KoopStats({ items, brandName, brandColor, brandLogo, creatorInfo, onCreator, onBrand, selectedBrands }: Props) {
   const s = useMemo(() => {
     const byCreator = new Map<string, { name: string; items: Koop[]; brands: Set<string> }>()
     const byBrand = new Map<string, number>(); const byTyp: Record<string, number> = {}; const bySrc: Record<string, number> = {}
@@ -47,12 +47,12 @@ export default function KoopStats({ items, brandName, brandColor, creatorInfo, o
           <div><div className="text-ink-2 text-xs font-medium mb-2">Nach Quelle</div>
             <Bars rows={Object.entries(s.bySrc).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ key: k, label: k, value: v, color: k === 'TikTok' ? '#4fc3b8' : k === 'Meta Ads' ? '#e6c27a' : '#ff7a8a' }))} /></div>
           {s.byBrand.length > 1 && <div><div className="text-ink-2 text-xs font-medium mb-2">Nach Marke</div>
-            <Bars rows={s.byBrand.slice(0, 8).map(([id, v]) => ({ key: id, label: brandName(id), value: v, color: brandColor(id) }))} onClick={onBrand} /></div>}
+            <Bars rows={s.byBrand.slice(0, 8).map(([id, v]) => ({ key: id, label: <span className="inline-flex items-center gap-1.5"><BrandLogo src={brandLogo(id)} name={brandName(id)} color={brandColor(id)} size={14} />{brandName(id)}</span>, value: v, color: brandColor(id) }))} onClick={onBrand} /></div>}
         </div>
       </div>
 
       <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4">
-        <div className="text-ink-2 text-xs font-medium mb-3">Top-Creator{selectedBrands.length === 1 ? ` bei ${brandName(selectedBrands[0])}` : ''} <span className="text-ink-4 font-normal">· nach Buchungen</span></div>
+        <div className="text-ink-2 text-xs font-medium mb-3 flex items-center gap-2">{selectedBrands.length === 1 && <BrandLogo src={brandLogo(selectedBrands[0])} name={brandName(selectedBrands[0])} color={brandColor(selectedBrands[0])} size={16} />}Top-Creator{selectedBrands.length === 1 ? ` bei ${brandName(selectedBrands[0])}` : ''} <span className="text-ink-4 font-normal">· nach Buchungen</span></div>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-1.5">
           {s.creators.slice(0, 15).map((c, i) => (
             <button key={c.handle} onClick={() => onCreator(c.handle)} className="flex items-center gap-2 text-left hover:bg-white/[0.03] rounded px-1.5 py-1 min-w-0">

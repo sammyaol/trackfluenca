@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react'
 
 export type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref?: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null; likes?: number | null; views?: number | null; flags?: string[] | null; typ?: string | null }
-export type CreatorInfo = { id?: string; name?: string; ig?: string | null; tt?: string | null; geschlecht?: string | null; land?: string | null; ig_follower?: number | null; tt_follower?: number | null; ig_tier?: string | null; status?: string | null }
+export type CreatorInfo = { id?: string; name?: string; ig?: string | null; tt?: string | null; geschlecht?: string | null; land?: string | null; ig_follower?: number | null; tt_follower?: number | null; ig_tier?: string | null; status?: string | null; lang?: string | null; gender_src?: string | null; bio?: string | null }
+export const LANG_FLAG: Record<string, string> = { de: '🇩🇪', en: '🇬🇧', fr: '🇫🇷', it: '🇮🇹', es: '🇪🇸', pt: '🇵🇹', nl: '🇳🇱', tr: '🇹🇷', pl: '🇵🇱' }
 
 // Inhaltstyp (wie Linkster: Story / Post / Reel), bei uns zusaetzlich TikTok-Video und Partnership-Ad
 export const TYP: Record<string, { label: string; color: string }> = {
@@ -36,6 +37,12 @@ export const IcoMale = ({ cls = '' }) => <I cls={cls} title="männlich" d={<><ci
 export const IcoFolder = ({ cls = '' }) => <I cls={cls} title="Im Creator-Pool" d={<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />} />
 export const IcoLink = ({ cls = '' }) => <I cls={cls} title="Öffnen" d={<><path d="M14 4h6v6" /><path d="M20 4 10 14" /><path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" /></>} />
 
+export function BrandLogo({ src, name, color, size = 18 }: { src?: string | null; name: string; color: string; size?: number }) {
+  return src
+    ? <img src={src} alt="" width={size} height={size} className="rounded-full bg-white object-contain flex-shrink-0" style={{ width: size, height: size, boxShadow: `0 0 0 2px ${color}` }} onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+    : <span className="rounded-full flex-shrink-0 inline-flex items-center justify-center text-[9px] font-bold text-black/70" style={{ width: size, height: size, background: color }}>{name.slice(0, 1).toUpperCase()}</span>
+}
+
 export const Badge = ({ children, title, cls = 'bg-white/[0.06] text-ink-3' }: { children: ReactNode; title?: string; cls?: string }) => <span title={title} className={`inline-flex items-center gap-1 h-5 px-1.5 rounded text-[10px] font-medium leading-none ${cls}`}>{children}</span>
 
 // Badge-Zeile fuer einen Creator (Plattform, Tier, Geschlecht, Land, Kennzeichnung, im Pool)
@@ -52,6 +59,7 @@ export function CreatorBadges({ items, info, compact = false }: { items: Koop[];
       {hasTt && <Badge title="TikTok"><IcoTikTok /></Badge>}
       {g.startsWith('w') || g.startsWith('f') ? <Badge title="weiblich" cls="bg-pink-500/15 text-pink-300"><IcoFemale /></Badge> : g.startsWith('m') ? <Badge title="männlich" cls="bg-sky-500/15 text-sky-300"><IcoMale /></Badge> : null}
       {info?.land && <Badge title={info.land}><span className="text-[12px] leading-none">{flag(info.land)}</span>{!compact && <span>{info.land.toUpperCase().slice(0, 2)}</span>}</Badge>}
+      {info?.lang && <Badge title={`Sprache der Posts: ${info.lang.toUpperCase()}`}><span className="text-[12px] leading-none">{LANG_FLAG[info.lang] || '🌐'}</span><span>{info.lang.toUpperCase()}</span></Badge>}
       {flags.has('verifiziert') && <Badge cls="bg-sky-500/15 text-sky-300" title="Verifiziertes Profil"><IcoCheck /></Badge>}
       {flags.has('Anzeige') && <Badge cls="bg-amber-500/15 text-amber-300" title="Posts als Anzeige gekennzeichnet"><IcoAd />{!compact && 'Anzeige'}</Badge>}
       {flags.has('Collab') && <Badge cls="bg-purple-500/15 text-purple-300" title="Collab-Posts mit der Marke"><IcoCollab />{!compact && 'Collab'}</Badge>}

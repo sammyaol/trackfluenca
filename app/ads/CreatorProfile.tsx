@@ -1,19 +1,19 @@
 'use client'
 // Creator-Profil (wie Linkster "Profile → Brand Cooperations"): alle Kooperationen eines Creators ueber alle Marken.
 import { useEffect, useMemo, useState } from 'react'
-import { type Koop, type CreatorInfo, TYP, typOf, typColor, Kpi, Bars, MonthChart, DotRow, makeAxis, AxisHeader, CreatorBadges, postLink, fmtN, IcoInsta, IcoTikTok, IcoLink } from './koopUi'
+import { type Koop, type CreatorInfo, TYP, typOf, typColor, Kpi, Bars, MonthChart, DotRow, makeAxis, AxisHeader, CreatorBadges, postLink, fmtN, IcoInsta, IcoTikTok, IcoLink, BrandLogo } from './koopUi'
 
 type Props = {
   handle: string; name?: string
   api: (url: string, method?: string, body?: any) => Promise<{ ok: boolean; j: any }>
-  brandName: (id: string) => string; brandColor: (id: string) => string
+  brandName: (id: string) => string; brandColor: (id: string) => string; brandLogo: (id: string) => string | null
   info: CreatorInfo | null
   onClose: () => void
   onAddCreator: (r: { creator: string; handle: string | null; url: string | null }) => Promise<void>
   onBrand?: (id: string) => void
 }
 
-export default function CreatorProfile({ handle, name, api, brandName, brandColor, info, onClose, onAddCreator, onBrand }: Props) {
+export default function CreatorProfile({ handle, name, api, brandName, brandColor, brandLogo, info, onClose, onAddCreator, onBrand }: Props) {
   const [items, setItems] = useState<Koop[] | null>(null)
   const [tab, setTab] = useState<'koops' | 'posts' | 'stats'>('koops')
   const [range, setRange] = useState<'12' | '24' | 'all'>('24')
@@ -88,7 +88,7 @@ export default function CreatorProfile({ handle, name, api, brandName, brandColo
                 <div className="grid grid-cols-[200px_1fr_90px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4"><div className="px-4 py-2">Marke</div><AxisHeader ticks={axis.ticks} /><div className="px-3 py-2 text-right">Koops</div></div>
                 {stats.brands.map(b => (
                   <div key={b.id} className="grid grid-cols-[200px_1fr_90px] items-center border-b border-hairline-soft/60 hover:bg-white/[0.02]">
-                    <button onClick={() => onBrand?.(b.id)} className="px-4 py-2 text-left min-w-0"><div className="flex items-center gap-2 min-w-0"><span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: brandColor(b.id) }} /><span className="text-ink-1 text-sm font-medium truncate">{brandName(b.id)}</span></div><div className="text-ink-4 text-[10px] ml-4.5 pl-[18px]">zuletzt {dat(b.last)}</div></button>
+                    <button onClick={() => onBrand?.(b.id)} className="px-4 py-2 text-left min-w-0"><div className="flex items-center gap-2 min-w-0"><BrandLogo src={brandLogo(b.id)} name={brandName(b.id)} color={brandColor(b.id)} size={20} /><span className="text-ink-1 text-sm font-medium truncate">{brandName(b.id)}</span></div><div className="text-ink-4 text-[10px] pl-7">zuletzt {dat(b.last)}</div></button>
                     <DotRow items={b.items} pos={axis.pos} fill={() => brandColor(b.id)} ticks={axis.ticks} />
                     <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{b.n}×</span></div>
                   </div>
@@ -103,7 +103,7 @@ export default function CreatorProfile({ handle, name, api, brandName, brandColo
                   <div key={k.id} className="flex items-center gap-3 bg-surface-3 rounded-apple-sm border border-hairline-soft p-1.5">
                     <a href={postLink(k)} target="_blank" rel="noreferrer" className="w-12 h-14 rounded bg-black/30 overflow-hidden flex-shrink-0">{k.media_url && <img src={k.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />}</a>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 text-[11px] flex-wrap"><span className="font-medium" style={{ color: brandColor(k.brand_id) }}>{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: typColor(k) + '22', color: typColor(k) }}>{TYP[typOf(k)].label}</span>{(k.flags || []).map(f => <span key={f} className="text-amber-300 text-[10px]">{f}</span>)}</div>
+                      <div className="flex items-center gap-2 text-[11px] flex-wrap"><span className="font-medium inline-flex items-center gap-1" style={{ color: brandColor(k.brand_id) }}><BrandLogo src={brandLogo(k.brand_id)} name={brandName(k.brand_id)} color={brandColor(k.brand_id)} size={12} />{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: typColor(k) + '22', color: typColor(k) }}>{TYP[typOf(k)].label}</span>{(k.flags || []).map(f => <span key={f} className="text-amber-300 text-[10px]">{f}</span>)}</div>
                       <div className="text-ink-3 text-[11px] truncate">{(k.text || '—').replace(/^\[[^\]]*\]\s*/, '').replace(/^\d+ Likes · /, '').replace(/^\d+k Views · (\d+ Likes · )?/, '')}</div>
                       <div className="text-ink-4 text-[10px]">{k.views ? `${fmtN(k.views)} Views · ` : ''}{k.likes ? `${fmtN(k.likes)} Likes` : ''}</div>
                     </div>
@@ -116,7 +116,7 @@ export default function CreatorProfile({ handle, name, api, brandName, brandColo
             {tab === 'stats' && (
               <div className="grid lg:grid-cols-2 gap-4">
                 <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4"><div className="text-ink-2 text-xs font-medium mb-5">Posting-Verlauf (Kooperationen pro Monat)</div><MonthChart items={all} months={13} height={120} /></div>
-                <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4"><div className="text-ink-2 text-xs font-medium mb-2">Top-Marken</div><Bars rows={stats.brands.slice(0, 10).map(b => ({ key: b.id, label: brandName(b.id), value: b.n, color: brandColor(b.id) }))} onClick={onBrand} /></div>
+                <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4"><div className="text-ink-2 text-xs font-medium mb-2">Top-Marken</div><Bars rows={stats.brands.slice(0, 10).map(b => ({ key: b.id, label: <span className="inline-flex items-center gap-1.5"><BrandLogo src={brandLogo(b.id)} name={brandName(b.id)} color={brandColor(b.id)} size={14} />{brandName(b.id)}</span>, value: b.n, color: brandColor(b.id) }))} onClick={onBrand} /></div>
                 <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4"><div className="text-ink-2 text-xs font-medium mb-2">Inhaltstypen</div><Bars rows={Object.entries(stats.byTyp).sort((a, b) => b[1] - a[1]).map(([t, n]) => ({ key: t, label: TYP[t].label, value: n, color: TYP[t].color }))} /></div>
                 <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4 text-xs text-ink-3 space-y-1.5">
                   <div className="text-ink-2 font-medium mb-1">Einordnung</div>

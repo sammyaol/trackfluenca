@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import KoopStats from './KoopStats'
 import CreatorProfile from './CreatorProfile'
-import { TYP, typOf, DotRow, AxisHeader, CreatorBadges, type CreatorInfo } from './koopUi'
+import { TYP, typOf, DotRow, AxisHeader, CreatorBadges, BrandLogo, type CreatorInfo } from './koopUi'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Ad, Brand } from '@/lib/ads'
 
@@ -37,6 +37,11 @@ export default function AdsPage() {
   const saved = useMemo<Saved>(() => ({}), [])
   const [hydrated, setHydrated] = useState(false)
   const [brands, setBrands] = useState<Brand[]>([])
+  const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
+  const api = useCallback(async (url: string, method = 'GET', body?: any) => {
+    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + await getToken() }, body: body ? JSON.stringify(body) : undefined })
+    const j = await r.json().catch(() => ({})); return { ok: r.ok, j }
+  }, [])
   const [settings, setSettings] = useState<Settings | null>(null)
   const [ads, setAds] = useState<Ad[]>([])
   const [total, setTotal] = useState(0)
@@ -72,13 +77,14 @@ export default function AdsPage() {
   const [koopTab, setKoopTab] = useState<'liste' | 'statistik'>('liste')
   const [profile, setProfile] = useState<{ handle: string; name?: string } | null>(null)
   const [creatorInfos, setCreatorInfos] = useState<Record<string, CreatorInfo>>({})
-  const creatorInfo = useCallback((h: string) => creatorInfos[(h || '').replace(/^@/, '').toLowerCase()] || null, [creatorInfos])
+  const [adsCreators, setAdsCreators] = useState<Record<string, CreatorInfo>>({})
+  const loadAdsCreators = useCallback(async () => { const { ok, j } = await api('/api/ads/creators'); if (ok && Array.isArray(j.creators)) { const m: Record<string, CreatorInfo> = {}; for (const c of j.creators) m[c.handle] = { geschlecht: c.gender, lang: c.lang, ig_follower: c.follower, land: c.land, bio: c.bio } ; setAdsCreators(m) } }, [api])
+  useEffect(() => { loadAdsCreators() }, [loadAdsCreators])
+  const creatorInfo = useCallback((h: string) => { const k = (h || '').replace(/^@/, '').toLowerCase(); const a = creatorInfos[k]; const b = adsCreators[k]; if (!a && !b) return null; return { ...(b || {}), ...(a || {}), geschlecht: a?.geschlecht || b?.geschlecht || null, land: a?.land || b?.land || null, ig_follower: a?.ig_follower || b?.ig_follower || null, lang: b?.lang || null } as CreatorInfo }, [creatorInfos, adsCreators])
+  const [koopGender, setKoopGender] = useState<'' | 'w' | 'm'>(''); const [koopLang, setKoopLang] = useState('')
+  const [recomputing, setRecomputing] = useState(false)
+  const recompute = async () => { setRecomputing(true); await api('/api/ads/creators', 'POST', { mode: 'recompute' }); await loadAdsCreators(); setRecomputing(false) }
   // Gespeicherte Filter nach dem Mount anwenden (kein SSR-Mismatch), danach jede Aenderung in localStorage + URL schreiben
-  const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
-  const api = useCallback(async (url: string, method = 'GET', body?: any) => {
-    const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + await getToken() }, body: body ? JSON.stringify(body) : undefined })
-    const j = await r.json().catch(() => ({})); return { ok: r.ok, j }
-  }, [])
 
   useEffect(() => { api('/api/creators?type=all').then(({ ok, j }) => { if (!ok || !Array.isArray(j)) return; const m: Record<string, CreatorInfo> = {}; for (const c of j) { const ig = String(c.ig || '').replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '').toLowerCase(); const tt = String(c.tt || '').replace(/^@/, '').replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, '').replace(/\/.*$/, '').toLowerCase(); const info: CreatorInfo = { id: c.id, name: c.name, ig, tt, geschlecht: c.geschlecht, land: c.land, ig_follower: c.ig_follower, tt_follower: c.tt_follower, ig_tier: c.ig_tier, status: c.status }; if (ig) m[ig] = info; if (tt) m[tt] = m[tt] || info } setCreatorInfos(m) }).catch(() => {}) }, [api])
   const applySaved = (s: Saved) => {
@@ -170,6 +176,8 @@ export default function AdsPage() {
     if (koopMin === 'multi') rows = rows.filter(r => r.items.length > 1)
     if (koopMin === 'multibrand') rows = rows.filter(r => r.brands.size > 1)
     if (koopQ.trim()) { const q = koopQ.trim().toLowerCase(); rows = rows.filter(r => r.creator.toLowerCase().includes(q) || (r.handle || '').toLowerCase().includes(q)) }
+    if (koopGender) rows = rows.filter(r => { const g = (creatorInfo(r.handle || r.creator)?.geschlecht || '').toLowerCase(); return koopGender === 'w' ? (g.startsWith('w') || g.startsWith('f')) : g.startsWith('m') })
+    if (koopLang) rows = rows.filter(r => creatorInfo(r.handle || r.creator)?.lang === koopLang)
     const last = (r: { items: Koop[] }) => r.items.reduce((a, k) => (k.start_date || '') > a ? (k.start_date || '') : a, '')
     rows.sort((a, b) => {
       if (koopSort === 'brands') return b.brands.size - a.brands.size || b.items.length - a.items.length || last(b).localeCompare(last(a))
@@ -177,8 +185,9 @@ export default function AdsPage() {
       return last(b).localeCompare(last(a)) || b.items.length - a.items.length
     })
     return rows
-  }, [koops, koopSort, koopMin, koopQ, koopSrc, koopFlagged, koopMinLikes])
+  }, [koops, koopSort, koopMin, koopQ, koopSrc, koopFlagged, koopMinLikes, koopGender, koopLang, creatorInfo])
   // Farbe pro Marke (stabil aus der ID), damit man in der Zeitleiste sieht, welche Marke wann gebucht hat
+  const brandLogo = useCallback((id: string) => brands.find(b => b.id === id)?.logo_url || null, [brands])
   const brandColor = useCallback((id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return `hsl(${h % 360} 70% 62%)` }, [])
   const brandStats = useCallback((items: Koop[]) => { const m = new Map<string, number>(); for (const k of items) m.set(k.brand_id, (m.get(k.brand_id) || 0) + 1); return [...m.entries()].sort((a, b) => b[1] - a[1]) }, [])
   const spanLabel = useCallback((items: Koop[]) => { const ds = items.map(k => k.start_date).filter(Boolean).sort() as string[]; if (!ds.length) return ''; const f = (d: string) => new Date(d).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' }); const a = f(ds[0]), b = f(ds[ds.length - 1]); return a === b ? a : `${a} – ${b}` }, [])
@@ -288,7 +297,7 @@ export default function AdsPage() {
                 <div className="absolute z-30 mt-1 w-72 max-h-72 overflow-y-auto bg-surface-2 border border-hairline rounded-apple-md shadow-xl">
                   {brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)).map(b => (
                     <button key={b.id} onMouseDown={e => e.preventDefault()} onClick={() => { setSel(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id]); setBrandQ('') }} className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between hover:bg-white/[0.04] ${sel.includes(b.id) ? 'text-accent' : 'text-ink-2'}`}>
-                      <span className="truncate">{sel.includes(b.id) ? '✓ ' : ''}{b.name}</span><span className="text-ink-4 text-[11px] ml-2">{b.ad_count} Ads</span>
+                      <span className="truncate inline-flex items-center gap-2"><BrandLogo src={b.logo_url} name={b.name} color={brandColor(b.id)} size={18} />{sel.includes(b.id) ? '✓ ' : ''}{b.name}</span><span className="text-ink-4 text-[11px] ml-2">{b.ad_count} Ads</span>
                     </button>
                   ))}
                   {!brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).length && <div className="px-3 py-2 text-xs text-ink-4">Keine Marke gefunden</div>}
@@ -296,7 +305,7 @@ export default function AdsPage() {
               )}
             </div>
             {!sel.length && <span className="text-ink-4 text-xs">Alle Marken</span>}
-            {sel.map(id => <button key={id} onClick={() => setSel(s => s.filter(x => x !== id))} className={chip(true)} title="Entfernen">{brandName(id)} <span className="ml-1 opacity-70">×</span></button>)}
+            {sel.map(id => <button key={id} onClick={() => setSel(s => s.filter(x => x !== id))} className={chip(true) + ' inline-flex items-center gap-1.5'} title="Entfernen"><BrandLogo src={brandLogo(id)} name={brandName(id)} color={brandColor(id)} size={16} />{brandName(id)} <span className="ml-1 opacity-70">×</span></button>)}
             {sel.length > 0 && <button onClick={() => setSel([])} className="text-xs text-ink-4 hover:text-ink-2">Zurücksetzen</button>}
           </div>
 
@@ -347,12 +356,15 @@ export default function AdsPage() {
                   <option value={5000}>≥ 5.000 Likes</option>
                 </select>
                 <label className="flex items-center gap-1.5 text-xs text-ink-3 cursor-pointer"><input type="checkbox" checked={koopFlagged} onChange={e => setKoopFlagged(e.target.checked)} className="accent-[#e6c27a]" />Nur gekennzeichnet (Anzeige/Collab/verifiziert)</label>
+                <select value={koopGender} onChange={e => setKoopGender(e.target.value as '' | 'w' | 'm')} className={selCls}><option value="">Geschlecht: alle</option><option value="w">♀ weiblich</option><option value="m">♂ männlich</option></select>
+                <select value={koopLang} onChange={e => setKoopLang(e.target.value)} className={selCls}><option value="">Sprache: alle</option>{['de', 'en', 'fr', 'it', 'es', 'pt', 'nl', 'tr', 'pl'].map(l => <option key={l} value={l}>{l.toUpperCase()}</option>)}</select>
                 <input value={koopQ} onChange={e => setKoopQ(e.target.value)} placeholder="Creator suchen…" className={selCls + ' w-44'} />
+                <button onClick={recompute} disabled={recomputing} title="Geschlecht (aus Vornamen) und Sprache (aus Captions) für alle Creator neu berechnen" className="text-[11px] text-ink-4 hover:text-ink-2 disabled:opacity-50">{recomputing ? 'Berechnet…' : 'Creator-Daten aktualisieren'}</button>
                 <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht · {koopRows.filter(r => r.brands.size > 1).length} bei mehreren Marken</span>
               </div>
               {addedMsg && <div className="text-emerald-400 text-sm">{addedMsg}</div>}
               {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : koopTab === 'statistik' ? (
-                <KoopStats items={koopRows.flatMap(r => r.items)} brandName={brandName} brandColor={brandColor} creatorInfo={creatorInfo} onCreator={h => setProfile({ handle: h })} onBrand={id => setSel([id])} selectedBrands={sel} />
+                <KoopStats items={koopRows.flatMap(r => r.items)} brandName={brandName} brandColor={brandColor} brandLogo={brandLogo} creatorInfo={creatorInfo} onCreator={h => setProfile({ handle: h })} onBrand={id => setSel([id])} selectedBrands={sel} />
               ) : !koopRows.length ? (
                 <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Keine Kooperationen in dieser Auswahl</div><div className="text-ink-4 text-xs mt-1">Quellen: Partnership-Ads („Creator mit Marke“) aus der Ad Library, Branded-Content-Library und Instagram-Tags. Sag Claude, welche Marke per Browser nachgezogen werden soll.</div></div>
               ) : (
@@ -376,7 +388,7 @@ export default function AdsPage() {
                             {r.brands.size > 1 && <span className="text-accent font-medium whitespace-nowrap">{r.brands.size} Marken</span>}
                             <button onClick={() => addCreator(r)} disabled={adding === r.creator} className="text-[10px] px-1.5 py-0.5 rounded border border-hairline text-ink-3 hover:text-ink-1 disabled:opacity-50 whitespace-nowrap">{adding === r.creator ? '…' : '+ Creator'}</button>
                           </div>
-                          <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] px-1.5 py-px rounded-full border" style={{ borderColor: brandColor(b), color: brandColor(b) }}>{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
+                          <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] pl-0.5 pr-1.5 py-px rounded-full border inline-flex items-center gap-1" style={{ borderColor: brandColor(b), color: brandColor(b) }}><BrandLogo src={brandLogo(b)} name={brandName(b)} color={brandColor(b)} size={12} />{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
                         </div>
                         <DotRow items={r.items} pos={koopSpan.pos} fill={k => brandColor(k.brand_id)} ticks={koopSpan.ticks} />
                         <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}×</span><div className="text-ink-4 text-[10px] whitespace-nowrap">{spanLabel(r.items)}</div></div>
@@ -475,7 +487,7 @@ export default function AdsPage() {
           </>)}
         </div>
 
-        {profile && <CreatorProfile handle={profile.handle} name={profile.name} api={api} brandName={brandName} brandColor={brandColor} info={creatorInfo(profile.handle)} onClose={() => setProfile(null)} onAddCreator={r => addCreator(r)} onBrand={id => { setSel([id]); setProfile(null) }} />}
+        {profile && <CreatorProfile handle={profile.handle} name={profile.name} api={api} brandName={brandName} brandColor={brandColor} brandLogo={brandLogo} info={creatorInfo(profile.handle)} onClose={() => setProfile(null)} onAddCreator={r => addCreator(r)} onBrand={id => { setSel([id]); setProfile(null) }} />}
         {detail && (
           <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setDetail(null)}>
             <div className="bg-surface-2 rounded-apple-lg border border-hairline w-full max-w-5xl max-h-[92vh] overflow-hidden grid md:grid-cols-[1fr_380px]" onClick={e => e.stopPropagation()}>

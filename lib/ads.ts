@@ -10,7 +10,7 @@ export const AD_FIELDS = [
   'publisher_platforms', 'languages', 'eu_total_reach', 'target_ages', 'target_gender', 'target_locations',
 ].join(',')
 
-export type Brand = { id: string; name: string; search_term?: string | null; page_ids: string[]; active: boolean; last_sync?: string | null; last_error?: string | null; ad_count: number }
+export type Brand = { id: string; name: string; search_term?: string | null; page_ids: string[]; active: boolean; last_sync?: string | null; last_error?: string | null; ad_count: number; ig_handle?: string | null; domain?: string | null; logo_url?: string | null }
 export type Ad = {
   id: string; brand_id: string; ad_id: string; page_id?: string | null; page_name?: string | null; snapshot_url?: string | null
   body?: string | null; title?: string | null; caption?: string | null; description?: string | null; link_url?: string | null; cta?: string | null
