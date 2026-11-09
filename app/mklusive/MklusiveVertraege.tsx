@@ -10,7 +10,7 @@ type Props = { api: Api; creators: any[]; inputCls: string; labelCls: string }
 const empty = () => ({
   agency_creator_id: '', creator_name: '', creator_handle: '', sprache: 'de',
   agentur_name: 'Mklusive', agentur_adresse: '', marke_name: 'Aoulmi & Spering E-Commerce GbR (Koluré)', marke_adresse: 'Theodorstraße 13, 50389 Wesseling',
-  plattform: 'Instagram', anzahl_videos: 1, inhalte: '', posting_bis: '', online_tage: 30, freigabe: true, rabatt_code: '',
+  plattform: 'Instagram', anzahl_videos: 1, inhalte: '', posting_bis: '', online_tage: 160, freigabe: true, rabatt_code: '',
   verguetung_art: 'produkt' as 'produkt' | 'fee' | 'beides', produkte: '', produktwert: '', fee: '', provision: '', versand_bis: '', zahlung_tage: 14,
   nutzungsrechte_ads: false, exklusiv_wochen: '', zusatz: '',
 })
@@ -35,6 +35,7 @@ export default function MklusiveVertraege({ api, creators, inputCls, labelCls }:
   const [confirm, setConfirm] = useState<string | null>(null)
   const [filter, setFilter] = useState('')
   const [open, setOpen] = useState<string | null>(null)
+  const [showText, setShowText] = useState<string | null>(null)
 
   const load = async () => { const { ok, j } = await api('/api/mklusive/vertraege'); if (ok) setList(j); setLoading(false) }
   useEffect(() => { load() }, [])
@@ -68,7 +69,7 @@ export default function MklusiveVertraege({ api, creators, inputCls, labelCls }:
     const { ok, j } = editId ? await api('/api/mklusive/vertraege', 'PATCH', { id: editId, ...body() }) : await api('/api/mklusive/vertraege', 'POST', body())
     setSaving(false)
     if (!ok) { setError(j.error || 'Fehler beim Speichern'); return }
-    setShow(false); await load(); setOpen(j.id)
+    setShow(false); await load(); setOpen(null)
   }
   const setStatus = async (id: string, status: string) => { await api('/api/mklusive/vertraege', 'PATCH', { id, status }); await load() }
   const remove = async (id: string) => { await api('/api/mklusive/vertraege', 'DELETE', { id }); setOpen(null); await load() }
@@ -101,14 +102,15 @@ export default function MklusiveVertraege({ api, creators, inputCls, labelCls }:
                     <td className="px-4 py-3 text-ink-2 whitespace-nowrap">{fmtDatum(v.posting_bis)}</td>
                     <td className="px-4 py-3 text-ink-2 whitespace-nowrap">{verg(v)}</td>
                     <td className="px-4 py-3"><span className={`text-[11px] px-2 py-0.5 rounded-full ${STATUS[v.status]?.cls || ''}`}>{STATUS[v.status]?.label || v.status}</span>{v.unterschrieben_am && <div className="text-ink-4 text-[10px] mt-0.5">{fmtZeit(v.unterschrieben_am)}</div>}</td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap"><button onClick={e => { e.stopPropagation(); copy('l' + v.id, linkFor(v)) }} className="text-xs px-2.5 py-1 rounded-full border border-hairline text-ink-2 hover:text-ink-1">{copied === 'l' + v.id ? 'Kopiert ✓' : 'Link kopieren'}</button></td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap"><button onClick={e => { e.stopPropagation(); copy('l' + v.id, linkFor(v)) }} className="text-xs px-2.5 py-1 rounded-full bg-accent text-[#1a1507] font-semibold">{copied === 'l' + v.id ? 'Kopiert ✓' : 'Link kopieren'}</button></td>
                   </tr>
                   {open === v.id && (
                     <tr className="border-b border-hairline-soft/60 bg-surface-3/40">
                       <td colSpan={6} className="px-4 py-4">
                         <div className="flex flex-wrap gap-2 mb-3">
-                          <a href={linkFor(v)} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 rounded-full bg-accent text-white font-medium">Vertrag öffnen ↗</a>
-                          <button onClick={() => copy('m' + v.id, nachrichtVorlageAgentur(v, linkFor(v)))} className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 hover:text-ink-1">{copied === 'm' + v.id ? 'Kopiert ✓' : 'Nachricht für Creator kopieren'}</button>
+                          <button onClick={() => copy('l' + v.id, linkFor(v))} className="text-xs px-3 py-1.5 rounded-full bg-accent text-[#1a1507] font-semibold">{copied === 'l' + v.id ? 'Kopiert ✓' : 'Link kopieren'}</button>
+                          <button onClick={() => copy('m' + v.id, nachrichtVorlageAgentur(v, linkFor(v)))} className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 hover:text-ink-1">{copied === 'm' + v.id ? 'Kopiert ✓' : 'Mit Nachricht kopieren'}</button>
+                          <a href={linkFor(v)} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 hover:text-ink-1">Ansehen ↗</a>
                           <a href={`https://wa.me/?text=${encodeURIComponent(nachrichtVorlageAgentur(v, linkFor(v)))}`} target="_blank" rel="noreferrer" className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 hover:text-ink-1">Per WhatsApp</a>
                           {v.status !== 'unterschrieben' && <button onClick={() => openEdit(v)} className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-2 hover:text-ink-1">Bearbeiten</button>}
                           {v.status !== 'unterschrieben' && v.status !== 'storniert' && <button onClick={() => setStatus(v.id, 'storniert')} className="text-xs px-3 py-1.5 rounded-full border border-hairline text-ink-3 hover:text-ink-1">Stornieren</button>}
@@ -116,11 +118,24 @@ export default function MklusiveVertraege({ api, creators, inputCls, labelCls }:
                           <button onClick={() => twoClick('del' + v.id, () => remove(v.id))} className={`text-xs px-3 py-1.5 rounded-full ml-auto ${confirm === 'del' + v.id ? 'bg-red-600 text-white' : 'bg-red-950/30 text-red-400 hover:bg-red-950/50'}`}>{confirm === 'del' + v.id ? 'Wirklich löschen?' : 'Löschen'}</button>
                         </div>
                         <div className="text-ink-4 text-[11px] mb-2">Link: <span className="text-ink-3 select-all">{linkFor(v)}</span>{v.angesehen_am ? ` · angesehen ${fmtZeit(v.angesehen_am)}` : ''}{v.unterschrift_name ? ` · unterschrieben von ${v.unterschrift_name}` : ''}</div>
-                        <div className="grid md:grid-cols-2 gap-x-8 gap-y-2 max-h-[40vh] overflow-y-auto pr-2">
-                          {klauselnFuer({ ...v, bereich: 'mklusive' }).map((k, i) => (
-                            <div key={i} className="text-xs"><div className="text-ink-1 font-medium mb-0.5">{i + 1}. {k.titel}</div>{k.absaetze.map((a, j) => <p key={j} className="text-ink-3 leading-relaxed mb-1">{a}</p>)}</div>
-                          ))}
+                        <div className="text-ink-3 text-xs grid sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-1">
+                          <span>Inhalte: <span className="text-ink-2">{v.anzahl_videos || 1}× {v.plattform || 'Instagram'}</span></span>
+                          <span>Posting bis: <span className="text-ink-2">{fmtDatum(v.posting_bis)}</span></span>
+                          <span>Mind. online: <span className="text-ink-2">{v.online_tage ?? 160} Tage</span></span>
+                          <span>Vergütung: <span className="text-ink-2">{verg(v) || '—'}</span></span>
+                          {v.rabatt_code && <span>Code: <span className="text-ink-2">{v.rabatt_code}</span></span>}
+                          {v.exklusiv_wochen ? <span>Exklusivität: <span className="text-ink-2">{v.exklusiv_wochen} Wochen</span></span> : null}
+                          <span>Ads-Nutzung: <span className="text-ink-2">{v.nutzungsrechte_ads ? 'ja' : 'nein'}</span></span>
+                          {v.inhalte && <span className="sm:col-span-2 lg:col-span-4">Absprache: <span className="text-ink-2">{v.inhalte}</span></span>}
                         </div>
+                        <button onClick={() => setShowText(showText === v.id ? null : v.id)} className="mt-2 text-[11px] text-ink-4 hover:text-ink-2">{showText === v.id ? 'Vertragstext ausblenden' : 'Vertragstext anzeigen'}</button>
+                        {showText === v.id && (
+                          <div className="mt-2 grid md:grid-cols-2 gap-x-8 gap-y-2 max-h-[40vh] overflow-y-auto pr-2">
+                            {klauselnFuer({ ...v, bereich: 'mklusive' }).map((k, i) => (
+                              <div key={i} className="text-xs"><div className="text-ink-1 font-medium mb-0.5">{i + 1}. {k.titel}</div>{k.absaetze.map((a, j) => <p key={j} className="text-ink-3 leading-relaxed mb-1">{a}</p>)}</div>
+                            ))}
+                          </div>
+                        )}
                       </td>
                     </tr>
                   )}

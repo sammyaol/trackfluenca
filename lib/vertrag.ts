@@ -301,7 +301,7 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
   const mitFee = v.verguetung_art === 'fee' || v.verguetung_art === 'beides'
   const mitProvision = v.provision != null && Number(v.provision) > 0
   const zahlTage = v.zahlung_tage ?? 14
-  const onlineTage = v.online_tage ?? 30
+  const onlineTage = v.online_tage ?? 160
   const exkl = v.exklusiv_wochen != null && Number(v.exklusiv_wochen) > 0 ? Number(v.exklusiv_wochen) : 0
   const freigabe = v.freigabe !== false
   const list: Klausel[] = []
