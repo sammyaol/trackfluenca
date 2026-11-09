@@ -19,7 +19,8 @@ export const typOf = (k: Koop) => (k.typ && TYP[k.typ]) ? k.typ : k.source === '
 export const typColor = (k: Koop) => TYP[typOf(k)].color
 
 export const fmtN = (n?: number | null) => n == null ? '—' : n >= 1e6 ? (n / 1e6).toFixed(1).replace('.', ',') + ' Mio' : n >= 1e4 ? Math.round(n / 1e3) + 'k' : n >= 1e3 ? (n / 1e3).toFixed(1).replace('.', ',') + 'k' : String(n)
-export const tierOf = (f?: number | null) => f == null ? null : f >= 1e6 ? 'MEGA' : f >= 1e5 ? 'MACRO' : f >= 1e4 ? 'MICRO' : 'NANO'
+export const tierOf = (f?: number | null, t?: string | null) => f != null ? (f >= 1e6 ? 'MEGA' : f >= 1e5 ? 'MACRO' : f >= 1e4 ? 'MICRO' : 'NANO') : t ? String(t).toUpperCase() : null
+export const tierInfo = (i?: { ig_follower?: number | null; tt_follower?: number | null; ig_tier?: string | null } | null) => i ? tierOf(i.ig_follower || i.tt_follower, i.ig_tier) : null
 export const TIER_CLS: Record<string, string> = { NANO: 'bg-amber-500/20 text-amber-300', MICRO: 'bg-teal-500/20 text-teal-300', MACRO: 'bg-purple-500/20 text-purple-300', MEGA: 'bg-pink-500/20 text-pink-300' }
 export const flag = (land?: string | null) => { const c = (land || '').trim().toUpperCase().slice(0, 2); if (!/^[A-Z]{2}$/.test(c)) return land ? land.slice(0, 2) : ''; return String.fromCodePoint(...[...c].map(ch => 0x1f1e6 + ch.charCodeAt(0) - 65)) }
 export const handleOf = (k: Koop) => (k.creator_handle || k.creator || '').replace(/^@/, '').toLowerCase()
@@ -50,11 +51,11 @@ export function CreatorBadges({ items, info, compact = false }: { items: Koop[];
   const hasIg = items.some(k => k.source !== 'tiktok'), hasTt = items.some(k => k.source === 'tiktok')
   const flags = new Set(items.flatMap(k => k.flags || []))
   const fol = info?.ig_follower || info?.tt_follower
-  const tier = tierOf(fol)
+  const tier = tierInfo(info)
   const g = (info?.geschlecht || '').toLowerCase()
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {tier && <Badge cls={TIER_CLS[tier]} title={`${fmtN(fol)} Follower`}>{tier}</Badge>}
+      {tier && TIER_CLS[tier] && <Badge cls={TIER_CLS[tier]} title={fol ? `${fmtN(fol)} Follower` : 'Größe laut Linkster'}>{tier}</Badge>}
       {hasIg && <Badge title="Instagram"><IcoInsta /></Badge>}
       {hasTt && <Badge title="TikTok"><IcoTikTok /></Badge>}
       {g.startsWith('w') || g.startsWith('f') ? <Badge title="weiblich" cls="bg-pink-500/15 text-pink-300"><IcoFemale /></Badge> : g.startsWith('m') ? <Badge title="männlich" cls="bg-sky-500/15 text-sky-300"><IcoMale /></Badge> : null}

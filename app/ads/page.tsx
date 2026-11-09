@@ -15,7 +15,7 @@ const libUrl = (adId: string) => `https://www.facebook.com/ads/library/?id=${adI
 const PLAT: Record<string, string> = { facebook: 'FB', instagram: 'IG', messenger: 'MSG', audience_network: 'AN', threads: 'TH' }
 
 type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref?: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null; likes?: number | null; views?: number | null; flags?: string[] | null; typ?: string | null }
-const SRC: Record<string, { label: string; color: string }> = { ad: { label: 'Partnership-Ad', color: '#e6c27a' }, branded: { label: 'Branded Content (IG)', color: '#c9b8ff' }, ig_tag: { label: 'Instagram-Tag', color: '#ff7a8a' }, tiktok: { label: 'TikTok', color: '#5ee3a3' } }
+const SRC: Record<string, { label: string; color: string }> = { ad: { label: 'Partnership-Ad', color: '#e6c27a' }, branded: { label: 'Branded Content (IG)', color: '#c9b8ff' }, ig_tag: { label: 'Instagram-Tag', color: '#ff7a8a' }, tiktok: { label: 'TikTok', color: '#5ee3a3' }, linkster: { label: 'Linkster', color: '#34d399' } }
 type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; updated_at: string | null }
 type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom' | 'month' | 'event'
 // Anlass-Zeitfenster fuer die Kooperationen (Jahr waehlbar)
@@ -79,9 +79,9 @@ export default function AdsPage() {
   const [profile, setProfile] = useState<{ handle: string; name?: string } | null>(null)
   const [creatorInfos, setCreatorInfos] = useState<Record<string, CreatorInfo>>({})
   const [adsCreators, setAdsCreators] = useState<Record<string, CreatorInfo>>({})
-  const loadAdsCreators = useCallback(async () => { const { ok, j } = await api('/api/ads/creators'); if (ok && Array.isArray(j.creators)) { const m: Record<string, CreatorInfo> = {}; for (const c of j.creators) m[c.handle] = { geschlecht: c.gender, lang: c.lang, ig_follower: c.follower, land: c.land, bio: c.bio } ; setAdsCreators(m) } }, [api])
+  const loadAdsCreators = useCallback(async () => { const { ok, j } = await api('/api/ads/creators'); if (ok && Array.isArray(j.creators)) { const m: Record<string, CreatorInfo> = {}; for (const c of j.creators) m[c.handle] = { geschlecht: c.gender, lang: c.lang, ig_follower: c.follower, land: c.land, bio: c.bio, ig_tier: c.tier } ; setAdsCreators(m) } }, [api])
   useEffect(() => { loadAdsCreators() }, [loadAdsCreators])
-  const creatorInfo = useCallback((h: string) => { const k = (h || '').replace(/^@/, '').toLowerCase(); const a = creatorInfos[k]; const b = adsCreators[k]; if (!a && !b) return null; return { ...(b || {}), ...(a || {}), geschlecht: a?.geschlecht || b?.geschlecht || null, land: a?.land || b?.land || null, ig_follower: a?.ig_follower || b?.ig_follower || null, lang: b?.lang || null } as CreatorInfo }, [creatorInfos, adsCreators])
+  const creatorInfo = useCallback((h: string) => { const k = (h || '').replace(/^@/, '').toLowerCase(); const a = creatorInfos[k]; const b = adsCreators[k]; if (!a && !b) return null; return { ...(b || {}), ...(a || {}), geschlecht: a?.geschlecht || b?.geschlecht || null, land: a?.land || b?.land || null, ig_follower: a?.ig_follower || b?.ig_follower || null, ig_tier: a?.ig_tier || b?.ig_tier || null, lang: b?.lang || null } as CreatorInfo }, [creatorInfos, adsCreators])
   const [koopGender, setKoopGender] = useState<'' | 'w' | 'm'>(''); const [koopLang, setKoopLang] = useState('')
   const [recomputing, setRecomputing] = useState(false)
   const recompute = async () => { setRecomputing(true); await api('/api/ads/creators', 'POST', { mode: 'recompute' }); await loadAdsCreators(); setRecomputing(false) }
@@ -166,8 +166,8 @@ export default function AdsPage() {
     const m = new Map<string, { creator: string; handle: string | null; url: string | null; items: Koop[]; brands: Set<string> }>()
     for (const k of koops) {
       if (koopSrc && k.source !== koopSrc) continue
-      if (koopFlagged && k.source !== 'ad' && !(k.flags && k.flags.length)) continue
-      if (koopMinLikes && k.source !== 'ad') { const score = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); if (score < koopMinLikes && !(k.flags || []).some(f => f === 'Anzeige' || f === 'Collab')) continue }
+      if (koopFlagged && k.source !== 'ad' && k.source !== 'linkster' && !(k.flags && k.flags.length)) continue
+      if (koopMinLikes && k.source !== 'ad' && k.source !== 'linkster') { const score = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); if (score < koopMinLikes && !(k.flags || []).some(f => f === 'Anzeige' || f === 'Collab')) continue }
       const key = (k.creator_handle || k.creator).toLowerCase()
       const r = m.get(key) || { creator: k.creator, handle: k.creator_handle || null, url: k.creator_url || null, items: [], brands: new Set<string>() }
       r.items.push(k); r.brands.add(k.brand_id); if (!r.handle && k.creator_handle) r.handle = k.creator_handle; if (!r.url && k.creator_url) r.url = k.creator_url

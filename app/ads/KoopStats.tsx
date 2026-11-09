@@ -1,7 +1,7 @@
 'use client'
 // Statistik-Tab fuer Kooperationen (wie Linkster "Brand Statistics"): Koops pro Monat, Kennzahlen, Verteilung, Top-Creator.
 import { useMemo } from 'react'
-import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges, BrandLogo, tierOf, TIER_CLS, flag } from './koopUi'
+import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges, BrandLogo, tierInfo, TIER_CLS, flag } from './koopUi'
 
 type Props = { items: Koop[]; brandName: (id: string) => string; brandColor: (id: string) => string; brandLogo: (id: string) => string | null; creatorInfo: (handle: string) => CreatorInfo | null; onCreator: (handle: string) => void; onBrand?: (id: string) => void; selectedBrands: string[] }
 
@@ -13,14 +13,14 @@ export default function KoopStats({ items, brandName, brandColor, brandLogo, cre
     for (const k of items) {
       const h = handleOf(k); const c = byCreator.get(h) || { name: k.creator, items: [], brands: new Set<string>() }; c.items.push(k); c.brands.add(k.brand_id); byCreator.set(h, c)
       byBrand.set(k.brand_id, (byBrand.get(k.brand_id) || 0) + 1); const t = typOf(k); byTyp[t] = (byTyp[t] || 0) + 1
-      const src = k.source === 'tiktok' ? 'TikTok' : k.source === 'ad' ? 'Meta Ads' : 'Instagram'; bySrc[src] = (bySrc[src] || 0) + 1
+      const src = k.source === 'tiktok' ? 'TikTok' : k.source === 'ad' ? 'Meta Ads' : k.source === 'linkster' ? 'Linkster' : 'Instagram'; bySrc[src] = (bySrc[src] || 0) + 1
       if ((k.flags || []).some(f => f === 'Anzeige' || f === 'Collab')) flagged++
       if (k.likes) { likes += k.likes; likesN++ } if (k.views) { views += k.views; viewsN++ }
     }
     const creators = [...byCreator.entries()].map(([h, c]) => ({ handle: h, ...c, n: c.items.length })).sort((a, b) => b.n - a.n)
     // Land + Groesse je Creator (gewichtet nach Kooperationen), soweit Profildaten vorliegen
     const byLand: Record<string, number> = {}; const bySize: Record<string, number> = {}; let landKnown = 0, sizeKnown = 0; const sizeCreators: Record<string, number> = {}
-    for (const c of creators) { const inf = creatorInfo(c.handle); const land = inf?.land; if (land) { byLand[land] = (byLand[land] || 0) + c.n; landKnown += c.n } const t = tierOf(inf?.ig_follower || inf?.tt_follower); if (t) { bySize[t] = (bySize[t] || 0) + c.n; sizeKnown += c.n; sizeCreators[t] = (sizeCreators[t] || 0) + 1 } }
+    for (const c of creators) { const inf = creatorInfo(c.handle); const land = inf?.land; if (land) { byLand[land] = (byLand[land] || 0) + c.n; landKnown += c.n } const t = tierInfo(inf); if (t && TIER_CLS[t]) { bySize[t] = (bySize[t] || 0) + c.n; sizeKnown += c.n; sizeCreators[t] = (sizeCreators[t] || 0) + 1 } }
     const byGender: Record<string, number> = {}; for (const c of creators) { const g = (creatorInfo(c.handle)?.geschlecht || '').toLowerCase(); const k = g.startsWith('w') || g.startsWith('f') ? 'w' : g.startsWith('m') ? 'm' : '?'; byGender[k] = (byGender[k] || 0) + 1 }
     const multi = creators.filter(c => c.n > 1).length
     const months = new Set(items.map(k => (k.start_date || '').slice(0, 7)).filter(Boolean))
@@ -49,7 +49,7 @@ export default function KoopStats({ items, brandName, brandColor, brandLogo, cre
         </div>
         <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4 space-y-4">
           <div><div className="text-ink-2 text-xs font-medium mb-2">Nach Quelle</div>
-            <Bars rows={Object.entries(s.bySrc).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ key: k, label: k, value: v, color: k === 'TikTok' ? '#4fc3b8' : k === 'Meta Ads' ? '#e6c27a' : '#ff7a8a' }))} /></div>
+            <Bars rows={Object.entries(s.bySrc).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ key: k, label: k, value: v, color: k === 'TikTok' ? '#4fc3b8' : k === 'Meta Ads' ? '#e6c27a' : k === 'Linkster' ? '#34d399' : '#ff7a8a' }))} /></div>
           {s.byBrand.length > 1 && <div><div className="text-ink-2 text-xs font-medium mb-2">Nach Marke</div>
             <Bars rows={s.byBrand.slice(0, 8).map(([id, v]) => ({ key: id, label: <span className="inline-flex items-center gap-1.5"><BrandLogo src={brandLogo(id)} name={brandName(id)} color={brandColor(id)} size={14} />{brandName(id)}</span>, value: v, color: brandColor(id) }))} onClick={onBrand} /></div>}
         </div>
