@@ -95,9 +95,9 @@ export function MonthChart({ items, months = 13, height = 120 }: { items: Koop[]
     <div>
       <div className="flex items-end gap-1" style={{ height }}>
         {cols.map(c => (
-          <div key={c.key} className="flex-1 flex flex-col justify-end items-stretch group relative" title={`${c.key}: ${c.total} Kooperationen`}>
+          <div key={c.key} className="flex-1 flex flex-col justify-end items-stretch group relative" style={{ height }} title={`${c.key}: ${c.total} Kooperationen`}>
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 text-[10px] text-ink-3 opacity-0 group-hover:opacity-100 tabular-nums">{c.total}</div>
-            <div className="flex flex-col-reverse rounded-t-sm overflow-hidden" style={{ height: `${(c.total / max) * 100}%`, minHeight: c.total ? 2 : 0 }}>
+            <div className="flex flex-col-reverse rounded-t-sm overflow-hidden" style={{ height: Math.max(c.total ? 3 : 0, Math.round((c.total / max) * height)) }}>
               {Object.entries(c.parts).sort((a, b) => b[1] - a[1]).map(([t, n]) => <div key={t} style={{ flex: n, background: TYP[t]?.color || '#999' }} />)}
             </div>
           </div>
