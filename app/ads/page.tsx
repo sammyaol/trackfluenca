@@ -23,10 +23,16 @@ const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 
 // Filter-Zustand bleibt erhalten (Tab-Wechsel, Zurück-Navigation, Reload)
 const FKEY = 'tf_ads_filters'
 type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string; koopMinLikes?: number; koopFlagged?: boolean; koopSrc?: string; month?: string; event?: string; eventYear?: number }
-const loadSaved = (): Saved => { if (typeof window === 'undefined') return {}; try { return JSON.parse(localStorage.getItem(FKEY) || '{}') } catch { return {} } }
+// Zuerst aus der URL (?f=…), sonst aus localStorage – so ueberlebt der Filter Reload, Zurueck-Taste und neue Tabs
+const loadSaved = (): Saved => {
+  if (typeof window === 'undefined') return {}
+  try { const f = new URLSearchParams(location.search).get('f'); if (f) return JSON.parse(decodeURIComponent(escape(atob(f.replace(/-/g, '+').replace(/_/g, '/'))))) } catch {}
+  try { return JSON.parse(localStorage.getItem(FKEY) || '{}') } catch { return {} }
+}
 
 export default function AdsPage() {
-  const saved = useMemo(loadSaved, [])
+  const saved = useMemo<Saved>(() => ({}), [])
+  const [hydrated, setHydrated] = useState(false)
   const [brands, setBrands] = useState<Brand[]>([])
   const [settings, setSettings] = useState<Settings | null>(null)
   const [ads, setAds] = useState<Ad[]>([])
@@ -60,7 +66,22 @@ export default function AdsPage() {
   const [event, setEvent] = useState(saved.event || 'black_week'); const [eventYear, setEventYear] = useState<number>(saved.eventYear || new Date().getFullYear() - 1)
   const [brandQ, setBrandQ] = useState(''); const [brandOpen, setBrandOpen] = useState(false)
   const [koopShow, setKoopShow] = useState(60)
-  useEffect(() => { try { localStorage.setItem(FKEY, JSON.stringify({ sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear })) } catch {} }, [sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
+  // Gespeicherte Filter nach dem Mount anwenden (kein SSR-Mismatch), danach jede Aenderung in localStorage + URL schreiben
+  useEffect(() => {
+    const s = loadSaved()
+    if (s.sel) setSel(s.sel); if (s.preset) setPreset(s.preset); if (s.from) setFrom(s.from); if (s.to) setTo(s.to)
+    if (s.platform) setPlatform(s.platform); if (s.anlass) setAnlass(s.anlass); if (s.type) setType(s.type); if (s.sort) setSort(s.sort); if (s.q) { setQ(s.q); setQDeb(s.q) }
+    if (s.view) setView(s.view); if (s.koopSort) setKoopSort(s.koopSort); if (s.koopMin) setKoopMin(s.koopMin); if (s.koopQ) setKoopQ(s.koopQ)
+    if (typeof s.koopMinLikes === 'number') setKoopMinLikes(s.koopMinLikes); if (typeof s.koopFlagged === 'boolean') setKoopFlagged(s.koopFlagged); if (s.koopSrc) setKoopSrc(s.koopSrc)
+    if (s.month) setMonth(s.month); if (s.event) setEvent(s.event); if (s.eventYear) setEventYear(s.eventYear)
+    setHydrated(true)
+  }, [])
+  useEffect(() => {
+    if (!hydrated) return
+    const data: Saved = { sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear }
+    try { localStorage.setItem(FKEY, JSON.stringify(data)) } catch {}
+    try { const f = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); history.replaceState(null, '', location.pathname + '?f=' + f) } catch {}
+  }, [hydrated, sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
   useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
   const [adding, setAdding] = useState<string | null>(null)
   const [addedMsg, setAddedMsg] = useState('')
@@ -104,13 +125,13 @@ export default function AdsPage() {
     if (ok) { setAds(a => append ? [...a, ...j.ads] : j.ads); setTotal(j.total); setPage(pg) }
     setLoading(false)
   }, [api, query])
-  useEffect(() => { loadAds(0, false) }, [loadAds])
+  useEffect(() => { if (hydrated) loadAds(0, false) }, [loadAds, hydrated])
   const loadKoops = useCallback(async () => {
     setKoopsLoading(true)
     const p = new URLSearchParams(); if (sel.length) p.set('brand', sel.join(',')); if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to)
     const { ok, j } = await api('/api/ads/koops?' + p.toString()); if (ok) setKoops(j.koops); setKoopsLoading(false)
   }, [api, sel, range])
-  useEffect(() => { if (view === 'koops') loadKoops() }, [view, loadKoops])
+  useEffect(() => { if (hydrated && view === 'koops') loadKoops() }, [view, loadKoops, hydrated])
 
   // Aggregation fuer die Zeitleiste: pro Creator alle Kooperationen, sortiert nach Anzahl
   const koopRows = useMemo(() => {
