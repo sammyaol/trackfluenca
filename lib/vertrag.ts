@@ -291,7 +291,8 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
   const E = (n?: number | null) => fmtEur(n, loc)
   const ag = v.agentur_name || 'Mklusive'
   const agAdr = v.agentur_adresse
-  const marke = v.marke_name || v.firma_name || 'Koluré'
+  const marke = v.marke_name || v.firma_name || 'Aoulmi & Spering E-Commerce GbR (Koluré)'
+  const kurz = /kolur/i.test(marke) ? 'Koluré' : marke
   const markeAdr = v.marke_adresse
   const plattform = v.plattform || 'Instagram'
   const anzahl = v.anzahl_videos || 1
@@ -307,34 +308,34 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
 
   if (L !== 'de') {
     list.push({ titel: 'Parties', absaetze: [
-      `This agreement is entered into between ${ag}${agAdr ? ', ' + agAdr : ''} (hereinafter the “Agency”), acting on behalf of and for the account of ${marke}${markeAdr ? ', ' + markeAdr : ''} (hereinafter the “Brand”), and ${v.creator_name}${handle} (hereinafter the “Creator”).`,
-      `The Agency manages the collaboration between the Brand and the Creator, is the Creator’s point of contact and handles coordination, approval and payment.`] })
-    const inh = [`The Creator will produce ${anzahl === 1 ? 'one video' : anzahl + ' videos'} or content for ${plattform} featuring products of the Brand. Type, scope and design of the content follow the briefing and the arrangement made between the Agency and the Creator in writing (e.g. Instagram, WhatsApp or e-mail). This arrangement forms part of this agreement.`]
+      `This agreement is entered into between ${marke}${markeAdr ? ', ' + markeAdr : ''} (hereinafter “${kurz}”) and ${v.creator_name}${handle} (hereinafter the “Creator”).`,
+      `The collaboration is managed on behalf of ${kurz} by the agency ${ag}${agAdr ? ', ' + agAdr : ''}. ${ag} is the Creator’s point of contact for briefing, coordination and approval; the contracting party and debtor of the remuneration is exclusively ${kurz}.`] })
+    const inh = [`The Creator will produce ${anzahl === 1 ? 'one video' : anzahl + ' videos'} or content for ${plattform} featuring products of ${kurz}. Type, scope and design of the content follow the briefing and the arrangement made between ${ag} or ${kurz} and the Creator in writing (e.g. Instagram, WhatsApp or e-mail). This arrangement forms part of this agreement.`]
     if (v.inhalte) inh.push(`Summary of the arrangement: ${v.inhalte}`)
     list.push({ titel: 'Subject and content', absaetze: inh })
     const pf = [
-      `The Creator undertakes to produce the agreed content and to publish it on ${plattform} ${v.posting_bis ? `no later than ${D(v.posting_bis)}` : 'within the period agreed with the Agency'}.`,
+      `The Creator undertakes to produce the agreed content and to publish it on ${plattform} ${v.posting_bis ? `no later than ${D(v.posting_bis)}` : 'within the agreed period'}.`,
       `The content will be labelled as advertising in accordance with the applicable legal requirements (e.g. “Anzeige”/“Werbung”/paid partnership) and will comply with the platform rules.`,
     ]
-    if (freigabe) pf.push(`Before publication the Creator submits the content to the Agency for approval. The Agency will give feedback within 48 hours; requests for changes are limited to brand fit, legal requirements and the agreed briefing.`)
-    if (v.rabatt_code) pf.push(`The Creator will mention the discount code “${v.rabatt_code}” and/or the tracking link provided by the Agency clearly visible in the content and in the caption.`)
+    if (freigabe) pf.push(`Before publication the Creator submits the content to ${ag} for approval. Feedback is given within 48 hours; requests for changes are limited to brand fit, legal requirements and the agreed briefing.`)
+    if (v.rabatt_code) pf.push(`The Creator will mention the discount code “${v.rabatt_code}” and/or the provided tracking link clearly visible in the content and in the caption.`)
     pf.push(`The published content will remain online for at least ${onlineTage} days and will not be deleted or archived during this period.`,
-      `The Creator will not publish any content that disparages the Brand or the Agency, and will tag the Brand in the content.`)
+      `The Creator will not publish any content that disparages ${kurz}, and will tag ${kurz} in the content.`)
     list.push({ titel: 'Obligations of the Creator', absaetze: pf })
     const f: string[] = []
-    if (mitProdukt) f.push(`The Creator receives ${v.produkte ? 'the following products: ' + v.produkte : 'the products agreed with the Agency'}${v.produktwert ? ` (value approx. ${E(v.produktwert)})` : ''}${v.versand_bis ? `, shipped no later than ${D(v.versand_bis)}` : ', promptly after signature'}. The products become the Creator’s property once the content has been published.`)
-    if (mitFee) f.push(`The Creator receives a fee of ${E(v.fee)}. Payment is made by the Agency within ${zahlTage} days after publication of the agreed content and receipt of a proper invoice.`)
-    if (mitProvision) f.push(`In addition, the Creator receives a commission of ${Number(v.provision).toLocaleString(loc)} % of the net revenue (excluding VAT, shipping and returns) generated via the Creator’s discount code or tracking link. The commission is settled monthly on the basis of the Brand’s shop data.`)
+    if (mitProdukt) f.push(`The Creator receives ${v.produkte ? 'the following products: ' + v.produkte : 'the agreed products'}${v.produktwert ? ` (value approx. ${E(v.produktwert)})` : ''}${v.versand_bis ? `, shipped no later than ${D(v.versand_bis)}` : ', promptly after signature'}. The products become the Creator’s property once the content has been published.`)
+    if (mitFee) f.push(`The Creator receives a fee of ${E(v.fee)}. Payment is made by ${kurz} within ${zahlTage} days after publication of the agreed content and receipt of a proper invoice addressed to ${kurz}.`)
+    if (mitProvision) f.push(`In addition, the Creator receives a commission of ${Number(v.provision).toLocaleString(loc)} % of the net revenue (excluding VAT, shipping and returns) generated via the Creator’s discount code or tracking link. The commission is settled monthly on the basis of ${kurz}’s shop data.`)
     f.push(`The Creator is responsible for the correct taxation of all remuneration received.`)
     list.push({ titel: 'Remuneration', absaetze: f })
     list.push({ titel: 'Usage rights', absaetze: [
-      `The Creator grants the Brand and the Agency a non-exclusive right, unlimited in time, to share and repost the content organically on their own channels (social media, website, newsletter, presentations), crediting the Creator.`,
-      v.nutzungsrechte_ads ? `In addition, the Brand may use the content for paid advertising (e.g. Meta/TikTok Ads, whitelisting, Spark Ads).` : `Use for paid advertising is only permitted by separate arrangement.`] })
+      `The Creator grants ${kurz} a non-exclusive right, unlimited in time, to share and repost the content organically on their own channels (social media, website, newsletter, presentations), crediting the Creator.`,
+      v.nutzungsrechte_ads ? `In addition, ${kurz} may use the content for paid advertising (e.g. Meta/TikTok Ads, whitelisting, Spark Ads).` : `Use for paid advertising is only permitted by separate arrangement.`] })
     if (exkl) list.push({ titel: 'Exclusivity', absaetze: [`From signature until ${exkl} weeks after publication of the last agreed content, the Creator will not promote directly competing brands in the same product category (jewellery) on ${plattform}.`] })
     list.push({ titel: 'Publication date and non-performance', absaetze: [
-      `(1) The publication date is agreed in writing and is binding. The Creator acknowledges that the Brand’s campaigns are planned around this date.`,
-      `(2) Any postponement must be requested in writing at least 7 days in advance and is only effective with the Agency’s written consent. In case of unforeseeable events (e.g. illness) the Creator informs the Agency immediately and agrees on an alternative date.`,
-      `(3) If the Creator fails to publish for reasons within their control, any further entitlement lapses${mitProdukt ? ' and the Creator shall return the products received at their own expense' : ''}. The Brand and the Agency reserve the right to claim compensation for any resulting damage.`] })
+      `(1) The publication date is agreed in writing and is binding. The Creator acknowledges that ${kurz}’s campaigns are planned around this date.`,
+      `(2) Any postponement must be requested in writing at least 7 days in advance and is only effective with the written consent of ${kurz} or ${ag}. In case of unforeseeable events (e.g. illness) the Creator informs ${ag} immediately and agrees on an alternative date.`,
+      `(3) If the Creator fails to publish for reasons within their control, any further entitlement lapses${mitProdukt ? ' and the Creator shall return the products received at their own expense' : ''}. ${kurz} reserves the right to claim compensation for any resulting damage, including lost sales.`] })
     list.push({ titel: 'Confidentiality', absaetze: [`The Creator will keep the conditions of this agreement (in particular fees, commissions and briefings) confidential.`] })
     if (v.zusatz) list.push({ titel: 'Additional agreements', absaetze: [v.zusatz] })
     list.push({ titel: 'Final provisions', absaetze: [
@@ -344,34 +345,34 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
   }
 
   list.push({ titel: 'Vertragsparteien', absaetze: [
-    `Diese Vereinbarung wird geschlossen zwischen ${ag}${agAdr ? ', ' + agAdr : ''} (nachfolgend „Agentur“), handelnd im Auftrag und für Rechnung von ${marke}${markeAdr ? ', ' + markeAdr : ''} (nachfolgend „Marke“), und ${v.creator_name}${handle} (nachfolgend „Creator“).`,
-    `Die Agentur betreut die Kooperation zwischen Marke und Creator, ist Ansprechpartnerin des Creators und übernimmt Abstimmung, Freigabe und Abwicklung der Vergütung.`] })
-  const inh = [`Der Creator erstellt ${anzahl === 1 ? 'ein Video' : anzahl + ' Videos'} bzw. Inhalte für ${plattform}, in denen Produkte der Marke gezeigt werden. Art, Umfang und Ausgestaltung richten sich nach dem Briefing und der Absprache, die Agentur und Creator in Textform (z. B. Instagram, WhatsApp oder E-Mail) getroffen haben. Diese Absprache ist Bestandteil dieser Vereinbarung.`]
+    `Diese Vereinbarung wird geschlossen zwischen ${marke}${markeAdr ? ', ' + markeAdr : ''} (nachfolgend „${kurz}“) und ${v.creator_name}${handle} (nachfolgend „Creator“).`,
+    `Die Kooperation wird im Auftrag von ${kurz} durch die Agentur ${ag}${agAdr ? ', ' + agAdr : ''} betreut. ${ag} ist Ansprechpartnerin des Creators für Briefing, Abstimmung und Freigabe; Vertragspartner und Schuldner der Vergütung ist ausschließlich ${kurz}.`] })
+  const inh = [`Der Creator erstellt ${anzahl === 1 ? 'ein Video' : anzahl + ' Videos'} bzw. Inhalte für ${plattform}, in denen Produkte von ${kurz} gezeigt werden. Art, Umfang und Ausgestaltung richten sich nach dem Briefing und der Absprache, die ${ag} bzw. ${kurz} und der Creator in Textform (z. B. Instagram, WhatsApp oder E-Mail) getroffen haben. Diese Absprache ist Bestandteil dieser Vereinbarung.`]
   if (v.inhalte) inh.push(`Zusammenfassung der Absprache: ${v.inhalte}`)
   list.push({ titel: 'Gegenstand und Inhalte', absaetze: inh })
   const pf = [
-    `Der Creator verpflichtet sich, die vereinbarten Inhalte zu erstellen und ${v.posting_bis ? `spätestens bis zum ${D(v.posting_bis)}` : 'innerhalb des mit der Agentur vereinbarten Zeitraums'} auf ${plattform} zu veröffentlichen.`,
+    `Der Creator verpflichtet sich, die vereinbarten Inhalte zu erstellen und ${v.posting_bis ? `spätestens bis zum ${D(v.posting_bis)}` : 'innerhalb des vereinbarten Zeitraums'} auf ${plattform} zu veröffentlichen.`,
     `Die Inhalte werden entsprechend den gesetzlichen Vorgaben als Werbung gekennzeichnet (z. B. „Anzeige“/„Werbung“ bzw. bezahlte Partnerschaft) und halten die Regeln der Plattform ein.`,
   ]
-  if (freigabe) pf.push(`Vor Veröffentlichung legt der Creator die Inhalte der Agentur zur Freigabe vor. Die Agentur gibt innerhalb von 48 Stunden Rückmeldung; Änderungswünsche beschränken sich auf Markenpassung, rechtliche Vorgaben und das vereinbarte Briefing.`)
-  if (v.rabatt_code) pf.push(`Der Creator nennt den Rabattcode „${v.rabatt_code}“ bzw. den von der Agentur bereitgestellten Tracking-Link gut sichtbar im Inhalt und in der Caption.`)
+  if (freigabe) pf.push(`Vor Veröffentlichung legt der Creator die Inhalte ${ag} zur Freigabe vor. Die Rückmeldung erfolgt innerhalb von 48 Stunden; Änderungswünsche beschränken sich auf Markenpassung, rechtliche Vorgaben und das vereinbarte Briefing.`)
+  if (v.rabatt_code) pf.push(`Der Creator nennt den Rabattcode „${v.rabatt_code}“ bzw. den bereitgestellten Tracking-Link gut sichtbar im Inhalt und in der Caption.`)
   pf.push(`Die veröffentlichten Inhalte bleiben mindestens ${onlineTage} Tage online und werden in diesem Zeitraum nicht gelöscht oder archiviert.`,
-    `Der Creator veröffentlicht keine Inhalte, die die Marke oder die Agentur herabsetzen, und markiert die Marke im Inhalt.`)
+    `Der Creator veröffentlicht keine Inhalte, die ${kurz} herabsetzen, und markiert ${kurz} im Inhalt.`)
   list.push({ titel: 'Pflichten des Creators', absaetze: pf })
   const f: string[] = []
-  if (mitProdukt) f.push(`Der Creator erhält ${v.produkte ? 'folgende Produkte: ' + v.produkte : 'die mit der Agentur vereinbarten Produkte'}${v.produktwert ? ` (Wert ca. ${E(v.produktwert)})` : ''}${v.versand_bis ? `, Versand spätestens bis zum ${D(v.versand_bis)}` : ', zeitnah nach Unterschrift'}. Die Produkte gehen nach Veröffentlichung der Inhalte in das Eigentum des Creators über.`)
-  if (mitFee) f.push(`Der Creator erhält eine Vergütung von ${E(v.fee)}. Die Zahlung erfolgt durch die Agentur innerhalb von ${zahlTage} Tagen nach Veröffentlichung der vereinbarten Inhalte und Zugang einer ordnungsgemäßen Rechnung.`)
-  if (mitProvision) f.push(`Zusätzlich erhält der Creator eine Provision von ${Number(v.provision).toLocaleString(loc)} % auf den Netto-Umsatz (ohne MwSt., Versand und Retouren), der über den Rabattcode bzw. Tracking-Link des Creators erzielt wird. Die Abrechnung erfolgt monatlich auf Basis der Shop-Daten der Marke.`)
+  if (mitProdukt) f.push(`Der Creator erhält ${v.produkte ? 'folgende Produkte: ' + v.produkte : 'die vereinbarten Produkte'}${v.produktwert ? ` (Wert ca. ${E(v.produktwert)})` : ''}${v.versand_bis ? `, Versand spätestens bis zum ${D(v.versand_bis)}` : ', zeitnah nach Unterschrift'}. Die Produkte gehen nach Veröffentlichung der Inhalte in das Eigentum des Creators über.`)
+  if (mitFee) f.push(`Der Creator erhält eine Vergütung von ${E(v.fee)}. Die Zahlung erfolgt durch ${kurz} innerhalb von ${zahlTage} Tagen nach Veröffentlichung der vereinbarten Inhalte und Zugang einer ordnungsgemäßen Rechnung an ${kurz}.`)
+  if (mitProvision) f.push(`Zusätzlich erhält der Creator eine Provision von ${Number(v.provision).toLocaleString(loc)} % auf den Netto-Umsatz (ohne MwSt., Versand und Retouren), der über den Rabattcode bzw. Tracking-Link des Creators erzielt wird. Die Abrechnung erfolgt monatlich auf Basis der Shop-Daten von ${kurz}.`)
   f.push(`Für die ordnungsgemäße Versteuerung der erhaltenen Vergütung ist der Creator selbst verantwortlich.`)
   list.push({ titel: 'Vergütung', absaetze: f })
   list.push({ titel: 'Nutzungsrechte', absaetze: [
-    `Der Creator räumt der Marke und der Agentur das einfache, zeitlich unbegrenzte Recht ein, die Inhalte auf den eigenen Kanälen (Social Media, Website, Newsletter, Präsentationen) organisch zu teilen und zu reposten, unter Nennung des Creators.`,
-    v.nutzungsrechte_ads ? `Zusätzlich darf die Marke die Inhalte für bezahlte Werbeanzeigen (z. B. Meta/TikTok Ads, Whitelisting, Spark Ads) nutzen.` : `Eine Nutzung für bezahlte Werbeanzeigen ist nur nach gesonderter Absprache erlaubt.`] })
+    `Der Creator räumt ${kurz} das einfache, zeitlich unbegrenzte Recht ein, die Inhalte auf den eigenen Kanälen (Social Media, Website, Newsletter, Präsentationen) organisch zu teilen und zu reposten, unter Nennung des Creators.`,
+    v.nutzungsrechte_ads ? `Zusätzlich darf ${kurz} die Inhalte für bezahlte Werbeanzeigen (z. B. Meta/TikTok Ads, Whitelisting, Spark Ads) nutzen.` : `Eine Nutzung für bezahlte Werbeanzeigen ist nur nach gesonderter Absprache erlaubt.`] })
   if (exkl) list.push({ titel: 'Exklusivität', absaetze: [`Ab Unterschrift bis ${exkl} Wochen nach Veröffentlichung des letzten vereinbarten Inhalts bewirbt der Creator auf ${plattform} keine direkt konkurrierenden Marken derselben Produktkategorie (Schmuck).`] })
   list.push({ titel: 'Veröffentlichungstermin und Nichterfüllung', absaetze: [
-    `(1) Der Veröffentlichungstermin wird in Textform vereinbart und ist verbindlich. Der Creator nimmt zur Kenntnis, dass die Kampagnen der Marke auf diesen Termin ausgerichtet sind.`,
-    `(2) Eine Verschiebung ist mindestens 7 Tage im Voraus in Textform zu beantragen und wird nur mit Zustimmung der Agentur wirksam. Bei unvorhersehbaren Ereignissen (z. B. Krankheit) informiert der Creator die Agentur unverzüglich und vereinbart einen Ersatztermin.`,
-    `(3) Veröffentlicht der Creator aus von ihm zu vertretenden Gründen nicht, entfällt jeder weitere Anspruch${mitProdukt ? ' und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück' : ''}. Marke und Agentur behalten sich vor, Ersatz für den entstandenen Schaden zu verlangen.`] })
+    `(1) Der Veröffentlichungstermin wird in Textform vereinbart und ist verbindlich. Der Creator nimmt zur Kenntnis, dass die Kampagnen von ${kurz} auf diesen Termin ausgerichtet sind.`,
+    `(2) Eine Verschiebung ist mindestens 7 Tage im Voraus in Textform zu beantragen und wird nur mit Zustimmung von ${kurz} bzw. ${ag} wirksam. Bei unvorhersehbaren Ereignissen (z. B. Krankheit) informiert der Creator ${ag} unverzüglich und vereinbart einen Ersatztermin.`,
+    `(3) Veröffentlicht der Creator aus von ihm zu vertretenden Gründen nicht, entfällt jeder weitere Anspruch${mitProdukt ? ' und der Creator sendet die erhaltenen Produkte auf eigene Kosten zurück' : ''}. ${kurz} behält sich vor, Ersatz für den entstandenen Schaden, einschließlich entgangener Umsätze, zu verlangen.`] })
   list.push({ titel: 'Vertraulichkeit', absaetze: [`Der Creator behandelt die Konditionen dieser Vereinbarung (insbesondere Vergütung, Provision und Briefing) vertraulich.`] })
   if (v.zusatz) list.push({ titel: 'Zusätzliche Vereinbarungen', absaetze: [v.zusatz] })
   list.push({ titel: 'Schlussbestimmungen', absaetze: [
@@ -382,13 +383,13 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
 
 export function nachrichtVorlageAgentur(v: Vertrag, link: string) {
   const vorname = (v.creator_name || '').split(' ')[0] || ''
-  const ag = v.agentur_name || 'Mklusive'; const marke = v.marke_name || 'Koluré'
-  if (langOf(v) !== 'de') return `Hey ${vorname || 'there'}! 💛 As discussed, here is the short collaboration agreement for your cooperation with ${marke} (via ${ag}) with everything we agreed. Please read it and sign right on your phone, it only takes a minute:
+  const ag = v.agentur_name || 'Mklusive'; const marke = /kolur/i.test(v.marke_name || 'Koluré') ? 'Koluré' : (v.marke_name || 'Koluré')
+  if (langOf(v) !== 'de') return `Hey ${vorname || 'there'}! 💛 As discussed, here is the short collaboration agreement for your cooperation with ${marke} (managed by ${ag}) with everything we agreed. Please read it and sign right on your phone, it only takes a minute:
 
 ${link}
 
 Thank you, we’re looking forward to working with you! ✨`
-  return `Hey ${vorname || 'du'}! 💛 Wie besprochen hier die kurze Kooperationsvereinbarung für deine Zusammenarbeit mit ${marke} (über ${ag}) mit allem, was wir abgesprochen haben. Bitte einmal durchlesen und direkt am Handy unterschreiben, dauert nur eine Minute:
+  return `Hey ${vorname || 'du'}! 💛 Wie besprochen hier die kurze Kooperationsvereinbarung für deine Zusammenarbeit mit ${marke} (betreut von ${ag}) mit allem, was wir abgesprochen haben. Bitte einmal durchlesen und direkt am Handy unterschreiben, dauert nur eine Minute:
 
 ${link}
 

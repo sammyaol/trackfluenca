@@ -9,7 +9,7 @@ type Props = { api: Api; creators: any[]; inputCls: string; labelCls: string }
 
 const empty = () => ({
   agency_creator_id: '', creator_name: '', creator_handle: '', sprache: 'de',
-  agentur_name: 'Mklusive', agentur_adresse: '', marke_name: 'Koluré', marke_adresse: '',
+  agentur_name: 'Mklusive', agentur_adresse: '', marke_name: 'Aoulmi & Spering E-Commerce GbR (Koluré)', marke_adresse: '',
   plattform: 'Instagram', anzahl_videos: 1, inhalte: '', posting_bis: '', online_tage: 30, freigabe: true, rabatt_code: '',
   verguetung_art: 'produkt' as 'produkt' | 'fee' | 'beides', produkte: '', produktwert: '', fee: '', provision: '', versand_bis: '', zahlung_tage: 14,
   nutzungsrechte_ads: false, exklusiv_wochen: '', zusatz: '',
@@ -149,9 +149,9 @@ export default function MklusiveVertraege({ api, creators, inputCls, labelCls }:
                   <div><label className={labelCls}>Handle</label><input value={form.creator_handle} onChange={e => setForm((f: any) => ({ ...f, creator_handle: e.target.value }))} placeholder="@name" className={inputCls} /></div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className={labelCls}>Agentur</label><input value={form.agentur_name} onChange={e => setForm((f: any) => ({ ...f, agentur_name: e.target.value }))} className={inputCls} /></div>
+                  <div><label className={labelCls}>Betreuende Agentur</label><input value={form.agentur_name} onChange={e => setForm((f: any) => ({ ...f, agentur_name: e.target.value }))} className={inputCls} /></div>
                   <div><label className={labelCls}>Agentur-Adresse</label><input value={form.agentur_adresse} onChange={e => setForm((f: any) => ({ ...f, agentur_adresse: e.target.value }))} placeholder="Straße, PLZ Ort" className={inputCls} /></div>
-                  <div><label className={labelCls}>Marke</label><input value={form.marke_name} onChange={e => setForm((f: any) => ({ ...f, marke_name: e.target.value }))} className={inputCls} /></div>
+                  <div><label className={labelCls}>Vertragspartner (Marke)</label><input value={form.marke_name} onChange={e => setForm((f: any) => ({ ...f, marke_name: e.target.value }))} className={inputCls} /></div>
                   <div><label className={labelCls}>Marken-Adresse</label><input value={form.marke_adresse} onChange={e => setForm((f: any) => ({ ...f, marke_adresse: e.target.value }))} placeholder="Straße, PLZ Ort" className={inputCls} /></div>
                 </div>
                 <div className="grid grid-cols-3 gap-3">
