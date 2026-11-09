@@ -1,6 +1,9 @@
 'use client'
 import Sidebar from '../components/Sidebar'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import KoopStats from './KoopStats'
+import CreatorProfile from './CreatorProfile'
+import { TYP, typOf, DotRow, AxisHeader, CreatorBadges, type CreatorInfo } from './koopUi'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Ad, Brand } from '@/lib/ads'
 
@@ -11,7 +14,7 @@ const iso = (d: Date) => d.toISOString().slice(0, 10)
 const libUrl = (adId: string) => `https://www.facebook.com/ads/library/?id=${adId}`
 const PLAT: Record<string, string> = { facebook: 'FB', instagram: 'IG', messenger: 'MSG', audience_network: 'AN', threads: 'TH' }
 
-type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref?: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null; likes?: number | null; views?: number | null; flags?: string[] | null }
+type Koop = { id: string; brand_id: string; creator: string; creator_handle?: string | null; creator_url?: string | null; source: string; ref?: string; url?: string | null; start_date?: string | null; end_date?: string | null; media_url?: string | null; text?: string | null; platform?: string | null; likes?: number | null; views?: number | null; flags?: string[] | null; typ?: string | null }
 const SRC: Record<string, { label: string; color: string }> = { ad: { label: 'Partnership-Ad', color: '#e6c27a' }, branded: { label: 'Branded Content (IG)', color: '#c9b8ff' }, ig_tag: { label: 'Instagram-Tag', color: '#ff7a8a' }, tiktok: { label: 'TikTok', color: '#5ee3a3' } }
 type Settings = { hasToken: boolean; tokenHint: string; countries: string[]; updated_at: string | null }
 type Preset = 'all' | 'active' | '30' | '90' | 'y0' | 'y1' | 'y2' | 'y3' | 'custom' | 'month' | 'event'
@@ -66,6 +69,10 @@ export default function AdsPage() {
   const [event, setEvent] = useState(saved.event || 'black_week'); const [eventYear, setEventYear] = useState<number>(saved.eventYear || new Date().getFullYear() - 1)
   const [brandQ, setBrandQ] = useState(''); const [brandOpen, setBrandOpen] = useState(false)
   const [koopShow, setKoopShow] = useState(60)
+  const [koopTab, setKoopTab] = useState<'liste' | 'statistik'>('liste')
+  const [profile, setProfile] = useState<{ handle: string; name?: string } | null>(null)
+  const [creatorInfos, setCreatorInfos] = useState<Record<string, CreatorInfo>>({})
+  const creatorInfo = useCallback((h: string) => creatorInfos[(h || '').replace(/^@/, '').toLowerCase()] || null, [creatorInfos])
   // Gespeicherte Filter nach dem Mount anwenden (kein SSR-Mismatch), danach jede Aenderung in localStorage + URL schreiben
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
   const api = useCallback(async (url: string, method = 'GET', body?: any) => {
@@ -73,6 +80,7 @@ export default function AdsPage() {
     const j = await r.json().catch(() => ({})); return { ok: r.ok, j }
   }, [])
 
+  useEffect(() => { api('/api/creators?type=all').then(({ ok, j }) => { if (!ok || !Array.isArray(j)) return; const m: Record<string, CreatorInfo> = {}; for (const c of j) { const ig = String(c.ig || '').replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, '').toLowerCase(); const tt = String(c.tt || '').replace(/^@/, '').replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/, '').replace(/\/.*$/, '').toLowerCase(); const info: CreatorInfo = { id: c.id, name: c.name, ig, tt, geschlecht: c.geschlecht, land: c.land, ig_follower: c.ig_follower, tt_follower: c.tt_follower, ig_tier: c.ig_tier, status: c.status }; if (ig) m[ig] = info; if (tt) m[tt] = m[tt] || info } setCreatorInfos(m) }).catch(() => {}) }, [api])
   const applySaved = (s: Saved) => {
     if (s.sel) setSel(s.sel); if (s.preset) setPreset(s.preset); if (s.from) setFrom(s.from); if (s.to) setTo(s.to)
     if (s.platform) setPlatform(s.platform); if (s.anlass) setAnlass(s.anlass); if (s.type) setType(s.type); if (s.sort) setSort(s.sort); if (s.q) { setQ(s.q); setQDeb(s.q) }
@@ -200,7 +208,7 @@ export default function AdsPage() {
   }
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { setDetail(null); setSetup(false) } }
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') { setDetail(null); setSetup(false); setProfile(null) } }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
   }, [])
 
@@ -313,9 +321,10 @@ export default function AdsPage() {
                   <span className="text-ink-4 text-xs">{range.from} – {range.to}</span>
                 </>}
                 {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
-                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke (Farbe), Rand = Quelle:</span>{Object.entries(SRC).map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
+                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke, Rand = Inhalt:</span>{Object.entries(TYP).filter(([k]) => k !== 'story' && k !== 'carousel').map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex rounded-full border border-hairline p-0.5">{([['liste', 'Creator-Liste'], ['statistik', 'Statistik']] as const).map(([k, l]) => <button key={k} onClick={() => setKoopTab(k)} className={`text-xs px-3 py-1 rounded-full ${koopTab === k ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>)}</div>
                 <select value={koopSort} onChange={e => setKoopSort(e.target.value as 'brands' | 'count' | 'recent')} className={selCls}>
                   <option value="brands">Sortierung: meiste Marken</option>
                   <option value="count">Sortierung: meiste Buchungen</option>
@@ -342,20 +351,26 @@ export default function AdsPage() {
                 <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht · {koopRows.filter(r => r.brands.size > 1).length} bei mehreren Marken</span>
               </div>
               {addedMsg && <div className="text-emerald-400 text-sm">{addedMsg}</div>}
-              {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : !koopRows.length ? (
+              {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : koopTab === 'statistik' ? (
+                <KoopStats items={koopRows.flatMap(r => r.items)} brandName={brandName} brandColor={brandColor} creatorInfo={creatorInfo} onCreator={h => setProfile({ handle: h })} onBrand={id => setSel([id])} selectedBrands={sel} />
+              ) : !koopRows.length ? (
                 <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Keine Kooperationen in dieser Auswahl</div><div className="text-ink-4 text-xs mt-1">Quellen: Partnership-Ads („Creator mit Marke“) aus der Ad Library, Branded-Content-Library und Instagram-Tags. Sag Claude, welche Marke per Browser nachgezogen werden soll.</div></div>
               ) : (
                 <div className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden">
                   <div className="grid grid-cols-[260px_1fr_120px] border-b border-hairline-soft text-[10px] uppercase tracking-wide text-ink-4 bg-surface-2">
                     <div className="px-4 py-2">Creator</div>
-                    <div className="relative h-8 overflow-hidden">{koopSpan.ticks.map((t, i) => <span key={i} className={`absolute top-0 bottom-0 flex items-center justify-center text-[10px] overflow-hidden whitespace-nowrap ${i % 2 ? 'bg-white/[0.025]' : ''} ${t.strong ? 'text-ink-2 font-semibold' : ''}`} style={{ left: `${t.left}%`, width: `${t.width}%` }}>{koopSpan.ticks.length > 40 && i % 2 ? '' : t.label}</span>)}</div>
+                    <AxisHeader ticks={koopSpan.ticks} />
                     <div className="px-3 py-2 text-right">Buchungen</div>
                   </div>
                   <div className="max-h-[70vh] overflow-y-auto">
                     {koopRows.slice(0, koopShow).map(r => (
                       <div key={r.creator} className="grid grid-cols-[260px_1fr_120px] items-center border-b border-hairline-soft/60 hover:bg-white/[0.03]">
                         <div className="px-4 py-2.5 min-w-0">
-                          <button onClick={() => setKoopCreator(koopCreator === r.creator ? null : r.creator)} className="text-ink-1 text-sm font-medium truncate block text-left hover:text-accent">{r.creator}</button>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <button onClick={() => setProfile({ handle: r.handle || r.creator, name: r.creator })} className="text-ink-1 text-sm font-medium truncate text-left hover:text-accent" title="Profil mit allen Marken öffnen">{r.creator}</button>
+                            <button onClick={() => setKoopCreator(koopCreator === r.creator ? null : r.creator)} className="text-ink-4 hover:text-ink-2 text-[10px] flex-shrink-0" title="Posts ein-/ausklappen">{koopCreator === r.creator ? '▲' : '▼'}</button>
+                          </div>
+                          <div className="mt-0.5"><CreatorBadges items={r.items} info={creatorInfo(r.handle || r.creator)} compact /></div>
                           <div className="text-ink-4 text-[11px] flex items-center gap-2">
                             {profileLink(r) && <a href={profileLink(r)!} target="_blank" rel="noreferrer" className="hover:text-ink-2 truncate">{r.handle ? '@' + r.handle : 'Profil'} ↗</a>}
                             {r.brands.size > 1 && <span className="text-accent font-medium whitespace-nowrap">{r.brands.size} Marken</span>}
@@ -363,15 +378,7 @@ export default function AdsPage() {
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">{brandStats(r.items).slice(0, 4).map(([b, n]) => <span key={b} className="text-[10px] px-1.5 py-px rounded-full border" style={{ borderColor: brandColor(b), color: brandColor(b) }}>{brandName(b)}{n > 1 ? ` ×${n}` : ''}</span>)}{brandStats(r.items).length > 4 && <span className="text-[10px] text-ink-4">+{brandStats(r.items).length - 4}</span>}</div>
                         </div>
-                        <div className="relative h-14">
-                          <div className="absolute inset-y-0 left-0 right-0">{koopSpan.ticks.map((t, i) => <span key={i} className={`absolute top-0 bottom-0 border-l border-hairline-soft/50 ${i % 2 ? 'bg-white/[0.025]' : ''}`} style={{ left: `${t.left}%`, width: `${t.width}%` }} />)}</div>
-                          <div className="absolute left-0 right-0 top-1/2 border-t border-hairline-soft/60" />
-                          {r.items.filter(k => k.start_date).map(k => {
-                            const days = k.end_date ? Math.max(1, Math.round((new Date(k.end_date).getTime() - new Date(k.start_date!).getTime()) / 86400000)) : 1
-                            const size = Math.min(26, 14 + Math.log2(days + 1) * 2)
-                            return <a key={k.id} href={postLink(k)} target="_blank" rel="noreferrer" title={`${brandName(k.brand_id)} · ${dat(k.start_date)}${k.end_date ? ' – ' + dat(k.end_date) : ''} · ${SRC[k.source]?.label || k.source}${k.text ? '\n' + k.text.slice(0, 120) : ''}\nKlick: Post öffnen`} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-[3px] shadow-[0_0_0_1px_rgba(0,0,0,.5)] hover:scale-125 hover:z-10 transition" style={{ left: `${koopSpan.pos(k.start_date!)}%`, width: size, height: size, background: brandColor(k.brand_id), borderColor: SRC[k.source]?.color || '#999' }} />
-                          })}
-                        </div>
+                        <DotRow items={r.items} pos={koopSpan.pos} fill={k => brandColor(k.brand_id)} ticks={koopSpan.ticks} />
                         <div className="px-3 py-2 text-right"><span className="text-ink-1 text-sm font-semibold">{r.items.length}×</span><div className="text-ink-4 text-[10px] whitespace-nowrap">{spanLabel(r.items)}</div></div>
                         {koopCreator === r.creator && (
                           <div className="col-span-3 px-4 pb-3">
@@ -386,7 +393,7 @@ export default function AdsPage() {
                                 <div key={k.id} className="flex items-center gap-3 bg-surface-3 rounded-apple-sm border border-hairline-soft p-1.5">
                                   <a href={postLink(k)} target="_blank" rel="noreferrer" className="w-12 h-14 rounded bg-black/30 overflow-hidden flex-shrink-0">{k.media_url && <img src={k.media_url} alt="" className="w-full h-full object-cover" loading="lazy" />}</a>
                                   <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-2 text-[11px]"><span className="font-medium" style={{ color: brandColor(k.brand_id) }}>{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: (SRC[k.source]?.color || '#999') + '22', color: SRC[k.source]?.color || '#999' }}>{SRC[k.source]?.label || k.source}</span></div>
+                                    <div className="flex items-center gap-2 text-[11px]"><span className="font-medium" style={{ color: brandColor(k.brand_id) }}>{brandName(k.brand_id)}</span><span className="text-ink-4">{dat(k.start_date)}{k.end_date ? ` – ${dat(k.end_date)}` : ''}</span><span className="px-1.5 rounded-full text-[10px]" style={{ background: TYP[typOf(k)].color + '22', color: TYP[typOf(k)].color }}>{TYP[typOf(k)].label}</span></div>
                                     <div className="text-ink-3 text-[11px] truncate">{k.text || '—'}</div>
                                     {(k.likes || k.views || (k.flags && k.flags.length)) ? <div className="text-ink-4 text-[10px] flex gap-2">{k.views ? <span>{(k.views / 1000).toFixed(k.views >= 100000 ? 0 : 1)}k Views</span> : null}{k.likes ? <span>{k.likes.toLocaleString('de-DE')} Likes</span> : null}{(k.flags || []).map(f => <span key={f} className="text-accent">{f}</span>)}</div> : null}
                                   </div>
@@ -468,6 +475,7 @@ export default function AdsPage() {
           </>)}
         </div>
 
+        {profile && <CreatorProfile handle={profile.handle} name={profile.name} api={api} brandName={brandName} brandColor={brandColor} info={creatorInfo(profile.handle)} onClose={() => setProfile(null)} onAddCreator={r => addCreator(r)} onBrand={id => { setSel([id]); setProfile(null) }} />}
         {detail && (
           <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setDetail(null)}>
             <div className="bg-surface-2 rounded-apple-lg border border-hairline w-full max-w-5xl max-h-[92vh] overflow-hidden grid md:grid-cols-[1fr_380px]" onClick={e => e.stopPropagation()}>

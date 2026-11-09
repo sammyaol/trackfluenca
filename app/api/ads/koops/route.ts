@@ -13,9 +13,10 @@ export async function GET(req: NextRequest) {
   const brands = (p.get('brand') || '').split(',').filter(Boolean)
   const all: unknown[] = []
   for (let off = 0; off < 30000; off += 1000) {
-    let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform, likes, views, flags').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
+    let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform, likes, views, flags, typ').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
     if (brands.length) q = q.in('brand_id', brands)
     if (p.get('creator')) q = q.ilike('creator', p.get('creator')!)
+    if (p.get('handle')) q = q.ilike('creator_handle', p.get('handle')!)
     if (p.get('from')) q = q.gte('start_date', p.get('from')!)
     if (p.get('to')) q = q.lte('start_date', p.get('to')!)
     if (p.get('source')) q = q.eq('source', p.get('source')!)
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
     likes: Number.isFinite(Number(k.likes)) ? Math.round(Number(k.likes)) : (Number((String(k.text || '').match(/(\d+) Likes/) || [])[1]) || null),
     views: Number.isFinite(Number(k.views)) && k.views != null ? Math.round(Number(k.views)) : (Number((String(k.text || '').match(/(\d+)k Views/) || [])[1]) * 1000 || null),
     flags: Array.isArray(k.flags) ? k.flags.map((f: unknown) => String(f).slice(0, 30)).slice(0, 6) : ((String(k.text || '').match(/\[([^\]]+)\]/) || [])[1] || '').split(', ').filter(Boolean),
+    typ: k.typ ? String(k.typ).slice(0, 20) : (k.source === 'tiktok' ? 'video' : k.source === 'ad' ? 'ad' : 'post'),
   }))
   if (!rows.length) return NextResponse.json({ ok: true, inserted: 0 }, { headers: CORS })
   const { error, data } = await db.from('ads_koops').upsert(rows, { onConflict: 'user_id,source,ref', ignoreDuplicates: false }).select('id')
