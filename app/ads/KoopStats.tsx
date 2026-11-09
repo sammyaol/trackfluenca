@@ -1,7 +1,7 @@
 'use client'
 // Statistik-Tab fuer Kooperationen (wie Linkster "Brand Statistics"): Koops pro Monat, Kennzahlen, Verteilung, Top-Creator.
 import { useMemo } from 'react'
-import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges, BrandLogo } from './koopUi'
+import { type Koop, type CreatorInfo, TYP, typOf, Kpi, Bars, MonthChart, handleOf, CreatorBadges, BrandLogo, tierOf, TIER_CLS, flag } from './koopUi'
 
 type Props = { items: Koop[]; brandName: (id: string) => string; brandColor: (id: string) => string; brandLogo: (id: string) => string | null; creatorInfo: (handle: string) => CreatorInfo | null; onCreator: (handle: string) => void; onBrand?: (id: string) => void; selectedBrands: string[] }
 
@@ -18,10 +18,14 @@ export default function KoopStats({ items, brandName, brandColor, brandLogo, cre
       if (k.likes) { likes += k.likes; likesN++ } if (k.views) { views += k.views; viewsN++ }
     }
     const creators = [...byCreator.entries()].map(([h, c]) => ({ handle: h, ...c, n: c.items.length })).sort((a, b) => b.n - a.n)
+    // Land + Groesse je Creator (gewichtet nach Kooperationen), soweit Profildaten vorliegen
+    const byLand: Record<string, number> = {}; const bySize: Record<string, number> = {}; let landKnown = 0, sizeKnown = 0; const sizeCreators: Record<string, number> = {}
+    for (const c of creators) { const inf = creatorInfo(c.handle); const land = inf?.land; if (land) { byLand[land] = (byLand[land] || 0) + c.n; landKnown += c.n } const t = tierOf(inf?.ig_follower || inf?.tt_follower); if (t) { bySize[t] = (bySize[t] || 0) + c.n; sizeKnown += c.n; sizeCreators[t] = (sizeCreators[t] || 0) + 1 } }
+    const byGender: Record<string, number> = {}; for (const c of creators) { const g = (creatorInfo(c.handle)?.geschlecht || '').toLowerCase(); const k = g.startsWith('w') || g.startsWith('f') ? 'w' : g.startsWith('m') ? 'm' : '?'; byGender[k] = (byGender[k] || 0) + 1 }
     const multi = creators.filter(c => c.n > 1).length
     const months = new Set(items.map(k => (k.start_date || '').slice(0, 7)).filter(Boolean))
-    return { creators, multi, byBrand: [...byBrand.entries()].sort((a, b) => b[1] - a[1]), byTyp, bySrc, flagged, avgLikes: likesN ? likes / likesN : 0, avgViews: viewsN ? views / viewsN : 0, months: months.size }
-  }, [items])
+    return { creators, multi, byBrand: [...byBrand.entries()].sort((a, b) => b[1] - a[1]), byTyp, bySrc, flagged, avgLikes: likesN ? likes / likesN : 0, avgViews: viewsN ? views / viewsN : 0, months: months.size, byLand, bySize, landKnown, sizeKnown, sizeCreators, byGender }
+  }, [items, creatorInfo])
 
   const n = items.length
   const fmt = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 1 })
@@ -51,10 +55,34 @@ export default function KoopStats({ items, brandName, brandColor, brandLogo, cre
         </div>
       </div>
 
+      <div className="grid lg:grid-cols-3 gap-4">
+        <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4">
+          <div className="text-ink-2 text-xs font-medium mb-2">Kooperationen nach Land <span className="text-ink-4 font-normal">· {n ? Math.round(s.landKnown / n * 100) : 0} % zugeordnet</span></div>
+          {Object.keys(s.byLand).length ? <Bars rows={Object.entries(s.byLand).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, v]) => ({ key: k, label: <span><span className="mr-1.5">{flag(k)}</span>{k}</span>, value: v, color: '#8fc7ff' }))} /> : <div className="text-ink-4 text-xs">Noch keine Länder – Creator-Profile nachladen.</div>}
+        </div>
+        <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4">
+          <div className="text-ink-2 text-xs font-medium mb-3">Nach Creator-Größe <span className="text-ink-4 font-normal">· {n ? Math.round(s.sizeKnown / n * 100) : 0} % zugeordnet</span></div>
+          <div className="flex items-end gap-2 h-28">
+            {(['NANO', 'MICRO', 'MACRO', 'MEGA'] as const).map(t => { const v = s.bySize[t] || 0; const m = Math.max(1, ...Object.values(s.bySize)); return (
+              <div key={t} className="flex-1 flex flex-col items-center justify-end gap-1 h-full" title={`${v} Kooperationen · ${s.sizeCreators[t] || 0} Creator`}>
+                <div className="text-ink-2 text-[10px] tabular-nums">{v.toLocaleString('de-DE')}</div>
+                <div className="w-full rounded-t-sm" style={{ height: `${Math.max(v ? 3 : 0, (v / m) * 80)}%`, background: t === 'NANO' ? '#f2b35a' : t === 'MICRO' ? '#4fc3b8' : t === 'MACRO' ? '#c084fc' : '#ff7a8a' }} />
+                <span className={`text-[9px] px-1.5 rounded ${TIER_CLS[t]}`}>{t}</span>
+              </div>) })}
+          </div>
+          <div className="text-ink-4 text-[10px] mt-2">Nano &lt;10k · Micro 10k–100k · Macro 100k–1M · Mega &gt;1M Follower</div>
+        </div>
+        <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4">
+          <div className="text-ink-2 text-xs font-medium mb-2">Creator nach Geschlecht</div>
+          <Bars rows={[['w', '♀ weiblich', '#f472b6'], ['m', '♂ männlich', '#60a5fa'], ['?', 'unklar', '#6b7280']].map(([k, l, c]) => ({ key: k, label: l, value: s.byGender[k] || 0, color: c }))} />
+          <div className="text-ink-4 text-[10px] mt-2">Geschätzt aus Vorname bzw. Bio.</div>
+        </div>
+      </div>
+
       <div className="bg-surface-3/40 rounded-apple-md border border-hairline-soft p-4">
         <div className="text-ink-2 text-xs font-medium mb-3 flex items-center gap-2">{selectedBrands.length === 1 && <BrandLogo src={brandLogo(selectedBrands[0])} name={brandName(selectedBrands[0])} color={brandColor(selectedBrands[0])} size={16} />}Top-Creator{selectedBrands.length === 1 ? ` bei ${brandName(selectedBrands[0])}` : ''} <span className="text-ink-4 font-normal">· nach Buchungen</span></div>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-1.5">
-          {s.creators.slice(0, 15).map((c, i) => (
+          {s.creators.slice(0, 24).map((c, i) => (
             <button key={c.handle} onClick={() => onCreator(c.handle)} className="flex items-center gap-2 text-left hover:bg-white/[0.03] rounded px-1.5 py-1 min-w-0">
               <span className="text-ink-4 text-[10px] w-4 tabular-nums">{i + 1}</span>
               <div className="min-w-0 flex-1">

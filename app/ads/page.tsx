@@ -74,7 +74,8 @@ export default function AdsPage() {
   const [event, setEvent] = useState(saved.event || 'black_week'); const [eventYear, setEventYear] = useState<number>(saved.eventYear || new Date().getFullYear() - 1)
   const [brandQ, setBrandQ] = useState(''); const [brandOpen, setBrandOpen] = useState(false)
   const [koopShow, setKoopShow] = useState(60)
-  const [koopTab, setKoopTab] = useState<'liste' | 'statistik'>('liste')
+  const [koopTab, setKoopTab] = useState<'marken' | 'liste' | 'statistik'>('marken')
+  const [markenQ, setMarkenQ] = useState('')
   const [profile, setProfile] = useState<{ handle: string; name?: string } | null>(null)
   const [creatorInfos, setCreatorInfos] = useState<Record<string, CreatorInfo>>({})
   const [adsCreators, setAdsCreators] = useState<Record<string, CreatorInfo>>({})
@@ -333,7 +334,7 @@ export default function AdsPage() {
                 <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke, Rand = Inhalt:</span>{Object.entries(TYP).filter(([k]) => k !== 'story' && k !== 'carousel').map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
-                <div className="flex rounded-full border border-hairline p-0.5">{([['liste', 'Creator-Liste'], ['statistik', 'Statistik']] as const).map(([k, l]) => <button key={k} onClick={() => setKoopTab(k)} className={`text-xs px-3 py-1 rounded-full ${koopTab === k ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>)}</div>
+                <div className="flex rounded-full border border-hairline p-0.5">{([['marken', 'Marken'], ['liste', 'Creator-Liste'], ['statistik', 'Statistik']] as const).map(([k, l]) => <button key={k} onClick={() => { setKoopTab(k); if (k === 'marken') setSel([]) }} className={`text-xs px-3 py-1 rounded-full ${koopTab === k ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>)}</div>
                 <select value={koopSort} onChange={e => setKoopSort(e.target.value as 'brands' | 'count' | 'recent')} className={selCls}>
                   <option value="brands">Sortierung: meiste Marken</option>
                   <option value="count">Sortierung: meiste Buchungen</option>
@@ -363,7 +364,26 @@ export default function AdsPage() {
                 <span className="text-ink-4 text-xs ml-auto">{koops.length} Kooperationen · {koopRows.length} Creator · {koopRows.filter(r => r.items.length > 1).length} mehrfach gebucht · {koopRows.filter(r => r.brands.size > 1).length} bei mehreren Marken</span>
               </div>
               {addedMsg && <div className="text-emerald-400 text-sm">{addedMsg}</div>}
-              {koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : koopTab === 'statistik' ? (
+              {koopTab === 'marken' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3"><input value={markenQ} onChange={e => setMarkenQ(e.target.value)} placeholder="Marke suchen…" className={selCls + ' w-64'} /><span className="text-ink-4 text-xs">{brands.length} Marken · Klick öffnet die Statistik der Marke</span></div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+                    {brands.filter(b => !markenQ.trim() || b.name.toLowerCase().includes(markenQ.trim().toLowerCase())).map(b => {
+                      const ks = koops.filter(k => k.brand_id === b.id); const cr = new Set(ks.map(k => (k.creator_handle || k.creator).toLowerCase())).size; const last = ks.reduce((m, k) => (k.start_date || '') > m ? (k.start_date || '') : m, '')
+                      return (
+                        <button key={b.id} onClick={() => { setSel([b.id]); setKoopTab('statistik') }} className="text-left bg-surface-2 hover:bg-surface-3 border border-hairline-soft rounded-apple-lg p-4 transition group">
+                          <div className="flex items-center gap-3"><BrandLogo src={b.logo_url} name={b.name} color={brandColor(b.id)} size={40} /><div className="min-w-0"><div className="text-ink-1 text-sm font-semibold truncate group-hover:text-accent">{b.name}</div><div className="text-ink-4 text-[11px] truncate">{b.ig_handle ? '@' + b.ig_handle : b.domain || ''}</div></div></div>
+                          <div className="grid grid-cols-3 gap-2 mt-3 text-center">
+                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{ks.length.toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Koops</div></div>
+                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{cr.toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Creator</div></div>
+                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{b.ad_count}</div><div className="text-ink-4 text-[10px]">Ads</div></div>
+                          </div>
+                          {last && <div className="text-ink-4 text-[10px] mt-2">zuletzt {dat(last)}</div>}
+                        </button>)
+                    })}
+                  </div>
+                </div>
+              ) : koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : koopTab === 'statistik' ? (
                 <KoopStats items={koopRows.flatMap(r => r.items)} brandName={brandName} brandColor={brandColor} brandLogo={brandLogo} creatorInfo={creatorInfo} onCreator={h => setProfile({ handle: h })} onBrand={id => setSel([id])} selectedBrands={sel} />
               ) : !koopRows.length ? (
                 <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Keine Kooperationen in dieser Auswahl</div><div className="text-ink-4 text-xs mt-1">Quellen: Partnership-Ads („Creator mit Marke“) aus der Ad Library, Branded-Content-Library und Instagram-Tags. Sag Claude, welche Marke per Browser nachgezogen werden soll.</div></div>
