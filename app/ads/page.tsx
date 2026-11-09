@@ -1,6 +1,6 @@
 'use client'
 import Sidebar from '../components/Sidebar'
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import type { Ad, Brand } from '@/lib/ads'
 
@@ -67,30 +67,43 @@ export default function AdsPage() {
   const [brandQ, setBrandQ] = useState(''); const [brandOpen, setBrandOpen] = useState(false)
   const [koopShow, setKoopShow] = useState(60)
   // Gespeicherte Filter nach dem Mount anwenden (kein SSR-Mismatch), danach jede Aenderung in localStorage + URL schreiben
-  useEffect(() => {
-    const s = loadSaved()
-    if (s.sel) setSel(s.sel); if (s.preset) setPreset(s.preset); if (s.from) setFrom(s.from); if (s.to) setTo(s.to)
-    if (s.platform) setPlatform(s.platform); if (s.anlass) setAnlass(s.anlass); if (s.type) setType(s.type); if (s.sort) setSort(s.sort); if (s.q) { setQ(s.q); setQDeb(s.q) }
-    if (s.view) setView(s.view); if (s.koopSort) setKoopSort(s.koopSort); if (s.koopMin) setKoopMin(s.koopMin); if (s.koopQ) setKoopQ(s.koopQ)
-    if (typeof s.koopMinLikes === 'number') setKoopMinLikes(s.koopMinLikes); if (typeof s.koopFlagged === 'boolean') setKoopFlagged(s.koopFlagged); if (s.koopSrc) setKoopSrc(s.koopSrc)
-    if (s.month) setMonth(s.month); if (s.event) setEvent(s.event); if (s.eventYear) setEventYear(s.eventYear)
-    setHydrated(true)
-  }, [])
-  useEffect(() => {
-    if (!hydrated) return
-    const data: Saved = { sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear }
-    try { localStorage.setItem(FKEY, JSON.stringify(data)) } catch {}
-    try { const f = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); history.replaceState(null, '', location.pathname + '?f=' + f) } catch {}
-  }, [hydrated, sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
-  useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
-  const [adding, setAdding] = useState<string | null>(null)
-  const [addedMsg, setAddedMsg] = useState('')
-
   const getToken = async () => (await sb.auth.getSession()).data.session?.access_token || ''
   const api = useCallback(async (url: string, method = 'GET', body?: any) => {
     const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json', authorization: 'Bearer ' + await getToken() }, body: body ? JSON.stringify(body) : undefined })
     const j = await r.json().catch(() => ({})); return { ok: r.ok, j }
   }, [])
+
+  const applySaved = (s: Saved) => {
+    if (s.sel) setSel(s.sel); if (s.preset) setPreset(s.preset); if (s.from) setFrom(s.from); if (s.to) setTo(s.to)
+    if (s.platform) setPlatform(s.platform); if (s.anlass) setAnlass(s.anlass); if (s.type) setType(s.type); if (s.sort) setSort(s.sort); if (s.q) { setQ(s.q); setQDeb(s.q) }
+    if (s.view) setView(s.view); if (s.koopSort) setKoopSort(s.koopSort); if (s.koopMin) setKoopMin(s.koopMin); if (s.koopQ) setKoopQ(s.koopQ)
+    if (typeof s.koopMinLikes === 'number') setKoopMinLikes(s.koopMinLikes); if (typeof s.koopFlagged === 'boolean') setKoopFlagged(s.koopFlagged); if (s.koopSrc) setKoopSrc(s.koopSrc)
+    if (s.month) setMonth(s.month); if (s.event) setEvent(s.event); if (s.eventYear) setEventYear(s.eventYear)
+  }
+  // Reihenfolge beim Laden: URL (?f=) → Server (pro Nutzer, geraeteuebergreifend) → lokaler Speicher
+  useEffect(() => {
+    (async () => {
+      const fromUrl = typeof window !== 'undefined' && new URLSearchParams(location.search).get('f')
+      let s: Saved | null = fromUrl ? loadSaved() : null
+      if (!s) { try { const { ok, j } = await api('/api/ads/filters'); if (ok && j.filters) s = j.filters as Saved } catch {} }
+      if (!s) s = loadSaved()
+      applySaved(s || {})
+      setHydrated(true)
+    })()
+  }, [api])
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!hydrated) return
+    const data: Saved = { sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear }
+    try { localStorage.setItem(FKEY, JSON.stringify(data)) } catch {}
+    try { const f = btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); history.replaceState(null, '', location.pathname + '?f=' + f) } catch {}
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(() => { api('/api/ads/filters', 'PUT', { filters: data }).catch(() => {}) }, 600)
+  }, [hydrated, sel, preset, from, to, platform, anlass, type, sort, q, view, koopSort, koopMin, koopQ, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear, api])
+  useEffect(() => { setKoopShow(60) }, [koopSort, koopMin, koopQ, sel, preset, from, to, koopMinLikes, koopFlagged, koopSrc, month, event, eventYear])
+  const [adding, setAdding] = useState<string | null>(null)
+  const [addedMsg, setAddedMsg] = useState('')
+
 
   const loadBrands = useCallback(async () => { const { ok, j } = await api('/api/ads/brands'); if (ok) { setBrands(j.brands); setSettings(j.settings); setCountries((j.settings.countries || ['DE']).join(', ')) } }, [api])
   useEffect(() => { loadBrands() }, [loadBrands])
