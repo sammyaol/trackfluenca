@@ -293,7 +293,7 @@ export function klauselnAgentur(v: Vertrag): Klausel[] {
   const agAdr = v.agentur_adresse
   const marke = v.marke_name || v.firma_name || 'Aoulmi & Spering E-Commerce GbR (Koluré)'
   const kurz = /kolur/i.test(marke) ? 'Koluré' : marke
-  const markeAdr = v.marke_adresse
+  const markeAdr = v.marke_adresse || (/kolur/i.test(marke) ? 'Theodorstraße 13, 50389 Wesseling' : null)
   const plattform = v.plattform || 'Instagram'
   const anzahl = v.anzahl_videos || 1
   const handle = v.creator_handle ? ` (${v.creator_handle})` : ''
