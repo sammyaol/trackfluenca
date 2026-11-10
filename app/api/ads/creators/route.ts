@@ -27,8 +27,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ handles: (data || []).map((r: any) => r.handle) })
   }
   const all: any[] = []
-  for (let off = 0; off < 40000; off += 1000) {
-    const { data, error } = await db.from('ads_creators').select('handle, name, gender, lang, follower, land, avatar, bio, fetched_at, tier, categories').eq('user_id', user.id).order('handle').range(off, off + 999)
+  for (let off = 0; off < 200000; off += 1000) {
+    const { data, error } = await db.from('ads_creators').select('handle, gender, lang, follower, land, tier').eq('user_id', user.id).order('handle').range(off, off + 999)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     all.push(...(data || [])); if (!data || data.length < 1000) break
   }

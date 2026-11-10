@@ -154,7 +154,12 @@ export default function AdsPage() {
     setLoading(false)
   }, [api, query])
   useEffect(() => { if (hydrated) loadAds(0, false) }, [loadAds, hydrated])
+  const [brandStats2, setBrandStats2] = useState<Record<string, { koops: number; creators: number; last_date: string | null; stories: number }>>({})
+  const loadSummary = useCallback(async () => { const { ok, j } = await api('/api/ads/koops?summary=1'); if (ok) { const m: Record<string, any> = {}; for (const r of j.stats || []) m[r.brand_id] = r; setBrandStats2(m) } }, [api])
+  useEffect(() => { if (hydrated && view === 'koops') loadSummary() }, [hydrated, view, loadSummary])
   const loadKoops = useCallback(async () => {
+    // Ohne Markenauswahl waeren es >100.000 Eintraege – Liste/Statistik laden erst mit Marke
+    if (!sel.length) { setKoops([]); return }
     setKoopsLoading(true)
     const p = new URLSearchParams(); if (sel.length) p.set('brand', sel.join(',')); if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to)
     const { ok, j } = await api('/api/ads/koops?' + p.toString()); if (ok) setKoops(j.koops); setKoopsLoading(false)
@@ -331,7 +336,7 @@ export default function AdsPage() {
                   <span className="text-ink-4 text-xs">{range.from} – {range.to}</span>
                 </>}
                 {preset === 'custom' && <><input type="date" value={from} onChange={e => setFrom(e.target.value)} className={selCls} /><span className="text-ink-4 text-xs">bis</span><input type="date" value={to} onChange={e => setTo(e.target.value)} className={selCls} /></>}
-                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke, Rand = Inhalt:</span>{Object.entries(TYP).filter(([k]) => k !== 'story' && k !== 'carousel').map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
+                <div className="flex items-center gap-3 ml-2 text-[11px] text-ink-4"><span>Punkt = Marke, Rand = Inhalt:</span>{Object.entries(TYP).filter(([k]) => k !== 'carousel').map(([k, v]) => <span key={k} className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full border-2" style={{ borderColor: v.color }} />{v.label}</span>)}</div>
               </div>
               <div className="flex flex-wrap gap-2 items-center">
                 <div className="flex rounded-full border border-hairline p-0.5">{([['marken', 'Marken'], ['liste', 'Creator-Liste'], ['statistik', 'Statistik']] as const).map(([k, l]) => <button key={k} onClick={() => { setKoopTab(k); if (k === 'marken') setSel([]) }} className={`text-xs px-3 py-1 rounded-full ${koopTab === k ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>{l}</button>)}</div>
@@ -368,14 +373,14 @@ export default function AdsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3"><input value={markenQ} onChange={e => setMarkenQ(e.target.value)} placeholder="Marke suchen…" className={selCls + ' w-64'} /><span className="text-ink-4 text-xs">{brands.length} Marken · Klick öffnet die Statistik der Marke</span></div>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-                    {brands.filter(b => !markenQ.trim() || b.name.toLowerCase().includes(markenQ.trim().toLowerCase())).map(b => {
-                      const ks = koops.filter(k => k.brand_id === b.id); const cr = new Set(ks.map(k => (k.creator_handle || k.creator).toLowerCase())).size; const last = ks.reduce((m, k) => (k.start_date || '') > m ? (k.start_date || '') : m, '')
+                    {brands.filter(b => !markenQ.trim() || b.name.toLowerCase().includes(markenQ.trim().toLowerCase())).sort((a, b) => (brandStats2[b.id]?.koops || 0) - (brandStats2[a.id]?.koops || 0)).map(b => {
+                      const st = brandStats2[b.id]; const last = st?.last_date || ''
                       return (
                         <button key={b.id} onClick={() => { setSel([b.id]); setKoopTab('statistik') }} className="text-left bg-surface-2 hover:bg-surface-3 border border-hairline-soft rounded-apple-lg p-4 transition group">
                           <div className="flex items-center gap-3"><BrandLogo src={b.logo_url} name={b.name} color={brandColor(b.id)} size={40} /><div className="min-w-0"><div className="text-ink-1 text-sm font-semibold truncate group-hover:text-accent">{b.name}</div><div className="text-ink-4 text-[11px] truncate">{b.ig_handle ? '@' + b.ig_handle : b.domain || ''}</div></div></div>
                           <div className="grid grid-cols-3 gap-2 mt-3 text-center">
-                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{ks.length.toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Koops</div></div>
-                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{cr.toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Creator</div></div>
+                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{(st?.koops || 0).toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Koops</div></div>
+                            <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{(st?.creators || 0).toLocaleString('de-DE')}</div><div className="text-ink-4 text-[10px]">Creator</div></div>
                             <div><div className="text-ink-1 text-sm font-semibold tabular-nums">{b.ad_count}</div><div className="text-ink-4 text-[10px]">Ads</div></div>
                           </div>
                           {last && <div className="text-ink-4 text-[10px] mt-2">zuletzt {dat(last)}</div>}
@@ -383,6 +388,8 @@ export default function AdsPage() {
                     })}
                   </div>
                 </div>
+              ) : !sel.length ? (
+                <div className="text-center py-16"><div className="text-ink-2 text-sm font-medium">Bitte eine Marke wählen</div><div className="text-ink-4 text-xs mt-1">Oben im Suchfeld eine oder mehrere Marken auswählen – oder im Tab „Marken“ auf eine Karte klicken.</div></div>
               ) : koopsLoading ? <div className="text-ink-4 text-sm py-10 text-center">Lädt…</div> : koopTab === 'statistik' ? (
                 <KoopStats items={koopRows.flatMap(r => r.items)} brandName={brandName} brandColor={brandColor} brandLogo={brandLogo} creatorInfo={creatorInfo} onCreator={h => setProfile({ handle: h })} onBrand={id => setSel([id])} selectedBrands={sel} />
               ) : !koopRows.length ? (

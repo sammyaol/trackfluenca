@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db, getUser } from '@/lib/ads'
 
 export const maxDuration = 60
-const CORS = { 'Access-Control-Allow-Origin': 'https://www.facebook.com', 'Access-Control-Allow-Headers': 'authorization, content-type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' }
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' }
 export async function OPTIONS() { return new NextResponse(null, { status: 204, headers: CORS }) }
 
 // Kooperationen: Creator x Marke x Datum. Quellen: Partnership-Ads aus der Ad Library ('ad'), Branded-Content-Library ('branded'), Instagram-Tags ('ig_tag'), TikTok ('tiktok').
@@ -10,9 +10,10 @@ export async function GET(req: NextRequest) {
   const user = await getUser(req); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const p = req.nextUrl.searchParams
   // Seitenweise laden (PostgREST liefert max. 1000 Zeilen pro Request), bis zu 30.000 Kooperationen
+  if (p.get('summary')) { const { data, error } = await db.rpc('ads_brand_stats', { p_user: user.id }); if (error) return NextResponse.json({ error: error.message }, { status: 500 }); return NextResponse.json({ stats: data || [] }) }
   const brands = (p.get('brand') || '').split(',').filter(Boolean)
   const all: unknown[] = []
-  for (let off = 0; off < 30000; off += 1000) {
+  for (let off = 0; off < 80000; off += 1000) {
     let q = db.from('ads_koops').select('id, brand_id, creator, creator_handle, creator_url, source, url, start_date, end_date, media_url, text, platform, likes, views, flags, typ').eq('user_id', user.id).order('start_date', { ascending: false, nullsFirst: false }).order('id').range(off, off + 999)
     if (brands.length) q = q.in('brand_id', brands)
     if (p.get('creator')) q = q.ilike('creator', p.get('creator')!)
@@ -22,7 +23,7 @@ export async function GET(req: NextRequest) {
     if (p.get('source')) q = q.eq('source', p.get('source')!)
     const { data, error } = await q
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    for (const k of data || []) all.push({ ...k, text: k.text ? String(k.text).slice(0, 220) : null })
+    for (const k of data || []) all.push({ ...k, text: k.text ? String(k.text).slice(0, k.source === 'linkster' ? 60 : 220) : null })
     if (!data || data.length < 1000) break
   }
   return NextResponse.json({ koops: all })
