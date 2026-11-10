@@ -3,6 +3,8 @@ import { db, getUser } from '@/lib/ads'
 import { guessGender } from '@/lib/gender'
 
 export const maxDuration = 60
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' }
+export async function OPTIONS() { return new NextResponse(null, { status: 204, headers: CORS }) }
 
 // Creator-Stammdaten zu den Kooperationen: Geschlecht (aus Vorname), Sprache (aus Captions), spaeter Bio/Follower aus Profilabruf.
 // Land aus Bio/Sprache schaetzen
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
       const { error } = await db.from('ads_creators').upsert(batch, { onConflict: 'user_id,handle' })
       if (!error) saved += batch.length
     }
-    return NextResponse.json({ ok: true, saved })
+    return NextResponse.json({ ok: true, saved }, { headers: CORS })
   }
   const user = await getUser(req); if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (b.handle && (b.gender === 'w' || b.gender === 'm' || b.gender === null)) {
