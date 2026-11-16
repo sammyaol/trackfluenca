@@ -63,6 +63,10 @@ export default function AdsPage() {
   const [view, setView] = useState<'ads' | 'koops'>(saved.view || 'ads')
   const [koops, setKoops] = useState<Koop[]>([])
   const [koopsLoading, setKoopsLoading] = useState(false)
+  const [hideOwn, setHideOwn] = useState(false)
+  useEffect(() => { try { setHideOwn(localStorage.getItem('ads_hide_own') === '1') } catch {} }, [])
+  const toggleOwn = () => setHideOwn(v => { try { localStorage.setItem('ads_hide_own', v ? '0' : '1') } catch {} return !v })
+  const ownIds = useMemo(() => new Set(brands.filter(b => /kolur/i.test(b.name)).map(b => b.id)), [brands])
   const [koopCreator, setKoopCreator] = useState<string | null>(null)
   const [koopSort, setKoopSort] = useState<'brands' | 'count' | 'recent'>(saved.koopSort || 'count')
   const [koopMin, setKoopMin] = useState<'all' | 'multi' | 'multibrand'>(saved.koopMin || 'all')
@@ -170,6 +174,7 @@ export default function AdsPage() {
   const koopRows = useMemo(() => {
     const m = new Map<string, { creator: string; handle: string | null; url: string | null; items: Koop[]; brands: Set<string> }>()
     for (const k of koops) {
+      if (hideOwn && ownIds.has(k.brand_id)) continue
       if (koopSrc && k.source !== koopSrc) continue
       if (koopFlagged && k.source !== 'ad' && k.source !== 'linkster' && !(k.flags && k.flags.length)) continue
       if (koopMinLikes && k.source !== 'ad' && k.source !== 'linkster') { const score = k.source === 'tiktok' ? (k.views || 0) / 20 : (k.likes || 0); if (score < koopMinLikes && !(k.flags || []).some(f => f === 'Anzeige' || f === 'Collab')) continue }
@@ -191,7 +196,7 @@ export default function AdsPage() {
       return last(b).localeCompare(last(a)) || b.items.length - a.items.length
     })
     return rows
-  }, [koops, koopSort, koopMin, koopQ, koopSrc, koopFlagged, koopMinLikes, koopGender, koopLang, creatorInfo])
+  }, [hideOwn, ownIds, koops, koopSort, koopMin, koopQ, koopSrc, koopFlagged, koopMinLikes, koopGender, koopLang, creatorInfo])
   // Farbe pro Marke (stabil aus der ID), damit man in der Zeitleiste sieht, welche Marke wann gebucht hat
   const brandLogo = useCallback((id: string) => brands.find(b => b.id === id)?.logo_url || null, [brands])
   const brandColor = useCallback((id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return `hsl(${h % 360} 70% 62%)` }, [])
@@ -274,6 +279,7 @@ export default function AdsPage() {
           <div>
             <h1 className="text-ink-1 font-semibold text-lg tracking-tight">Ad Library</h1>
             <p className="text-ink-3 text-xs mt-0.5">Meta-Ads der Wettbewerber: automatisch gesammelt, nach Marke und Zeitraum filterbar</p>
+            <button onClick={toggleOwn} className={`mt-2 text-[11px] px-2.5 py-1 rounded-full border transition-colors ${hideOwn ? 'border-accent text-accent' : 'border-hairline text-ink-3 hover:text-ink-1'}`}>{hideOwn ? 'Koluré ausgeblendet · wieder einblenden' : 'Koluré ausblenden'}</button>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex rounded-full border border-hairline p-0.5 mr-2">
@@ -301,12 +307,12 @@ export default function AdsPage() {
               <input value={brandQ} onChange={e => { setBrandQ(e.target.value); setBrandOpen(true) }} onFocus={() => setBrandOpen(true)} onBlur={() => setTimeout(() => setBrandOpen(false), 150)} onKeyDown={e => { if (e.key === 'Enter') { const hit = brands.find(b => b.name.toLowerCase().includes(brandQ.trim().toLowerCase())); if (hit) { setSel(s => s.includes(hit.id) ? s : [...s, hit.id]); setBrandQ(''); setBrandOpen(false) } } if (e.key === 'Escape') setBrandOpen(false) }} placeholder={`Marke suchen… (${brands.length})`} className={selCls + ' w-56'} />
               {brandOpen && (
                 <div className="absolute z-30 mt-1 w-72 max-h-72 overflow-y-auto bg-surface-2 border border-hairline rounded-apple-md shadow-xl">
-                  {brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)).map(b => (
+                  {brands.filter(b => !(hideOwn && ownIds.has(b.id))).filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).sort((a, b) => a.name.localeCompare(b.name)).map(b => (
                     <button key={b.id} onMouseDown={e => e.preventDefault()} onClick={() => { setSel(s => s.includes(b.id) ? s.filter(x => x !== b.id) : [...s, b.id]); setBrandQ('') }} className={`w-full text-left px-3 py-1.5 text-sm flex items-center justify-between hover:bg-white/[0.04] ${sel.includes(b.id) ? 'text-accent' : 'text-ink-2'}`}>
                       <span className="truncate inline-flex items-center gap-2"><BrandLogo src={b.logo_url} name={b.name} color={brandColor(b.id)} size={18} />{sel.includes(b.id) ? '✓ ' : ''}{b.name}</span><span className="text-ink-4 text-[11px] ml-2">{b.ad_count} Ads</span>
                     </button>
                   ))}
-                  {!brands.filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).length && <div className="px-3 py-2 text-xs text-ink-4">Keine Marke gefunden</div>}
+                  {!brands.filter(b => !(hideOwn && ownIds.has(b.id))).filter(b => !brandQ.trim() || b.name.toLowerCase().includes(brandQ.trim().toLowerCase())).length && <div className="px-3 py-2 text-xs text-ink-4">Keine Marke gefunden</div>}
                 </div>
               )}
             </div>
@@ -373,7 +379,7 @@ export default function AdsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-3"><input value={markenQ} onChange={e => setMarkenQ(e.target.value)} placeholder="Marke suchen…" className={selCls + ' w-64'} /><span className="text-ink-4 text-xs">{brands.length} Marken · Klick öffnet die Statistik der Marke</span></div>
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-                    {brands.filter(b => !markenQ.trim() || b.name.toLowerCase().includes(markenQ.trim().toLowerCase())).sort((a, b) => (brandStats2[b.id]?.koops || 0) - (brandStats2[a.id]?.koops || 0)).map(b => {
+                    {brands.filter(b => !(hideOwn && ownIds.has(b.id))).filter(b => !markenQ.trim() || b.name.toLowerCase().includes(markenQ.trim().toLowerCase())).sort((a, b) => (brandStats2[b.id]?.koops || 0) - (brandStats2[a.id]?.koops || 0)).map(b => {
                       const st = brandStats2[b.id]; const last = st?.last_date || ''
                       return (
                         <button key={b.id} onClick={() => { setSel([b.id]); setKoopTab('statistik') }} className="text-left bg-surface-2 hover:bg-surface-3 border border-hairline-soft rounded-apple-lg p-4 transition group">
@@ -486,7 +492,7 @@ export default function AdsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-              {ads.map(a => (
+              {ads.filter(a => !(hideOwn && ownIds.has(a.brand_id))).map(a => (
                 <div key={a.id} className="bg-surface-2 rounded-apple-lg border border-hairline-soft overflow-hidden flex flex-col group">
                   <button onClick={() => setDetail(a)} className="aspect-[4/5] bg-surface-3 overflow-hidden text-left relative">
                     <Media a={a} />
