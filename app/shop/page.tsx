@@ -23,6 +23,8 @@ type Overview = {
   lost_value: number; won_value: number; avg_duration_cart: number; returning_cart: number
   sources: Grp[]; devices: Grp[]; cart_products: { p: string; carts: number; checkout: number; bought: number }[]; view_products: { p: string; views: number; carts: number }[]
 }
+type CmpRow = { n: number; avg_value: number | null; dur: number | null; pages: number | null; prods: number | null; clicks: number | null; to_cart: number | null; cart_to_end: number | null; items: number | null; ret: number | null; mobil: number | null; code: number | null }
+type Cmp = { buyers: CmpRow | null; abandoners: CmpRow | null; bought_products: { p: string; n: number }[]; buyer_sources: { k: string; n: number; v: number }[] }
 type Ev = { ts: string; event: string; path: string | null; product: string | null; variant: string | null; value: number | null; discount: string | null; shipping: number | null; data: any }
 
 const STAGES: { stage: number; label: string }[] = [
@@ -65,6 +67,7 @@ const sel = 'bg-surface-2 border border-hairline rounded-apple-sm text-ink-2 tex
 export default function ShopPage() {
   const [range, setRange] = useState('7')
   const [ov, setOv] = useState<Overview | null>(null)
+  const [cmp, setCmp] = useState<Cmp | null>(null)
   const [list, setList] = useState<{ count: number; sessions: Session[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -87,6 +90,8 @@ export default function ShopPage() {
     setLoading(true); setError('')
     const { data, error: e } = await sb.rpc('shop_overview', span())
     if (e) setError(e.message); else setOv(data as Overview)
+    const c = await sb.rpc('shop_compare', span())
+    if (!c.error) setCmp(c.data as Cmp)
     setLoading(false)
   }, [span])
   const loadList = useCallback(async () => {
@@ -197,6 +202,48 @@ export default function ShopPage() {
                 </div>
               </div>
 
+              <div className={card}>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-ink-2 text-xs font-medium">Käufe im Vergleich zu Abbrüchen</div>
+                  <button onClick={() => setFPattern(fPattern === 'gekauft' ? '' : 'gekauft')} className={`text-[11px] px-2.5 py-1 rounded-full border ${fPattern === 'gekauft' ? 'border-accent text-accent' : 'border-hairline text-ink-3 hover:text-ink-1'}`}>Nur Käufe in der Liste zeigen</button>
+                </div>
+                <div className="text-ink-4 text-[11px] mb-3">Durchschnitt je Session mit Warenkorb</div>
+                {!cmp?.buyers && <div className="text-ink-4 text-xs">Im gewählten Zeitraum gibt es noch keinen erfassten Kauf.</div>}
+                {cmp?.buyers && (
+                  <div className="grid lg:grid-cols-[1.4fr_1fr_1fr] gap-6">
+                    <table className="w-full text-xs">
+                      <thead><tr className="text-ink-4 text-[10px] text-left"><th className="font-normal pb-1.5"></th><th className="font-normal text-right text-emerald-300">Käufer</th><th className="font-normal text-right text-amber-300">Abbrecher</th></tr></thead>
+                      <tbody>
+                        {([
+                          ['Sessions', (r: CmpRow) => String(r.n)],
+                          ['Ø Warenwert', (r: CmpRow) => euro(r.avg_value)],
+                          ['Ø Dauer im Shop', (r: CmpRow) => dauer(r.dur)],
+                          ['Ø Seiten', (r: CmpRow) => String(r.pages ?? '–')],
+                          ['Ø Produkte angesehen', (r: CmpRow) => String(r.prods ?? '–')],
+                          ['Ø Produkte im Warenkorb', (r: CmpRow) => String(r.items ?? '–')],
+                          ['Ø Klicks', (r: CmpRow) => String(r.clicks ?? '–')],
+                          ['Ø Zeit bis zum ersten Warenkorb-Klick', (r: CmpRow) => dauer(r.to_cart)],
+                          ['Ø Zeit vom Warenkorb bis zum Ende', (r: CmpRow) => dauer(r.cart_to_end)],
+                          ['Anteil Handy', (r: CmpRow) => (r.mobil ?? 0) + ' %'],
+                          ['Anteil Wiederkehrer', (r: CmpRow) => (r.ret ?? 0) + ' %'],
+                          ['Anteil mit Rabattcode', (r: CmpRow) => (r.code ?? 0) + ' %'],
+                        ] as [string, (r: CmpRow) => string][]).map(([l, f]) => (
+                          <tr key={l} className="border-t border-white/[0.05]"><td className="py-1.5 text-ink-2">{l}</td><td className="text-right text-ink-1 tabular-nums">{cmp.buyers ? f(cmp.buyers) : '–'}</td><td className="text-right text-ink-3 tabular-nums">{cmp.abandoners ? f(cmp.abandoners) : '–'}</td></tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <div>
+                      <div className="text-ink-3 text-[11px] mb-2">Gekaufte Produkte</div>
+                      {cmp.bought_products.map(p => <div key={p.p} className="flex justify-between gap-3 text-xs py-1 border-t border-white/[0.05]"><span className="text-ink-2 truncate">{p.p}</span><span className="text-ink-1 tabular-nums">{p.n}</span></div>)}
+                    </div>
+                    <div>
+                      <div className="text-ink-3 text-[11px] mb-2">Käufe nach Quelle</div>
+                      {cmp.buyer_sources.map(g => <div key={g.k} className="flex justify-between gap-3 text-xs py-1 border-t border-white/[0.05]"><span className="text-ink-2 truncate">{g.k}</span><span className="text-ink-1 tabular-nums">{g.n} · {euro(g.v)}</span></div>)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid lg:grid-cols-2 gap-5">
                 <div className={card}>
                   <div className="text-ink-2 text-xs font-medium mb-3">Im Warenkorb, aber nicht gekauft</div>
@@ -237,7 +284,7 @@ export default function ShopPage() {
                   <div className="text-ink-2 text-xs font-medium">Sessions mit Warenkorb oder Checkout <span className="text-ink-4 font-normal">· {list ? list.count : 0} Treffer{list && list.count > list.sessions.length ? `, ${list.sessions.length} angezeigt` : ''}</span></div>
                   <div className="flex gap-1.5 flex-wrap items-center">
                     <select value={fPattern} onChange={e => setFPattern(e.target.value)} className={sel}>
-                      <option value="">Alle Muster</option><option value="warenkorb">Im Warenkorb abgebrochen</option><option value="checkout">Im Checkout abgebrochen</option>
+                      <option value="">Käufe und Abbrüche</option><option value="abbruch">Nur Abbrüche</option><option value="warenkorb">Im Warenkorb abgebrochen</option><option value="checkout">Im Checkout abgebrochen</option>
                       {Object.entries(PATTERN).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                     </select>
                     <select value={fProduct} onChange={e => setFProduct(e.target.value)} className={sel}><option value="">Alle Produkte</option>{ov.cart_products.map(p => <option key={p.p} value={p.p}>{p.p}</option>)}</select>
