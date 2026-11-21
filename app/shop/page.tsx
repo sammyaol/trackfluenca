@@ -6,12 +6,13 @@ import { createBrowserClient } from '@supabase/ssr'
 
 const sb = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 const CLARITY_PROJECT = 'tfeedgnn6h'
+const SHOP_ADMIN = 'https://admin.shopify.com/store/s6kepz-zi'
 
 type Session = {
   sid: string; started: string; ended: string; stage: number; pages: number; products_viewed: number
   cart_products: string[] | null; value: number | null; shipping: number | null; discount: string | null
   clarity_user: string | null; clarity_session: string | null; last_path: string | null; last_event: string | null
-  referrer: string | null; first_url: string | null; device: string | null; order_id: string | null
+  referrer: string | null; first_url: string | null; device: string | null; order_id: string | null; order_name: string | null
 }
 type Funnel = { total: number; stages: { stage: number; n: number }[] | null; ended_at: { stage: number; n: number }[] | null; sessions: Session[] }
 
@@ -137,6 +138,7 @@ export default function ShopPage() {
                         </div>
                         <div className="min-w-0 flex-1">
                           <span className={`inline-block text-[11px] px-2 py-0.5 rounded ${st.cls}`}>{st.label}</span>
+                          {s.order_id && <a href={`${SHOP_ADMIN}/orders/${s.order_id}`} target="_blank" rel="noreferrer" className="ml-2 text-[11px] text-accent hover:underline">{s.order_name ? `Bestellung ${s.order_name}` : 'Bestellung öffnen'}</a>}
                           <div className="text-ink-2 text-xs mt-1.5 truncate">{(s.cart_products || []).join(' · ') || 'Produkt unbekannt'}</div>
                           <div className="text-ink-4 text-[11px] mt-0.5">
                             {s.pages} Seiten · {s.products_viewed} Produkte angesehen · Quelle: {quelle(s)}
