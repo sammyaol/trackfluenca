@@ -25,7 +25,7 @@ const ANLASS: Record<string, string> = { black_week: 'Black Week', weihnachten: 
 
 // Filter-Zustand bleibt erhalten (Tab-Wechsel, Zurück-Navigation, Reload)
 const FKEY = 'tf_ads_filters'
-type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string; koopMinLikes?: number; koopFlagged?: boolean; koopSrc?: string; month?: string; event?: string; eventYear?: number }
+type Saved = { sel?: string[]; preset?: Preset; from?: string; to?: string; platform?: string; anlass?: string; type?: string; sort?: string; q?: string; view?: 'ads' | 'koops' | 'bw'; koopSort?: 'brands' | 'count' | 'recent'; koopMin?: 'all' | 'multi' | 'multibrand'; koopQ?: string; koopMinLikes?: number; koopFlagged?: boolean; koopSrc?: string; month?: string; event?: string; eventYear?: number }
 // Zuerst aus der URL (?f=…), sonst aus localStorage – so ueberlebt der Filter Reload, Zurueck-Taste und neue Tabs
 const loadSaved = (): Saved => {
   if (typeof window === 'undefined') return {}
@@ -60,7 +60,7 @@ export default function AdsPage() {
   const [newBrand, setNewBrand] = useState({ name: '', search_term: '', page_ids: '' })
   const [confirm, setConfirm] = useState<string | null>(null)
   const [err, setErr] = useState('')
-  const [view, setView] = useState<'ads' | 'koops'>(saved.view || 'ads')
+  const [view, setView] = useState<'ads' | 'koops' | 'bw'>(saved.view || 'ads')
   const [koops, setKoops] = useState<Koop[]>([])
   const [koopsLoading, setKoopsLoading] = useState(false)
   const [hideOwn, setHideOwn] = useState(false)
@@ -145,11 +145,11 @@ export default function AdsPage() {
   const query = useMemo(() => {
     const p = new URLSearchParams()
     if (sel.length) p.set('brand', sel.join(','))
-    if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to)
-    if (preset === 'active') p.set('status', 'active')
-    if (platform) p.set('platform', platform); if (anlass) p.set('anlass', anlass); if (type) p.set('type', type); if (qDeb) p.set('q', qDeb); if (sort !== 'newest') p.set('sort', sort)
+    if (view === 'bw') { p.set('status', 'active'); p.set('anlass', 'black_week'); p.set('from', `${new Date().getFullYear()}-10-15`) }
+    else { if (range.from) p.set('from', range.from); if (range.to) p.set('to', range.to); if (preset === 'active') p.set('status', 'active'); if (anlass) p.set('anlass', anlass) }
+    if (platform) p.set('platform', platform); if (type) p.set('type', type); if (qDeb) p.set('q', qDeb); if (sort !== 'newest') p.set('sort', sort)
     return p.toString()
-  }, [sel, range, preset, platform, anlass, type, qDeb, sort])
+  }, [view, sel, range, preset, platform, anlass, type, qDeb, sort])
 
   const loadAds = useCallback(async (pg: number, append: boolean) => {
     setLoading(true)
@@ -285,6 +285,7 @@ export default function AdsPage() {
             <div className="flex rounded-full border border-hairline p-0.5 mr-2">
               <button onClick={() => setView('ads')} className={`press text-xs px-3 py-1.5 rounded-full ${view === 'ads' ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Ads</button>
               <button onClick={() => setView('koops')} className={`press text-xs px-3 py-1.5 rounded-full ${view === 'koops' ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Kooperationen</button>
+              <button onClick={() => setView('bw')} className={`press text-xs px-3 py-1.5 rounded-full ${view === 'bw' ? 'bg-accent text-[#1a1507] font-semibold' : 'text-ink-3 hover:text-ink-1'}`}>Black Week Ads</button>
             </div>
             {syncMsg && <span className="text-ink-4 text-xs max-w-md truncate" title={syncMsg}>{syncMsg}</span>}
             <button onClick={async () => { setSyncing('imports'); const { j } = await api('/api/ads/sync?mode=imports', 'POST'); setSyncing(null); const r = (j.imports || []).reduce((a: any, x: any) => ({ ok: a.ok + x.ok, fail: a.fail + x.fail }), { ok: 0, fail: 0 }); setSyncMsg(`Medien: ${r.ok} gespeichert${r.fail ? `, ${r.fail} fehlgeschlagen` : ''}`); loadAds(0, false) }} disabled={!!syncing} className="press text-sm font-medium rounded-full px-4 py-2 border border-hairline text-ink-2 hover:text-ink-1 disabled:opacity-50">{syncing === 'imports' ? 'Lädt Medien…' : 'Medien nachladen'}</button>
@@ -459,7 +460,8 @@ export default function AdsPage() {
             </>
           )}
 
-          {view === 'ads' && (<>
+          {(view === 'ads' || view === 'bw') && (<>
+          {view === 'bw' && <div className="text-ink-3 text-xs">Aktuell laufende Ads mit Black-Week-, Black-Friday- oder Cyber-Bezug aller Marken, gestartet seit Mitte Oktober. Zeitraum und Anlass sind hier fest eingestellt, Marke, Plattform, Typ und Suche kannst du weiter filtern.</div>}
           <div className="flex flex-wrap gap-2 items-center">
             <select value={preset} onChange={e => setPreset(e.target.value as Preset)} className={selCls}>
               <option value="all">Gesamter Zeitraum</option>
